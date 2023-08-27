@@ -114,10 +114,10 @@ class LearnablePoolingModel(nn.Module):
             inputs = inputs.reshape(BS, FR, -1)
 
         # Temporal pooling operation
-        if self.neck == "MAX" or self.neck == "AVG":
+        if self.neck == "MaxPool" or self.neck == "AvgPool":
             inputs_pooled = self.pooling_layer(inputs.permute((0, 2, 1))).squeeze(-1)
 
-        elif self.neck == "MAX++" or self.neck == "AVG++":
+        elif self.neck == "MaxPool++" or self.neck == "AvgPool++":
             nb_frames_50 = int(inputs.shape[1]/2)    
             input_before = inputs[:, :nb_frames_50, :]        
             input_after = inputs[:, nb_frames_50:, :]  
