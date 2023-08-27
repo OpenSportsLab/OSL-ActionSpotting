@@ -15,5 +15,13 @@ pip install mmengine
 ## Training
 
 ```bash
-python tools/train.py configs/netvlad++_resnet512_soccernet.py --cfg-options data_root=/media/giancos/Football/SoccerNet/
+python tools/train.py configs/soccernet_learnablepooling_maxpool_resnetpca512.py
+python tools/train.py configs/soccernet_learnablepooling_avgpool_resnetpca512.py
+python tools/train.py configs/soccernet_learnablepooling_netrvlad_resnetpca512.py
+python tools/train.py configs/soccernet_learnablepooling_netvlad_resnetpca512.py
+
+python tools/train.py configs/soccernet_learnablepooling_maxpool++_resnetpca512.py
+python tools/train.py configs/soccernet_learnablepooling_avgpool++_resnetpca512.py
+python tools/train.py configs/soccernet_learnablepooling_netrvlad++_resnetpca512.py
+python tools/train.py configs/soccernet_learnablepooling_netvlad++_resnetpca512.py
 ```

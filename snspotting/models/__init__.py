@@ -1,4 +1,4 @@
-from .netvlad import NetVLAD
+from .learnablepooling import LearnablePoolingModel
 
 import logging
 
@@ -13,13 +13,13 @@ def build_model(cfg, verbose=True, default_args=None):
     Returns:
         Model: The constructed model.
     """
-    if cfg.type == "NetVLAD":
-        model = NetVLAD(weights=cfg.load_weights, input_size=cfg.feature_dim,
+    if cfg.type == "LearnablePooling":
+        model = LearnablePoolingModel(weights=cfg.load_weights, input_size=cfg.backbone.feature_dim,
                   num_classes=len(cfg.classes), window_size=cfg.window_size, 
-                  vocab_size = cfg.vocab_size,
-                  framerate=2, pool=cfg.neck)
-    # else:
-    #     model = None 
+                  vocab_size=cfg.vocab_size, framerate=cfg.framerate, 
+                  backbone=cfg.backbone.type, neck=cfg.neck, head=cfg.head)
+    else:
+        model = None 
 
     if verbose:    
         # Display info on model

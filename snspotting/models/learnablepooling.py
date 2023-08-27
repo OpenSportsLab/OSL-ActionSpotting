@@ -8,76 +8,87 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# from .utils import NetVLAD_pool, NetRVLAD_pool
 
-
-class NetVLAD(nn.Module):
-    def __init__(self, weights=None, input_size=512, num_classes=17, vocab_size=64, window_size=15, framerate=2, pool="NetVLAD"):
+class LearnablePoolingModel(nn.Module):
+    def __init__(self, weights=None, input_size=512, 
+    num_classes=17, vocab_size=64, 
+    window_size=15, framerate=2, 
+    backbone="PreExtracted", neck="NetVLAD++", head="LinearLayer"):
         """
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
 
-        super(NetVLAD, self).__init__()
+        super(LearnablePoolingModel, self).__init__()
 
         self.window_size_frame=window_size * framerate
-        self.input_size = input_size
+        self.pooling_layer_input_dimension = input_size
         self.num_classes = num_classes
         self.framerate = framerate
-        self.pool = pool
+        self.backbone = backbone
+        self.neck = neck
+        self.head = head
         self.vlad_k = vocab_size
         
         # are feature alread PCA'ed?
-        if not self.input_size == 512:   
-            self.feature_extractor = nn.Linear(self.input_size, 512)
+        if not self.pooling_layer_input_dimension == 512:   
+            self.feature_extractor = nn.Linear(self.pooling_layer_input_dimension, 512)
             input_size = 512
-            self.input_size = 512
+            self.pooling_layer_input_dimension = 512
 
-        if self.pool == "MAX":
-            self.pool_layer = nn.MaxPool1d(self.window_size_frame, stride=1)
-            self.fc = nn.Linear(input_size, self.num_classes+1)
+        # Define Neck (=PoolingLayer)
+        if self.neck == "MaxPool":
+            self.pooling_layer = nn.MaxPool1d(self.window_size_frame, stride=1)
+            self.pooling_layer_output_dimension = self.pooling_layer_input_dimension
+        
+        if self.neck == "MaxPool++":
+            self.pooling_layer_before = nn.MaxPool1d(int(self.window_size_frame/2), stride=1)
+            self.pooling_layer_after = nn.MaxPool1d(int(self.window_size_frame/2), stride=1)
+            self.pooling_layer_output_dimension = 2*self.pooling_layer_input_dimension
+            
 
-        if self.pool == "MAX++":
-            self.pool_layer_before = nn.MaxPool1d(int(self.window_size_frame/2), stride=1)
-            self.pool_layer_after = nn.MaxPool1d(int(self.window_size_frame/2), stride=1)
-            self.fc = nn.Linear(2*input_size, self.num_classes+1)
+        if self.neck == "AvgPool":
+            self.pooling_layer = nn.AvgPool1d(self.window_size_frame, stride=1)
+            self.pooling_layer_output_dimension = self.pooling_layer_input_dimension
 
+        if self.neck == "AvgPool++":
+            self.pooling_layer_before = nn.AvgPool1d(int(self.window_size_frame/2), stride=1)
+            self.pooling_layer_after = nn.AvgPool1d(int(self.window_size_frame/2), stride=1)
+            self.pooling_layer_output_dimension = 2*self.pooling_layer_input_dimension
+            
 
-        if self.pool == "AVG":
-            self.pool_layer = nn.AvgPool1d(self.window_size_frame, stride=1)
-            self.fc = nn.Linear(input_size, self.num_classes+1)
-
-        if self.pool == "AVG++":
-            self.pool_layer_before = nn.AvgPool1d(int(self.window_size_frame/2), stride=1)
-            self.pool_layer_after = nn.AvgPool1d(int(self.window_size_frame/2), stride=1)
-            self.fc = nn.Linear(2*input_size, self.num_classes+1)
-
-
-        elif self.pool == "NetVLAD":
-            self.pool_layer = NetVLAD_pool(cluster_size=self.vlad_k, feature_size=self.input_size,
+        elif self.neck == "NetVLAD":
+            self.pooling_layer = NetVLAD_pool(cluster_size=self.vlad_k, feature_size=self.pooling_layer_input_dimension,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
+            self.pooling_layer_output_dimension = self.vlad_k*self.pooling_layer_input_dimension
 
-        elif self.pool == "NetVLAD++":
-            self.pool_layer_before = NetVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.input_size,
+        elif self.neck == "NetVLAD++":
+            self.pooling_layer_before = NetVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.pooling_layer_input_dimension,
                                             add_batch_norm=True)
-            self.pool_layer_after = NetVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.input_size,
+            self.pooling_layer_after = NetVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.pooling_layer_input_dimension,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
+            self.pooling_layer_output_dimension = self.vlad_k*self.pooling_layer_input_dimension
 
 
 
-        elif self.pool == "NetRVLAD":
-            self.pool_layer = NetRVLAD_pool(cluster_size=self.vlad_k, feature_size=self.input_size,
+        elif self.neck == "NetRVLAD":
+            self.pooling_layer = NetRVLAD_pool(cluster_size=self.vlad_k, feature_size=self.pooling_layer_input_dimension,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
+            self.pooling_layer_output_dimension = self.vlad_k*self.pooling_layer_input_dimension
 
-        elif self.pool == "NetRVLAD++":
-            self.pool_layer_before = NetRVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.input_size,
+        elif self.neck == "NetRVLAD++":
+            self.pooling_layer_before = NetRVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.pooling_layer_input_dimension,
                                             add_batch_norm=True)
-            self.pool_layer_after = NetRVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.input_size,
+            self.pooling_layer_after = NetRVLAD_pool(cluster_size=int(self.vlad_k/2), feature_size=self.pooling_layer_input_dimension,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
+            self.pooling_layer_output_dimension = self.vlad_k*self.pooling_layer_input_dimension
+
+
+
+        # Define Head
+        if self.head == "LinearLayer":
+            self.fc = nn.Linear(self.pooling_layer_output_dimension, self.num_classes+1)
+        
 
         self.drop = nn.Dropout(p=0.4)
         self.sigm = nn.Sigmoid()
@@ -103,25 +114,25 @@ class NetVLAD(nn.Module):
             inputs = inputs.reshape(BS, FR, -1)
 
         # Temporal pooling operation
-        if self.pool == "MAX" or self.pool == "AVG":
-            inputs_pooled = self.pool_layer(inputs.permute((0, 2, 1))).squeeze(-1)
+        if self.neck == "MAX" or self.neck == "AVG":
+            inputs_pooled = self.pooling_layer(inputs.permute((0, 2, 1))).squeeze(-1)
 
-        elif self.pool == "MAX++" or self.pool == "AVG++":
+        elif self.neck == "MAX++" or self.neck == "AVG++":
             nb_frames_50 = int(inputs.shape[1]/2)    
             input_before = inputs[:, :nb_frames_50, :]        
             input_after = inputs[:, nb_frames_50:, :]  
-            inputs_before_pooled = self.pool_layer_before(input_before.permute((0, 2, 1))).squeeze(-1)
-            inputs_after_pooled = self.pool_layer_after(input_after.permute((0, 2, 1))).squeeze(-1)
+            inputs_before_pooled = self.pooling_layer_before(input_before.permute((0, 2, 1))).squeeze(-1)
+            inputs_after_pooled = self.pooling_layer_after(input_after.permute((0, 2, 1))).squeeze(-1)
             inputs_pooled = torch.cat((inputs_before_pooled, inputs_after_pooled), dim=1)
 
 
-        elif self.pool == "NetVLAD" or self.pool == "NetRVLAD":
-            inputs_pooled = self.pool_layer(inputs)
+        elif self.neck == "NetVLAD" or self.neck == "NetRVLAD":
+            inputs_pooled = self.pooling_layer(inputs)
 
-        elif self.pool == "NetVLAD++" or self.pool == "NetRVLAD++":
+        elif self.neck == "NetVLAD++" or self.neck == "NetRVLAD++":
             nb_frames_50 = int(inputs.shape[1]/2)
-            inputs_before_pooled = self.pool_layer_before(inputs[:, :nb_frames_50, :])
-            inputs_after_pooled = self.pool_layer_after(inputs[:, nb_frames_50:, :])
+            inputs_before_pooled = self.pooling_layer_before(inputs[:, :nb_frames_50, :])
+            inputs_after_pooled = self.pooling_layer_after(inputs[:, nb_frames_50:, :])
             inputs_pooled = torch.cat((inputs_before_pooled, inputs_after_pooled), dim=1)
 
 

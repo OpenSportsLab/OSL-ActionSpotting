@@ -47,6 +47,8 @@ def main():
 
     # Read Config
     cfg = Config.fromfile(args.config)
+    config_filename = os.path.splitext(os.path.basename(args.config))[0]
+    
     # overwrite cfg from args
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
@@ -61,8 +63,8 @@ def main():
         raise ValueError('Invalid log level: %s' % args.loglevel)
 
     # Define output folder
-    os.makedirs(os.path.join("models", cfg.engine.model_name), exist_ok=True)
-    log_path = os.path.join("models", cfg.engine.model_name,
+    os.makedirs(os.path.join("models", config_filename), exist_ok=True)
+    log_path = os.path.join("models", config_filename,
                             datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log'))
     logging.basicConfig(
         level=numeric_level,
@@ -79,7 +81,7 @@ def main():
         os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.engine.GPU)
 
     # Dump configuration file
-    cfg.dump(os.path.join("models", cfg.engine.model_name, 'config.py'))
+    cfg.dump(os.path.join("models", config_filename, 'config.py'))
     print(cfg)
 
     # Start Timing
@@ -105,12 +107,12 @@ def main():
     # start training
     trainer(train_loader, val_loader, 
             model, optimizer, scheduler, criterion,
-            model_name=cfg.engine.model_name,
+            model_name=config_filename,
             max_epochs=cfg.engine.max_epochs, 
             evaluation_frequency=cfg.engine.evaluation_frequency)
 
     # For the best model only
-    checkpoint = torch.load(os.path.join("models", cfg.engine.model_name, "model.pth.tar"))
+    checkpoint = torch.load(os.path.join("models", config_filename, "model.pth.tar"))
     model.load_state_dict(checkpoint['state_dict'])
 
     # test on multiple splits [test/challenge]
@@ -118,7 +120,7 @@ def main():
         dataset_Test = build_dataset(cfg.dataset.test)
         test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
 
-        results = testSpotting(test_loader, model=model, model_name=cfg.engine.model_name, 
+        results = testSpotting(test_loader, model=model, model_name=config_filename, 
         NMS_window=cfg.model.NMS_window, NMS_threshold=cfg.model.NMS_threshold)
         if results is None:
             continue
