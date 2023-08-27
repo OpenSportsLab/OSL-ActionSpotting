@@ -1,6 +1,8 @@
 from .netvlad import NetVLAD
 
-def build_model(cfg, default_args=None):
+import logging
+
+def build_model(cfg, verbose=True, default_args=None):
     """Build a model from config dict.
 
     Args:
@@ -18,4 +20,13 @@ def build_model(cfg, default_args=None):
                   framerate=2, pool=cfg.neck)
     # else:
     #     model = None 
+
+    if verbose:    
+        # Display info on model
+        logging.info(model)
+        total_params = sum(p.numel()
+                        for p in model.parameters() if p.requires_grad)
+        parameters_per_layer  = [p.numel() for p in model.parameters() if p.requires_grad]
+        logging.info("Total number of parameters: " + str(total_params))
+
     return model
