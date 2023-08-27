@@ -80,7 +80,7 @@ dataset = dict(
             pin_memory=True,
         )),
 )
-engine = dict(
+training = dict(
     max_epochs=1000,
     evaluation_frequency=10,
     framerate=2,

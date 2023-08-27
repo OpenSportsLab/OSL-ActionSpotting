@@ -16,7 +16,35 @@ from SoccerNet.Evaluation.utils import AverageMeter, EVENT_DICTIONARY_V2, INVERS
 from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIONARY_V1
 
 
-
+# class Trainer():
+#     def __init__(self,train_loader,
+#             val_loader,
+#             model,
+#             optimizer,
+#             scheduler,
+#             criterion,
+#             cfg):
+#         # super(Trainer, self).__init__()
+#         self.train_loader = train_loader
+#         self.val_loader = val_loader
+#         self.model = model
+#         self.optimizer = optimizer
+#         self.scheduler = scheduler
+#         self.criterion = criterion
+#         self.model_name = cfg.model_name
+#         self.max_epochs = cfg.max_epochs
+#         self.evaluation_frequency = cfg.evaluation_frequency
+#         self.cfg = cfg
+    
+#         # trainer(self.train_loader,
+#         #         self.val_loader,
+#         #         self.model,
+#         #         self.optimizer,
+#         #         self.scheduler,
+#         #         self.criterion,
+#         #         self.model_name,
+#         #         self.max_epochs,
+#         #         self.evaluation_frequency)
 
 def trainer(train_loader,
             val_loader,
@@ -28,6 +56,7 @@ def trainer(train_loader,
             max_epochs=1000,
             evaluation_frequency=20):
 
+    # def train(self):
     logging.info("start training")
 
     best_loss = 9e99
@@ -36,11 +65,11 @@ def trainer(train_loader,
         best_model_path = os.path.join("models", model_name, "model.pth.tar")
 
         # train for one epoch
-        loss_training = train(train_loader, model, criterion,
-                              optimizer, epoch + 1, train=True)
+        loss_training = train_one_epoch(train_loader, model, criterion,
+                            optimizer, epoch + 1, train=True)
 
         # evaluate on validation set
-        loss_validation = train(
+        loss_validation = train_one_epoch(
             val_loader, model, criterion, optimizer, epoch + 1, train=False)
 
         state = {
@@ -67,7 +96,7 @@ def trainer(train_loader,
                 model_name)
 
             logging.info("Validation performance at epoch " +
-                         str(epoch+1) + " -> " + str(performance_validation))
+                        str(epoch+1) + " -> " + str(performance_validation))
 
         # Reduce LR on Plateau after patience reached
         prevLR = optimizer.param_groups[0]['lr']
@@ -85,12 +114,12 @@ def trainer(train_loader,
     return
 
 
-def train(dataloader,
-          model,
-          criterion,
-          optimizer,
-          epoch,
-          train=False):
+def train_one_epoch(dataloader,
+        model,
+        criterion,
+        optimizer,
+        epoch,
+        train=False):
 
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -107,8 +136,11 @@ def train(dataloader,
         for i, (feats, labels) in t:
             # measure data loading time
             data_time.update(time.time() - end)
+
+            # if cfg.GPU >= 0:
             feats = feats.cuda()
             labels = labels.cuda()
+
             # compute output
             output = model(feats)
 
@@ -181,7 +213,7 @@ def test(dataloader, model, model_name):
     AP = []
     for i in range(1, dataloader.dataset.num_classes+1):
         AP.append(average_precision_score(np.concatenate(all_labels)
-                                          [:, i], np.concatenate(all_outputs)[:, i]))
+                                        [:, i], np.concatenate(all_outputs)[:, i]))
 
     # t.set_description()
     # print(AP)
@@ -191,7 +223,7 @@ def test(dataloader, model, model_name):
     return mAP
 
 def testSpotting(dataloader, model, model_name, overwrite=True, NMS_window=30, NMS_threshold=0.5):
-    
+
     split = '_'.join(dataloader.dataset.split)
     # print(split)
     output_results = os.path.join("models", model_name, f"results_spotting_{split}.zip")
@@ -344,9 +376,9 @@ def testSpotting(dataloader, model, model_name, overwrite=True, NMS_window=30, N
         return None
         
     results =  evaluate(SoccerNet_path=dataloader.dataset.path, 
-                 Predictions_path=output_results,
-                 split="test",
-                 prediction_file="results_spotting.json", 
-                 version=dataloader.dataset.version)
+                Predictions_path=output_results,
+                split="test",
+                prediction_file="results_spotting.json", 
+                version=dataloader.dataset.version)
 
     return results

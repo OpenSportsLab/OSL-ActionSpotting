@@ -10,11 +10,12 @@ import mmengine
 from mmengine.config import Config, DictAction
 
 
-from snspotting.loss import build_criterion
 from snspotting.datasets import build_dataset, build_dataloader
 from snspotting.models import build_model
-from snspotting.engine import build_optimizer, build_scheduler
-from snspotting.engine import trainer, testSpotting
+from snspotting.loss import build_criterion
+from snspotting.core import build_optimizer, build_scheduler
+
+from snspotting.core import trainer, testSpotting
 
 
 def parse_args():
@@ -76,9 +77,9 @@ def main():
         ])
 
     # define GPUs
-    if cfg.engine.GPU >= 0:
+    if cfg.training.GPU >= 0:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.engine.GPU)
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
 
     # Dump configuration file
     cfg.dump(os.path.join("models", config_filename, 'config.py'))
@@ -100,16 +101,24 @@ def main():
     model = build_model(cfg.model).cuda()
 
     # Build Trainer
-    criterion = build_criterion(cfg.engine.criterion)
-    optimizer = build_optimizer(model.parameters(), cfg.engine.optimizer)
-    scheduler = build_scheduler(optimizer, cfg.engine.scheduler)
+    # cfg.training.model_name = config_filename
+    # trainer = build_trainer(train_loader=train_loader,
+    #                         val_loader=val_loader,
+    #                         model=model,
+    #                         cfg=cfg.training)
+
+    # trainer.train()
+
+    criterion = build_criterion(cfg.training.criterion)
+    optimizer = build_optimizer(model.parameters(), cfg.training.optimizer)
+    scheduler = build_scheduler(optimizer, cfg.training.scheduler)
 
     # start training
     trainer(train_loader, val_loader, 
             model, optimizer, scheduler, criterion,
             model_name=config_filename,
-            max_epochs=cfg.engine.max_epochs, 
-            evaluation_frequency=cfg.engine.evaluation_frequency)
+            max_epochs=cfg.training.max_epochs, 
+            evaluation_frequency=cfg.training.evaluation_frequency)
 
     # For the best model only
     checkpoint = torch.load(os.path.join("models", config_filename, "model.pth.tar"))
