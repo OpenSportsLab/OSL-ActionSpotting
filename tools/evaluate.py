@@ -48,6 +48,8 @@ def main():
     # Read Config
     cfg = Config.fromfile(args.config)
     config_filename = os.path.splitext(os.path.basename(args.config))[0]
+    if args.weights is None:
+        args.weights = config_filename
     
     # overwrite cfg from args
     if args.cfg_options is not None:
