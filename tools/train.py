@@ -16,7 +16,7 @@ from snspotting.loss import build_criterion
 from snspotting.core import build_optimizer, build_scheduler
 
 from snspotting.core.training import train_one_epoch
-from snspotting.core.evaluate import testClassication, testSpotting
+from snspotting.core.evaluation import testClassication, testSpotting
 
 
 def parse_args():
@@ -161,48 +161,11 @@ def main():
                 "Plateau Reached and no more reduction -> Exiting Loop")
             break
 
-
-
-
-
-
     # trainer(train_loader, val_loader, 
     #         model, optimizer, scheduler, criterion,
     #         model_name=config_filename,
     #         max_epochs=cfg.training.max_epochs, 
     #         evaluation_frequency=cfg.training.evaluation_frequency)
-
-    # For the best model only
-    checkpoint = torch.load(os.path.join(cfg.work_dir, "model.pth.tar"))
-    model.load_state_dict(checkpoint['state_dict'])
-
-    # test on multiple splits [test/challenge]
-    for split in cfg.dataset.test.split:
-        dataset_Test = build_dataset(cfg.dataset.test)
-        test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
-
-        results = testSpotting(test_loader, model=model, work_dir=cfg.work_dir, 
-        NMS_window=cfg.model.NMS_window, NMS_threshold=cfg.model.NMS_threshold)
-        if results is None:
-            continue
-
-        a_mAP = results["a_mAP"]
-        a_mAP_per_class = results["a_mAP_per_class"]
-        a_mAP_visible = results["a_mAP_visible"]
-        a_mAP_per_class_visible = results["a_mAP_per_class_visible"]
-        a_mAP_unshown = results["a_mAP_unshown"]
-        a_mAP_per_class_unshown = results["a_mAP_per_class_unshown"]
-
-        logging.info("Best Performance at end of training ")
-        logging.info("a_mAP visibility all: " +  str(a_mAP))
-        logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
-        logging.info("a_mAP visibility visible: " +  str( a_mAP_visible))
-        logging.info("a_mAP visibility visible per class: " +  str( a_mAP_per_class_visible))
-        logging.info("a_mAP visibility unshown: " +  str( a_mAP_unshown))
-        logging.info("a_mAP visibility unshown per class: " +  str( a_mAP_per_class_unshown))
-    
-    
-    logging.info(f'Total Execution Time is {time.time()-start} seconds')
 
     return 
 

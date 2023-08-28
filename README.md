@@ -29,7 +29,7 @@ python tools/train.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.
 #### Overwrite the config file
 
 ```bash
-python tools/train.py configs/soccernet_learnablepooling_netvlad++_resnetpca512.py --cfg-options training.max_epochs=10 training.evaluation_frequency=8
+python tools/train.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py --cfg-options training.max_epochs=10 training.evaluation_frequency=8
 ```
 
 
