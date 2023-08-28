@@ -65,8 +65,8 @@ def main():
         raise ValueError('Invalid log level: %s' % args.loglevel)
 
     # Define output folder
-    os.makedirs(os.path.join("models", config_filename), exist_ok=True)
-    log_path = os.path.join("models", config_filename,
+    os.makedirs(os.path.join("outputs", config_filename), exist_ok=True)
+    log_path = os.path.join("outputs", config_filename,
                             datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log'))
     logging.basicConfig(
         level=numeric_level,

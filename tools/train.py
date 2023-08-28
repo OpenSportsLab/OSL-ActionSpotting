@@ -15,7 +15,8 @@ from snspotting.models import build_model
 from snspotting.loss import build_criterion
 from snspotting.core import build_optimizer, build_scheduler
 
-from snspotting.core import trainer, testSpotting
+from snspotting.core.training import train_one_epoch
+from snspotting.core.evaluate import testClassication, testSpotting
 
 
 def parse_args():
@@ -48,7 +49,6 @@ def main():
 
     # Read Config
     cfg = Config.fromfile(args.config)
-    config_filename = os.path.splitext(os.path.basename(args.config))[0]
     
     # overwrite cfg from args
     if args.cfg_options is not None:
@@ -58,15 +58,16 @@ def main():
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
+    # Create Work directory
+    os.makedirs(cfg.work_dir, exist_ok=True)
+
     # Define logging
     numeric_level = getattr(logging, args.loglevel.upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % args.loglevel)
 
     # Define output folder
-    os.makedirs(os.path.join("models", config_filename), exist_ok=True)
-    log_path = os.path.join("models", config_filename,
-                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log'))
+    log_path = os.path.join(cfg.work_dir, datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log'))
     logging.basicConfig(
         level=numeric_level,
         format=
@@ -82,7 +83,7 @@ def main():
         os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
 
     # Dump configuration file
-    cfg.dump(os.path.join("models", config_filename, 'config.py'))
+    cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
     print(cfg)
 
     # Start Timing
@@ -101,27 +102,78 @@ def main():
     model = build_model(cfg.model).cuda()
 
     # Build Trainer
-    # cfg.training.model_name = config_filename
-    # trainer = build_trainer(train_loader=train_loader,
-    #                         val_loader=val_loader,
-    #                         model=model,
-    #                         cfg=cfg.training)
-
-    # trainer.train()
-
     criterion = build_criterion(cfg.training.criterion)
     optimizer = build_optimizer(model.parameters(), cfg.training.optimizer)
     scheduler = build_scheduler(optimizer, cfg.training.scheduler)
 
-    # start training
-    trainer(train_loader, val_loader, 
-            model, optimizer, scheduler, criterion,
-            model_name=config_filename,
-            max_epochs=cfg.training.max_epochs, 
-            evaluation_frequency=cfg.training.evaluation_frequency)
+    # Start training
+    logging.info("start training")
+
+    best_loss = 9e99
+
+    # loop over epochs
+    for epoch in range(cfg.training.max_epochs):
+        best_model_path = os.path.join(cfg.work_dir, "model.pth.tar")
+
+        # train for one epoch
+        loss_training = train_one_epoch(train_loader, model, criterion,
+                            optimizer, epoch + 1, backprop=True)
+
+        # evaluate on validation set
+        loss_validation = train_one_epoch(
+            val_loader, model, criterion, optimizer, epoch + 1, backprop=False)
+
+        state = {
+            'epoch': epoch + 1,
+            'state_dict': model.state_dict(),
+            'best_loss': best_loss,
+            'optimizer': optimizer.state_dict(),
+        }
+
+        # remember best prec@1 and save checkpoint
+        is_better = loss_validation < best_loss
+        best_loss = min(loss_validation, best_loss)
+
+        # Save the best model based on loss only if the evaluation frequency too long
+        if is_better:
+            torch.save(state, best_model_path)
+
+        # Test the model on the validation set
+        if epoch % cfg.training.evaluation_frequency == 0 and epoch != 0:
+            performance_validation = testClassication(
+                val_loader,
+                model,
+                work_dir=cfg.work_dir)
+
+            logging.info("Validation performance at epoch " +
+                        str(epoch+1) + " -> " + str(performance_validation))
+
+        # Reduce LR on Plateau after patience reached
+        prevLR = optimizer.param_groups[0]['lr']
+        scheduler.step(loss_validation)
+        currLR = optimizer.param_groups[0]['lr']
+        if (currLR is not prevLR and scheduler.num_bad_epochs == 0):
+            logging.info("Plateau Reached!")
+
+        if (prevLR < 2 * scheduler.eps and
+                scheduler.num_bad_epochs >= scheduler.patience):
+            logging.info(
+                "Plateau Reached and no more reduction -> Exiting Loop")
+            break
+
+
+
+
+
+
+    # trainer(train_loader, val_loader, 
+    #         model, optimizer, scheduler, criterion,
+    #         model_name=config_filename,
+    #         max_epochs=cfg.training.max_epochs, 
+    #         evaluation_frequency=cfg.training.evaluation_frequency)
 
     # For the best model only
-    checkpoint = torch.load(os.path.join("models", config_filename, "model.pth.tar"))
+    checkpoint = torch.load(os.path.join(cfg.work_dir, "model.pth.tar"))
     model.load_state_dict(checkpoint['state_dict'])
 
     # test on multiple splits [test/challenge]
@@ -129,7 +181,7 @@ def main():
         dataset_Test = build_dataset(cfg.dataset.test)
         test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
 
-        results = testSpotting(test_loader, model=model, model_name=config_filename, 
+        results = testSpotting(test_loader, model=model, work_dir=cfg.work_dir, 
         NMS_window=cfg.model.NMS_window, NMS_threshold=cfg.model.NMS_threshold)
         if results is None:
             continue
