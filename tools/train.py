@@ -84,7 +84,7 @@ def main():
 
     # Dump configuration file
     cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
-    print(cfg)
+    logging.info(cfg)
 
     # Start Timing
     start=time.time()
