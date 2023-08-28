@@ -12,5 +12,6 @@ dataset = dict(
 )
 
 model = dict(
-    neck='AvgPool++',
+    neck=dict(
+        type='AvgPool++'),
 )

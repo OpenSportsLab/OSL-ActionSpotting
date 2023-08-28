@@ -12,5 +12,6 @@ dataset = dict(
 )
 
 model = dict(
-    neck='MaxPool++',
+    neck=dict(
+        type='MaxPool++'),
 )

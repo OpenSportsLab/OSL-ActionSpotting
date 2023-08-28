@@ -12,5 +12,7 @@ dataset = dict(
 )
 
 model = dict(
-    neck='NetRVLAD',
+    neck=dict(
+        type='NetRVLAD',
+        vocab_size=64),
 )

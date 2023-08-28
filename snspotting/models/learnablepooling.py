@@ -13,7 +13,7 @@ class LearnablePoolingModel(nn.Module):
     def __init__(self, weights=None, input_size=512, 
     num_classes=17, vocab_size=64, 
     window_size=15, framerate=2, 
-    backbone="PreExtracted", neck="NetVLAD++", head="LinearLayer"):
+    backbone="PreExtracted", neck="NetVLAD++", head="LinearLayer", post_proc="NMS"):
         """
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
@@ -29,6 +29,7 @@ class LearnablePoolingModel(nn.Module):
         self.neck = neck
         self.head = head
         self.vlad_k = vocab_size
+        self.post_proc = post_proc
         
         # are feature alread PCA'ed?
         if not self.pooling_layer_input_dimension == 512:   
@@ -140,6 +141,11 @@ class LearnablePoolingModel(nn.Module):
         output = self.sigm(self.fc(self.drop(inputs_pooled)))
 
         return output
+
+    def post_proc(self):
+
+        return
+
 
 
 import torch

@@ -14,10 +14,11 @@ def build_model(cfg, verbose=True, default_args=None):
         Model: The constructed model.
     """
     if cfg.type == "LearnablePooling":
-        model = LearnablePoolingModel(weights=cfg.load_weights, input_size=cfg.backbone.feature_dim,
-                  num_classes=cfg.num_classes, window_size=cfg.window_size, 
-                  vocab_size=cfg.vocab_size, framerate=cfg.framerate, 
-                  backbone=cfg.backbone.type, neck=cfg.neck, head=cfg.head)
+        model = LearnablePoolingModel(weights=cfg.load_weights, 
+                  backbone=cfg.backbone.type, window_size=cfg.backbone.window_size, framerate=cfg.backbone.framerate, input_size=cfg.backbone.feature_dim,
+                  head=cfg.head.type, num_classes=cfg.head.num_classes,  
+                  neck=cfg.neck.type, vocab_size=cfg.neck.vocab_size,
+                  post_proc=cfg.post_proc.type)
     else:
         model = None 
 
