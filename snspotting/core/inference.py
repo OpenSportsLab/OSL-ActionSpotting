@@ -1,17 +1,12 @@
 import logging
 import os
 import zipfile
-import sys
 import json
 import time
 from tqdm import tqdm
 import torch
 import numpy as np
 
-import sklearn
-import sklearn.metrics
-from sklearn.metrics import average_precision_score
-from SoccerNet.Evaluation.ActionSpotting import evaluate
 from SoccerNet.Evaluation.utils import AverageMeter, EVENT_DICTIONARY_V2, INVERSE_EVENT_DICTIONARY_V2
 from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIONARY_V1
 
