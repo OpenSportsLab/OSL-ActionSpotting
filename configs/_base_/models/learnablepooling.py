@@ -3,6 +3,7 @@ model = dict(
     load_weights=None,
     backbone=dict(
         type='PreExtactedFeatures',
+        encoder='ResNET_TF2_PCA512',
         feature_dim=512,
         output_dim=512,
         framerate=2,
@@ -10,6 +11,7 @@ model = dict(
     neck=dict(
         type='NetVLAD++',
         input_dim=512,
+        output_dim=512*64,
         vocab_size=64),
     head=dict(
         type='LinearLayer',
@@ -22,8 +24,8 @@ model = dict(
 )
 
 training = dict(
-    max_epochs=1000, #1000,
-    evaluation_frequency=10, #10,
+    max_epochs=5, #1000,
+    evaluation_frequency=3, #10,
     framerate=2,
     batch_size=256,
     GPU=-1,

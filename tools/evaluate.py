@@ -23,6 +23,7 @@ def parse_args():
 
     parser = ArgumentParser(description='context aware loss function', formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("config", metavar="FILE", type=str, help="path to config file")
+    parser.add_argument("--weights", metavar="FILE", type=str, default=None, help="path to weights file")
 
     # not that important
     parser.add_argument("--seed", type=int, default=42, help="random seed")
@@ -94,7 +95,11 @@ def main():
     model = build_model(cfg.model).cuda()
 
     # For the best model only
-    checkpoint = torch.load(os.path.join(cfg.work_dir, "model.pth.tar"))
+    if args.weights is not None:
+        checkpoint_path = args.weights
+    else:
+        checkpoint_path = os.path.join(cfg.work_dir, "model.pth.tar")
+    checkpoint = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint['state_dict'])
 
     # test on multiple splits [test/challenge]

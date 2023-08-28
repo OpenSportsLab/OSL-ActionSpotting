@@ -15,10 +15,8 @@ def build_model(cfg, verbose=True, default_args=None):
     """
     if cfg.type == "LearnablePooling":
         model = LearnablePoolingModel(weights=cfg.load_weights, 
-                  backbone=cfg.backbone, window_size=cfg.backbone.window_size, framerate=cfg.backbone.framerate, input_size=cfg.backbone.feature_dim,
-                  head=cfg.head, num_classes=cfg.head.num_classes,  
-                  neck=cfg.neck, vocab_size=cfg.neck.vocab_size,
-                  post_proc=cfg.post_proc)
+                  backbone=cfg.backbone, head=cfg.head, 
+                  neck=cfg.neck, post_proc=cfg.post_proc)
     else:
         model = None 
 

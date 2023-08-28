@@ -12,6 +12,6 @@ dataset = dict(
 )
 
 model = dict(
-    neck=dict(type='AvgPool++'),
+    neck=dict(type='AvgPool++', output_dim=512, nb_frames=20*2,),
     head=dict(input_dim=2*512)
 )
