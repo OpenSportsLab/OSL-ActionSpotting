@@ -89,7 +89,10 @@ def main():
     # Start Timing
     start=time.time()
     logging.info('Starting main function')
-
+    
+    # Build Model
+    model = build_model(cfg.model).cuda()
+    
     # Build Datasets    
     dataset_Train = build_dataset(cfg.dataset.train)
     dataset_Val = build_dataset(cfg.dataset.val)
@@ -97,9 +100,6 @@ def main():
     # Build Dataloaders
     train_loader = build_dataloader(dataset_Train, cfg.dataset.train.dataloader)
     val_loader = build_dataloader(dataset_Val, cfg.dataset.val.dataloader)
-
-    # Build Model
-    model = build_model(cfg.model).cuda()
 
     # Build Trainer
     criterion = build_criterion(cfg.training.criterion)

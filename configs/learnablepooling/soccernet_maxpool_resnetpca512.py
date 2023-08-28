@@ -12,6 +12,6 @@ dataset = dict(
 )
 
 model = dict(
-    neck=dict(
-        type='MaxPool'),
+    neck=dict(type='MaxPool'),
+    head=dict(input_dim=512)
 )
