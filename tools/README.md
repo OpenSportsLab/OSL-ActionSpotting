@@ -47,9 +47,8 @@ configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
 --features "/home/giancos/git/sn-spotting-pip/path/to/SoccerNet/england_epl/2014-2015/2015-02-21 - 18-00 Chelsea 1 - 1 Burnley/1_ResNET_TF2_PCA512.npy" \
 --confidence_threshold=0.5 \
 --overwrite
-```
 
-```bash
+
 python tools/infer.py \
 configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
 --game "/home/giancos/git/sn-spotting-pip/path/to/SoccerNet/england_epl/2014-2015/2015-02-21 - 18-00 Chelsea 1 - 1 Burnley" \

@@ -189,9 +189,9 @@ def infer_game(cfg, game_folder, model, confidence_threshold=0.5, overwrite=Fals
     return json_data
 
 
-def infer_features(cfg, features, model, confidence_threshold=0.5, overwrite=False):
+def infer_features(cfg, features_file, model, confidence_threshold=0.5, overwrite=False):
       
-    features = np.load(features)
+    features = np.load(features_file)
     features = feats2clip(torch.from_numpy(features), 
                     stride=1, off=int(cfg.dataset.test.window_size/2), 
                     clip_length=cfg.dataset.test.window_size)
@@ -241,7 +241,7 @@ def infer_features(cfg, features, model, confidence_threshold=0.5, overwrite=Fal
     get_spot = get_spot_from_NMS
 
     json_data = dict()
-    json_data["UrlLocal"] = features
+    json_data["UrlLocal"] = features_file
     json_data["predictions"] = list()
 
     for half, timestamp in enumerate([timestamp_long]):
@@ -272,7 +272,6 @@ def infer_features(cfg, features, model, confidence_threshold=0.5, overwrite=Fal
                 json_data["predictions"].append(prediction_data)
     
     json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
-
 
     return json_data
 

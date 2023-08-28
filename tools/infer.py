@@ -110,7 +110,7 @@ def main():
 
     # Infer features
     if args.features is not None:
-        output_file = os.path.join(os.path.dirname(features), "results_spotting.json")
+        output_file = os.path.join(os.path.dirname(args.features), "results_spotting.json")
         
         # Prevent overwriting existing results
         if os.path.exists(output_file) and not args.overwrite:           
@@ -118,7 +118,7 @@ def main():
         else:
             json_results = infer_features(cfg, args.features, model, 
                 confidence_threshold=args.confidence_threshold, 
-                overwrite=args.overwrite)
+                overwrite=args.overwrite)            
             with open(output_file, 'w') as f:
                 json.dump(json_results, f, indent=4)
         
