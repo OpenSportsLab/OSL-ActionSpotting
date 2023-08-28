@@ -148,7 +148,7 @@ class SoccerNetClips(Dataset):
         return len(self.game_feats)
 
 
-class SoccerNetClipsTesting(Dataset):
+class SoccerNetGames(Dataset):
     def __init__(self, path, features="ResNET_PCA512.npy", split=["test"], version=1, 
                 framerate=2, window_size=15):
         self.path = path

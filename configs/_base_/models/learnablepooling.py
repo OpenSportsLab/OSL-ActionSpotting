@@ -24,8 +24,8 @@ model = dict(
 )
 
 training = dict(
-    max_epochs=5, #1000,
-    evaluation_frequency=3, #10,
+    max_epochs=1000,
+    evaluation_frequency=1000,
     framerate=2,
     batch_size=256,
     GPU=-1,

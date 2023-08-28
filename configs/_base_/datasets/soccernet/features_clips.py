@@ -45,7 +45,7 @@ dataset = dict(
             pin_memory=True,
         )),
     test=dict(
-        type="SoccerNetClipsTesting",
+        type="SoccerNetGames",
         features="ResNET_TF2_PCA512.npy",
         version=2,
         framerate=2,

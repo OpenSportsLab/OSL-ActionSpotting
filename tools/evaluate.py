@@ -15,15 +15,14 @@ from snspotting.models import build_model
 from snspotting.loss import build_criterion
 from snspotting.core import build_optimizer, build_scheduler
 
-from snspotting.core.training import train_one_epoch
-from snspotting.core.evaluation import testClassication, testSpotting
+from snspotting.core.inference import infer_dataset
+from snspotting.core.evaluation import evaluate_Spotting #testClassication, testSpotting
 
 
 def parse_args():
 
     parser = ArgumentParser(description='context aware loss function', formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("config", metavar="FILE", type=str, help="path to config file")
-    parser.add_argument("--weights", metavar="FILE", type=str, default=None, help="path to weights file")
 
     # not that important
     parser.add_argument("--seed", type=int, default=42, help="random seed")
@@ -91,42 +90,26 @@ def main():
     start=time.time()
     logging.info('Starting main function')
 
-    # Build Model
+
+    # Ensure weights are not None
+    if cfg.model.load_weights is None:
+        cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
+    
     model = build_model(cfg.model).cuda()
 
-    # For the best model only
-    if args.weights is not None:
-        checkpoint_path = args.weights
-    else:
-        checkpoint_path = os.path.join(cfg.work_dir, "model.pth.tar")
-    checkpoint = torch.load(checkpoint_path)
-    model.load_state_dict(checkpoint['state_dict'])
-
     # test on multiple splits [test/challenge]
-    for split in cfg.dataset.test.split:
+    splits_to_evaluate = cfg.dataset.test.split
+    for split in splits_to_evaluate:    
+        # build dataset and dataloader for single split 
+        cfg.dataset.test.split = [split]
         dataset_Test = build_dataset(cfg.dataset.test)
         test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
 
-        results = testSpotting(test_loader, model=model, work_dir=cfg.work_dir, 
-        NMS_window=cfg.model.NMS_window, NMS_threshold=cfg.model.NMS_threshold)
-        if results is None:
-            continue
+        # infer results
+        zip_results = infer_dataset(cfg, test_loader, model, overwrite=True)
 
-        a_mAP = results["a_mAP"]
-        a_mAP_per_class = results["a_mAP_per_class"]
-        a_mAP_visible = results["a_mAP_visible"]
-        a_mAP_per_class_visible = results["a_mAP_per_class_visible"]
-        a_mAP_unshown = results["a_mAP_unshown"]
-        a_mAP_per_class_unshown = results["a_mAP_per_class_unshown"]
-
-        logging.info("Best Performance at end of training ")
-        logging.info("a_mAP visibility all: " +  str(a_mAP))
-        logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
-        logging.info("a_mAP visibility visible: " +  str( a_mAP_visible))
-        logging.info("a_mAP visibility visible per class: " +  str( a_mAP_per_class_visible))
-        logging.info("a_mAP visibility unshown: " +  str( a_mAP_unshown))
-        logging.info("a_mAP visibility unshown per class: " +  str( a_mAP_per_class_unshown))
-    
+        # run evaluation
+        results = evaluate_Spotting(cfg, cfg.dataset.test.data_root, zip_results)
     
     logging.info(f'Total Execution Time is {time.time()-start} seconds')
 

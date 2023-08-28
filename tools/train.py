@@ -16,7 +16,7 @@ from snspotting.loss import build_criterion
 from snspotting.core import build_optimizer, build_scheduler
 
 from snspotting.core.training import train_one_epoch
-from snspotting.core.evaluation import testClassication, testSpotting
+# from snspotting.core.evaluation import testClassication, testSpotting
 
 
 def parse_args():
@@ -138,16 +138,6 @@ def main():
         if is_better:
             torch.save(state, best_model_path)
 
-        # Test the model on the validation set
-        if epoch % cfg.training.evaluation_frequency == 0 and epoch != 0:
-            performance_validation = testClassication(
-                val_loader,
-                model,
-                work_dir=cfg.work_dir)
-
-            logging.info("Validation performance at epoch " +
-                        str(epoch+1) + " -> " + str(performance_validation))
-
         # Reduce LR on Plateau after patience reached
         prevLR = optimizer.param_groups[0]['lr']
         scheduler.step(loss_validation)
@@ -160,12 +150,6 @@ def main():
             logging.info(
                 "Plateau Reached and no more reduction -> Exiting Loop")
             break
-
-    # trainer(train_loader, val_loader, 
-    #         model, optimizer, scheduler, criterion,
-    #         model_name=config_filename,
-    #         max_epochs=cfg.training.max_epochs, 
-    #         evaluation_frequency=cfg.training.evaluation_frequency)
 
     return 
 

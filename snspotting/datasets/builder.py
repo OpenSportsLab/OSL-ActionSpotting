@@ -1,5 +1,5 @@
 
-from .soccernet import SoccerNetClips, SoccerNetClipsTesting
+from .soccernet import SoccerNetClips, SoccerNetGames
 
 import torch
 from mmengine.config import Config, DictAction
@@ -18,12 +18,12 @@ def build_dataset(cfg, default_args=None):
     if cfg.type == "SoccerNetClips":
         dataset = SoccerNetClips(path=cfg.data_root, 
             features=cfg.features, split=cfg.split,
-            version=2, framerate=2,
+            version=cfg.version, framerate=cfg.framerate,
             window_size=cfg.window_size)
-    elif cfg.type == "SoccerNetClipsTesting":
-        dataset = SoccerNetClipsTesting(path=cfg.data_root, 
+    elif cfg.type == "SoccerNetGames":
+        dataset = SoccerNetGames(path=cfg.data_root, 
             features=cfg.features, split=cfg.split, 
-            version=2, framerate=2,
+            version=cfg.version, framerate=cfg.framerate,
             window_size=cfg.window_size)
     else:
         dataset=None
