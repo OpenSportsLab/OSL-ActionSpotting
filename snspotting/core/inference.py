@@ -17,7 +17,7 @@ from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIO
 
 
 
-def infer_dataset(cfg, dataloader, model, overwrite=False):
+def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=False):
 
     # Create folder name and zip file name
     output_folder=f"results_spotting_{'_'.join(cfg.dataset.test.split)}"
@@ -124,13 +124,15 @@ def infer_dataset(cfg, dataloader, model, overwrite=False):
                         # print("spot", int(spot[0]), spot[1], spot)
                         frame_index = int(spot[0])
                         confidence = spot[1]
+                        if confidence < confidence_threshold:
+                            continue
                         # confidence = predictions_half_1[frame_index, l]
 
                         seconds = int((frame_index//framerate)%60)
                         minutes = int((frame_index//framerate)//60)
 
                         prediction_data = dict()
-                        prediction_data["gameTime"] = str(half+1) + " - " + str(minutes) + ":" + str(seconds)
+                        prediction_data["gameTime"] = f"{half+1} - {minutes:02.0f}:{seconds:02.0f}"
                         if dataloader.dataset.version == 2:
                             prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[l]
                         else:
@@ -140,6 +142,9 @@ def infer_dataset(cfg, dataloader, model, overwrite=False):
                         prediction_data["confidence"] = str(confidence)
                         json_data["predictions"].append(prediction_data)
             
+                json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
+                json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
+
             os.makedirs(os.path.join(cfg.work_dir, output_folder, game_ID), exist_ok=True)
             with open(os.path.join(cfg.work_dir, output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
                 json.dump(json_data, output_file, indent=4)
