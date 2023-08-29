@@ -307,7 +307,7 @@ def NMS(detections, delta):
 def predictions2json(predictions_half_1, predictions_half_2, output_path, game_info, framerate=2):
 
     os.makedirs(output_path + game_info, exist_ok=True)
-    output_file_path = output_path + game_info + "/Predictions-v2.json"
+    output_file_path = output_path + game_info + "/results_spotting.json"
 
     frames_half_1, class_half_1 = np.where(predictions_half_1 >= 0)
     frames_half_2, class_half_2 = np.where(predictions_half_2 >= 0)
@@ -347,7 +347,7 @@ def predictions2json(predictions_half_1, predictions_half_2, output_path, game_i
         prediction_data["confidence"] = str(confidence)
 
         json_data["predictions"].append(prediction_data)
-
+    
     with open(output_file_path, 'w') as output_file:
         json.dump(json_data, output_file, indent=4)
 
@@ -436,7 +436,7 @@ def infer_dataset_CALF(cfg, dataloader, model, confidence_threshold=0.0, overwri
     # if save_predictions:
     list_game = getListGames(dataloader.dataset.split)
     for index in np.arange(len(list_game)):
-        predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],"outputs/", list_game[index], model.framerate)
+        predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],cfg.work_dir+"/"+output_folder+"/", list_game[index], model.framerate)
 
 
 

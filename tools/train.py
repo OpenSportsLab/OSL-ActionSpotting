@@ -108,11 +108,13 @@ def main():
     logging.info("Start training")
 
     best_model = trainer.train(train_loader, val_loader)
+    logging.info("Done training")
 
     torch.save(best_model, 
                os.path.join(cfg.work_dir, "model.pth.tar"))
 
-    logging.info("Done training")
+    logging.info('Model saved')
+    logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
 
     return 
 

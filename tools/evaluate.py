@@ -90,8 +90,8 @@ def main():
     logging.info('Starting main function')
 
     # Ensure weights are not None
-    # if cfg.model.load_weights is None:
-    #     cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
+    if cfg.model.load_weights is None:
+        cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
     
     # Build Model
     model = build_model(cfg.model).cuda()
