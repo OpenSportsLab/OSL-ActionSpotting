@@ -64,6 +64,10 @@ def init_spotter(
     elif 'init_cfg' in config.model.backbone:
         config.model.backbone.init_cfg = None
 
+    # load checkpoint 
+    config.model.load_weights = checkpoint
+
+    # build model
     model = build_model(config.model)
     model.to(device)
     model.eval()
