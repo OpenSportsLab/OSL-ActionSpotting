@@ -40,18 +40,27 @@ python tools/evaluate.py configs/learnablepooling/soccernet_netvlad++_resnetpca5
 
 ## Infer
 
-
 ```bash
 python tools/infer.py \
 configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
---features "/home/giancos/git/sn-spotting-pip/path/to/SoccerNet/england_epl/2014-2015/2015-02-21 - 18-00 Chelsea 1 - 1 Burnley/1_ResNET_TF2_PCA512.npy" \
---confidence_threshold=0.5 \
+--input "/home/giancos/git/sn-spotting-pip/path/to/SoccerNet/england_epl/2014-2015/2015-02-21 - 18-00 Chelsea 1 - 1 Burnley/1_ResNET_TF2_PCA512.npy" \
+--checkpoint outputs/learnablepooling/soccernet_netvlad++_resnetpca512/model.pth.tar \
 --overwrite
 
 
 python tools/infer.py \
 configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
---game "/home/giancos/git/sn-spotting-pip/path/to/SoccerNet/england_epl/2014-2015/2015-02-21 - 18-00 Chelsea 1 - 1 Burnley" \
---confidence_threshold=0.5 \
+--input "/home/giancos/git/sn-spotting-pip/path/to/SoccerNet/england_epl/2014-2015/2015-02-21 - 18-00 Chelsea 1 - 1 Burnley" \
+--checkpoint outputs/learnablepooling/soccernet_netvlad++_resnetpca512/model.pth.tar \
 --overwrite
-``` 
+```
+
+## Extract feratures
+
+```bash
+pip install scikit-video tensorflow==2.3.0 imutils opencv-python==3.4.11.41 SoccerNet moviepy scikit-learn ffmpy protobuf==3.20 ffmpeg ffmpy
+```
+
+```bash
+python tools/features/extract_features.py --path_video path/to/video.mkv --path_features path/to/features.npy -PCA tools/features/pca_512_TF2.pkl --PCA_scaler tools/features/average_512_TF2.pkl
+```
