@@ -3,5 +3,5 @@ SoccerNet
 matplotlib
 scikit-learn
 mmengine
-torch==1.6
-torchvision==0.7
+torch
+torchvision
