@@ -8,9 +8,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .head import build_head
-from .backbone import build_backbone
-from .neck import build_neck
+from .heads import build_head
+from .backbones import build_backbone
+from .necks import build_neck
 
 
 class LearnablePoolingModel(nn.Module):
