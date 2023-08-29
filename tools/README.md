@@ -59,9 +59,9 @@ configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
 ## Extract feratures
 
 ```bash
-pip install scikit-video tensorflow==2.3.0 imutils opencv-python==3.4.11.41 SoccerNet moviepy scikit-learn ffmpy protobuf==3.20
+pip install scikit-video tensorflow==2.3.0 imutils opencv-python==3.4.11.41 SoccerNet moviepy scikit-learn ffmpy protobuf==3.20 ffmpeg ffmpy
 ```
 
 ```bash
-python tools/features/extract_features.py --path_video path/to/video.mkv --path_features path/to/features.npy
+python tools/features/extract_features.py --path_video path/to/video.mkv --path_features path/to/features.npy -PCA tools/features/pca_512_TF2.pkl --PCA_scaler tools/features/average_512_TF2.pkl
 ```
