@@ -11,6 +11,9 @@ python tools/train.py configs/learnablepooling/soccernet_avgpool++_resnetpca512.
 python tools/train.py configs/learnablepooling/soccernet_maxpool++_resnetpca512.py
 python tools/train.py configs/learnablepooling/soccernet_netrvlad++_resnetpca512.py
 python tools/train.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py
+
+
+python tools/train.py configs/contextawarelossfunction/soccernet_resnetpca512.py
 ```
 
 ### Train with custom config file
@@ -30,6 +33,9 @@ python tools/evaluate.py configs/learnablepooling/soccernet_avgpool++_resnetpca5
 python tools/evaluate.py configs/learnablepooling/soccernet_maxpool++_resnetpca512.py
 python tools/evaluate.py configs/learnablepooling/soccernet_netrvlad++_resnetpca512.py
 python tools/evaluate.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py
+
+python tools/evaluate.py configs/contextawarelossfunction/soccernet_resnetpca512.py
+
 ```
 
 ### Evaluate with custom config file

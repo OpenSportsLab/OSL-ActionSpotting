@@ -278,3 +278,193 @@ def infer_features(cfg, features_file, model, confidence_threshold=0.5, overwrit
 
 def infer_video(cfg, video, model, confidence_threshold=0.5, overwrite=False):
     return
+
+## CODE CALF
+from snspotting.datasets.soccernet_CALF import timestamps2long, batch2long
+from SoccerNet.Downloader import getListGames
+
+def NMS(detections, delta):
+    
+    # Array to put the results of the NMS
+    detections_tmp = np.copy(detections)
+    detections_NMS = np.zeros(detections.shape)-1
+
+    # Loop over all classes
+    for i in np.arange(detections.shape[-1]):
+        # Stopping condition
+        while(np.max(detections_tmp[:,i]) >= 0):
+
+            # Get the max remaining index and value
+            max_value = np.max(detections_tmp[:,i])
+            max_index = np.argmax(detections_tmp[:,i])
+
+            detections_NMS[max_index,i] = max_value
+
+            detections_tmp[int(np.maximum(-(delta/2)+max_index,0)): int(np.minimum(max_index+int(delta/2), detections.shape[0])) ,i] = -1
+
+    return detections_NMS
+
+def predictions2json(predictions_half_1, predictions_half_2, output_path, game_info, framerate=2):
+
+    os.makedirs(output_path + game_info, exist_ok=True)
+    output_file_path = output_path + game_info + "/Predictions-v2.json"
+
+    frames_half_1, class_half_1 = np.where(predictions_half_1 >= 0)
+    frames_half_2, class_half_2 = np.where(predictions_half_2 >= 0)
+
+    json_data = dict()
+    json_data["UrlLocal"] = game_info
+    json_data["predictions"] = list()
+
+    for frame_index, class_index in zip(frames_half_1, class_half_1):
+
+        confidence = predictions_half_1[frame_index, class_index]
+
+        seconds = int((frame_index//framerate)%60)
+        minutes = int((frame_index//framerate)//60)
+
+        prediction_data = dict()
+        prediction_data["gameTime"] = str(1) + " - " + str(minutes) + ":" + str(seconds)
+        prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index]
+        prediction_data["position"] = str(int((frame_index/framerate)*1000))
+        prediction_data["half"] = str(1)
+        prediction_data["confidence"] = str(confidence)
+
+        json_data["predictions"].append(prediction_data)
+
+    for frame_index, class_index in zip(frames_half_2, class_half_2):
+
+        confidence = predictions_half_2[frame_index, class_index]
+
+        seconds = int((frame_index//framerate)%60)
+        minutes = int((frame_index//framerate)//60)
+
+        prediction_data = dict()
+        prediction_data["gameTime"] = str(2) + " - " + str(minutes) + ":" + str(seconds)
+        prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index]
+        prediction_data["position"] = str(int((frame_index/framerate)*1000))
+        prediction_data["half"] = str(2)
+        prediction_data["confidence"] = str(confidence)
+
+        json_data["predictions"].append(prediction_data)
+
+    with open(output_file_path, 'w') as output_file:
+        json.dump(json_data, output_file, indent=4)
+
+def infer_dataset_CALF(cfg, dataloader, model, confidence_threshold=0.0, overwrite=False):
+
+
+    output_folder=f"results_spotting_{'_'.join(cfg.dataset.test.split)}"
+    output_results=os.path.join(cfg.work_dir, f"{output_folder}.zip")
+
+    # Prevent overwriting existing results
+    if os.path.exists(output_results) and not overwrite:
+        logging.warning("Results already exists in zip format. Use [overwrite=True] to overwrite the previous results.The inference will not run over the previous results.")
+        return output_results
+
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+    losses = AverageMeter()
+
+    spotting_grountruth = list()
+    spotting_grountruth_visibility = list()
+    spotting_predictions = list()
+    segmentation_predictions = list()
+
+    chunk_size = model.chunk_size
+    receptive_field = model.receptive_field
+
+    model.eval()
+
+    end = time.time()
+    with tqdm(enumerate(dataloader), total=len(dataloader), ncols=120) as t:
+        for i, (feat_half1, feat_half2, label_half1, label_half2) in t:
+            data_time.update(time.time() - end)
+
+            feat_half1 = feat_half1.cuda().squeeze(0)
+            label_half1 = label_half1.float().squeeze(0)
+            feat_half2 = feat_half2.cuda().squeeze(0)
+            label_half2 = label_half2.float().squeeze(0)
+
+
+            feat_half1=feat_half1.unsqueeze(1)
+            feat_half2=feat_half2.unsqueeze(1)
+
+            # Compute the output
+            output_segmentation_half_1, output_spotting_half_1 = model(feat_half1)
+            output_segmentation_half_2, output_spotting_half_2 = model(feat_half2)
+
+
+            timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
+            timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+            segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
+            segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+
+            spotting_grountruth.append(torch.abs(label_half1))
+            spotting_grountruth.append(torch.abs(label_half2))
+            spotting_grountruth_visibility.append(label_half1)
+            spotting_grountruth_visibility.append(label_half2)
+            spotting_predictions.append(timestamp_long_half_1)
+            spotting_predictions.append(timestamp_long_half_2)
+            segmentation_predictions.append(segmentation_long_half_1)
+            segmentation_predictions.append(segmentation_long_half_2)
+
+
+    # Transformation to numpy for evaluation
+    targets_numpy = list()
+    closests_numpy = list()
+    detections_numpy = list()
+    for target, detection in zip(spotting_grountruth_visibility,spotting_predictions):
+        target_numpy = target.numpy()
+        targets_numpy.append(target_numpy)
+        detections_numpy.append(NMS(detection.numpy(), 20*model.framerate))
+        closest_numpy = np.zeros(target_numpy.shape)-1
+        #Get the closest action index
+        for c in np.arange(target_numpy.shape[-1]):
+            indexes = np.where(target_numpy[:,c] != 0)[0].tolist()
+            if len(indexes) == 0 :
+                continue
+            indexes.insert(0,-indexes[0])
+            indexes.append(2*closest_numpy.shape[0])
+            for i in np.arange(len(indexes)-2)+1:
+                start = max(0,(indexes[i-1]+indexes[i])//2)
+                stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
+                closest_numpy[start:stop,c] = target_numpy[indexes[i],c]
+        closests_numpy.append(closest_numpy)
+
+    # Save the predictions to the json format
+    # if save_predictions:
+    list_game = getListGames(dataloader.dataset.split)
+    for index in np.arange(len(list_game)):
+        predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],"outputs/", list_game[index], model.framerate)
+
+
+
+    def zipResults(zip_path, target_dir, filename="results_spotting.json"):            
+        zipobj = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+        rootlen = len(target_dir) + 1
+        for base, dirs, files in os.walk(target_dir):
+            for file in files:
+                if file == filename:
+                    fn = os.path.join(base, file)
+                    zipobj.write(fn, fn[rootlen:])
+
+    # zip folder
+    zipResults(zip_path = output_results,
+            target_dir = os.path.join(cfg.work_dir, output_folder),
+            filename="results_spotting.json")
+
+    return output_results
+
+    # # Compute the performances
+    # a_mAP, a_mAP_per_class, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown = average_mAP(targets_numpy, detections_numpy, closests_numpy, model.framerate)
+    
+    # print("Average mAP: ", a_mAP)
+    # print("Average mAP visible: ", a_mAP_visible)
+    # print("Average mAP unshown: ", a_mAP_unshown)
+    # print("Average mAP per class: ", a_mAP_per_class)
+    # print("Average mAP visible per class: ", a_mAP_per_class_visible)
+    # print("Average mAP unshown per class: ", a_mAP_per_class_unshown)
+
+    # return a_mAP, a_mAP_per_class, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown
+

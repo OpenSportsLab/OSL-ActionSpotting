@@ -12,11 +12,10 @@ from mmengine.config import Config, DictAction
 
 from snspotting.datasets import build_dataset, build_dataloader
 from snspotting.models import build_model
-from snspotting.loss import build_criterion
-from snspotting.core import build_optimizer, build_scheduler
 
 from snspotting.core.inference import infer_dataset
-from snspotting.core.evaluation import evaluate_Spotting #testClassication, testSpotting
+from snspotting.core.evaluation import evaluate_Spotting
+from snspotting.core import build_runner
 
 
 def parse_args():
@@ -90,25 +89,31 @@ def main():
     start=time.time()
     logging.info('Starting main function')
 
-
     # Ensure weights are not None
-    if cfg.model.load_weights is None:
-        cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
+    # if cfg.model.load_weights is None:
+    #     cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
     
+    # Build Model
     model = build_model(cfg.model).cuda()
 
-    # test on multiple splits [test/challenge]
+    # Build Runner for Inference
+    runner = build_runner(cfg.runner, model)
+
+    # Loop over dataset to evaluate
     splits_to_evaluate = cfg.dataset.test.split
     for split in splits_to_evaluate:    
-        # build dataset and dataloader for single split 
         cfg.dataset.test.split = [split]
+
+        # Build Dataset
         dataset_Test = build_dataset(cfg.dataset.test)
+
+        # Build Dataloader
         test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
 
-        # infer results
-        zip_results = infer_dataset(cfg, test_loader, model, overwrite=True)
+        # Run Inference on Dataset
+        zip_results = runner.infer_dataset(cfg, test_loader, model, overwrite=True)
 
-        # run evaluation
+        # Evaluate Results
         results = evaluate_Spotting(cfg, cfg.dataset.test.data_root, zip_results)
     
     logging.info(f'Total Execution Time is {time.time()-start} seconds')
