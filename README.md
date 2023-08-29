@@ -8,9 +8,6 @@ pip install SoccerNet matplotlib scikit-learn sklearn
 pip install mmengine
 ```
 
-
-
-
 ## TODO
 
 - Integrate Pytorch Lightning

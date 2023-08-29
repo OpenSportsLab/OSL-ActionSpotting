@@ -40,7 +40,6 @@ python tools/evaluate.py configs/learnablepooling/soccernet_netvlad++_resnetpca5
 
 ## Infer
 
-
 ```bash
 python tools/infer.py \
 configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
