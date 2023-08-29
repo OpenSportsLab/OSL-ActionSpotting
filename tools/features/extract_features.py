@@ -202,7 +202,7 @@ if __name__ == "__main__":
         #      outputs={path_video_LQ: '-y -r 25 -vf scale=-1:224 '})
         # print(ff.cmd)
         # ff.run()
-
+        path_video_LQ = args.path_video
 
         myFeatureExtractor = VideoFeatureExtractor(
             feature=args.features,
@@ -211,7 +211,7 @@ if __name__ == "__main__":
             grabber=args.grabber,
             FPS=args.FPS)
 
-        myFeatureExtractor.extractFeatures(path_video_input=args.path_video,
+        myFeatureExtractor.extractFeatures(path_video_input=path_video_LQ,
                                         path_features_output=args.path_features,
                                         start=args.start,
                                         duration=args.duration,
