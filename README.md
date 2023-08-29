@@ -10,8 +10,9 @@ pip install mmengine
 
 ## TODO
 
-- Integrate Pytorch Lightning
-- Create pip package setup
-- Push library to pypi
-- Integrate CALF
-- Integrate PTS
+[x] Create pip package setup
+[x] Push library to pypi
+[] Integrate CALF -> Need fix for parameters K forced to cuda!
+[] Integrate PTS
+[] Integrate Pytorch Lightning
+
