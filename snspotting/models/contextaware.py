@@ -25,7 +25,6 @@ class ContextAwareModel(nn.Module):
 
         super(ContextAwareModel, self).__init__()
 
-        self.load_weights(weights=weights)
 
         self.input_size = input_size
         self.num_classes = num_classes
@@ -83,6 +82,8 @@ class ContextAwareModel(nn.Module):
         self.conv_class = nn.Conv2d(in_channels=16*(chunk_size//8-1), out_channels=self.num_detections*self.num_classes, kernel_size=(1,1))
         self.softmax = nn.Softmax(dim=-1)
 
+        # load weight if needed
+        self.load_weights(weights=weights)
 
     def load_weights(self, weights=None):
         if(weights is not None):
