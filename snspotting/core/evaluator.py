@@ -75,7 +75,7 @@ class Evaluator():
             test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader)
 
             # Run Inference on Dataset
-            results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=False)
+            results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True)
 
             # exxtract performances from results
             performances = self.evaluate_Spotting(cfg_testset, results)
