@@ -2,7 +2,7 @@ classes = ("Medical",)
 
 dataset = dict(
     train=dict(
-        type="ClipsfromJSON",
+        type="FeatureClipsfromJSON",
         path="train.json",
         framerate=2,
         window_size=20,
@@ -14,7 +14,7 @@ dataset = dict(
             pin_memory=True,
         )),
     val=dict(
-        type="ClipsfromJSON",
+        type="FeatureClipsfromJSON",
         path="val.json",
         framerate=2,
         window_size=20,
@@ -26,7 +26,7 @@ dataset = dict(
             pin_memory=True,
         )),
     test=dict(
-        type="VideosfromJSON",
+        type="FeatureVideosfromJSON",
         path="test.json",
         framerate=2,
         window_size=20,

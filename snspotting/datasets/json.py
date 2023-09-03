@@ -40,7 +40,7 @@ def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0):
     return feats[idx,...]
 
 
-class ClipsfromJSON(Dataset):
+class FeatureClipsfromJSON(Dataset):
     def __init__(self, path,
                 framerate=2,
                 window_size=15):
@@ -116,7 +116,7 @@ class ClipsfromJSON(Dataset):
 
 
 
-class VideosfromJSON(Dataset):
+class FeatureVideosfromJSON(Dataset):
     def __init__(self, path,
                 framerate=2,
                 window_size=15):
