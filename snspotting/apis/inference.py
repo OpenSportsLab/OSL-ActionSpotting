@@ -20,8 +20,8 @@ from snspotting.models import build_model
 from snspotting.loss import build_criterion
 from snspotting.core import build_optimizer, build_scheduler
 
-from snspotting.core.inference import infer_features, infer_game, infer_video
-from snspotting.core.evaluation import evaluate_Spotting #testClassication, testSpotting
+from snspotting.core.runner import infer_features, infer_game, infer_video
+from snspotting.core.evaluator import evaluate_Spotting #testClassication, testSpotting
 
 import copy
 import warnings

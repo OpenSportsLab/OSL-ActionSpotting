@@ -10,12 +10,9 @@ import mmengine
 from mmengine.config import Config, DictAction
 
 
-from snspotting.datasets import build_dataset, build_dataloader
 from snspotting.models import build_model
 
-from snspotting.core.inference import infer_dataset
-from snspotting.core.evaluation import evaluate_Spotting
-from snspotting.core import build_runner
+from snspotting.core import build_runner, build_evaluator
 
 
 def parse_args():
@@ -96,28 +93,16 @@ def main():
     # Build Model
     model = build_model(cfg.model).cuda()
 
-    # Build Runner for Inference
-    runner = build_runner(cfg.runner, model)
 
-    # Loop over dataset to evaluate
-    splits_to_evaluate = cfg.dataset.test.split
-    for split in splits_to_evaluate:    
-        cfg.dataset.test.split = [split]
+    # Build Evaluator
+    logging.info('Build Evaluator')
+    evaluator = build_evaluator(cfg=cfg, model=model)
 
-        # Build Dataset
-        dataset_Test = build_dataset(cfg.dataset.test)
+    # Start evaluate`
+    logging.info("Start evaluate")
 
-        # Build Dataloader
-        test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
-
-        # Run Inference on Dataset
-        results = runner.infer_dataset(cfg, test_loader, model, overwrite=True)
-
-        # Evaluate Results
-        if "data_root" in cfg.dataset.test:
-            results = evaluate_Spotting(cfg, cfg.dataset.test.data_root, results)
-        else:
-            results = evaluate_Spotting(cfg, cfg.dataset.test.path, results)
+    performance = evaluator.evaluate(cfg.dataset.test)
+    logging.info("Done evaluating")
 
     
     logging.info(f'Total Execution Time is {time.time()-start} seconds')

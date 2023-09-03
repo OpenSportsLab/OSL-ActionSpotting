@@ -1,35 +1,11 @@
+import torch
+import os
+
+from .runner import build_runner
+from snspotting.datasets import build_dataset, build_dataloader
+
 import logging
 from SoccerNet.Evaluation.ActionSpotting import evaluate
-
-
-def evaluate_Spotting(cfg, GT_path, pred_path):
-
-    # challenge sets to be tested on EvalAI
-    if "challenge" in cfg.dataset.test.split: 
-        print("Visit eval.ai to evaluate performances on Challenge set")
-        return None
-    
-    if GT_path.endswith(".json") and pred_path.endswith(".json"):
-
-        results = evaluateJSON(SoccerNet_path=GT_path, 
-                    Predictions_path=pred_path)
-    else:
-        results = evaluate(SoccerNet_path=GT_path, 
-                    Predictions_path=pred_path,
-                    split=cfg.dataset.test.split,
-                    prediction_file="results_spotting.json", 
-                    version=cfg.dataset.test.version)
-
-
-    a_mAP = results["a_mAP"]
-    a_mAP_per_class = results["a_mAP_per_class"]
-
-    logging.info("Best Performance at end of training ")
-    logging.info("a_mAP visibility all: " +  str(a_mAP))
-    logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
-    
-    return results
-
 
 
 import os
@@ -40,9 +16,6 @@ from SoccerNet.utils import getListGames
 
 import json
 
-# from SoccerNet.Evaluation.utils import LoadJsonFromZip, EVENT_DICTIONARY_V2, INVERSE_EVENT_DICTIONARY_V2
-# from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIONARY_V1, EVENT_DICTIONARY_BALL
-
 import json
 import zipfile
 from tqdm import tqdm
@@ -52,8 +25,66 @@ import glob
 
 
 
-def evaluateJSON(SoccerNet_path, Predictions_path, metric="loose",):
-    # evaluate the prediction with respect to some ground truth
+def build_evaluator(cfg, model, default_args=None):
+    """Build a evaluator from config dict.
+
+    Args:
+        cfg (dict): Config dict. It should at least contain the key "type".
+        default_args (dict | None, optional): Default initialization arguments.
+            Default: None.
+
+    Returns:
+        evaluator: The constructed evaluator.
+    """
+    if cfg.runner.type == "runner_JSON":
+        evaluator = Evaluator(cfg=cfg,
+                        evaluate_Spotting=evaluate_JSON,
+                        model=model)
+    elif cfg.runner.type == "runner_pooling":
+        evaluator = Evaluator(cfg=cfg,
+                        evaluate_Spotting=evaluate_SN,
+                        model=model)
+    elif cfg.runner.type == "runner_CALF":
+        evaluator = Evaluator(cfg=cfg,
+                        evaluate_Spotting=evaluate_SN,
+                        model=model)
+    
+    return evaluator
+
+
+class Evaluator():
+    def __init__(self, cfg, 
+                evaluate_Spotting,
+                model):
+        self.cfg = cfg
+        self.model = model
+        self.runner = build_runner(cfg.runner, model)
+        self.evaluate_Spotting = evaluate_Spotting
+
+    def evaluate(self, cfg_testset):
+
+        # Loop over dataset to evaluate
+        splits_to_evaluate = cfg_testset.split
+        for split in splits_to_evaluate:    
+            cfg_testset.split = [split]
+
+            # Build Dataset
+            dataset_Test = build_dataset(cfg_testset)
+
+            # Build Dataloader
+            test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader)
+
+            # Run Inference on Dataset
+            results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=False)
+
+            # exxtract performances from results
+            performances = self.evaluate_Spotting(cfg_testset, results)
+
+            return performances
+
+
+
+def evaluate_JSON(cfg, pred_path, metric="loose"):
     # Params:
     #   - SoccerNet_path: path for labels (folder or zipped file)
     #   - Predictions_path: path for predictions (folder or zipped file)
@@ -62,9 +93,16 @@ def evaluateJSON(SoccerNet_path, Predictions_path, metric="loose",):
     #   - frame_rate: frame rate to evalaute from [2]
     # Return:
     #   - details mAP
-    with open(SoccerNet_path) as f :
+
+    # challenge sets to be tested on EvalAI
+    if "challenge" in cfg.split: 
+        print("Visit eval.ai to evaluate performances on Challenge set")
+        return None
+    
+    
+    with open(cfg.path) as f :
         GT_data = json.load(f)
-    with open(Predictions_path) as f :
+    with open(pred_path) as f :
         pred_data = json.load(f)
 
     targets_numpy = list()
@@ -130,7 +168,51 @@ def evaluateJSON(SoccerNet_path, Predictions_path, metric="loose",):
         "a_mAP": a_mAP,
         "a_mAP_per_class": a_mAP_per_class,
     }
+
+    logging.info("Best Performance at end of training ")
+    logging.info("a_mAP visibility all: " +  str(a_mAP))
+    logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
+    
     return results
+
+
+
+
+def evaluate_SN(cfg, pred_path, metric="loose"):
+    # Params:
+    #   - SoccerNet_path: path for labels (folder or zipped file)
+    #   - Predictions_path: path for predictions (folder or zipped file)
+    #   - prediction_file: name of the predicted files - if set to None, try to infer it
+    #   - split: split to evaluate from ["test", "challenge"]
+    #   - frame_rate: frame rate to evalaute from [2]
+    # Return:
+    #   - details mAP
+
+    # challenge sets to be tested on EvalAI
+    if "challenge" in cfg.split: 
+        print("Visit eval.ai to evaluate performances on Challenge set")
+        return None
+    # GT_path = cfg.data_root
+    results = evaluate(SoccerNet_path=cfg.data_root, 
+                    Predictions_path=pred_path,
+                    split=cfg.split,
+                    prediction_file="results_spotting.json", 
+                    version=cfg.version)
+    # results = {
+    #     "a_mAP": a_mAP,
+    #     "a_mAP_per_class": a_mAP_per_class,
+    # }
+
+    logging.info("Best Performance at end of training ")
+    logging.info("a_mAP visibility all: " +  str(results["a_mAP"]))
+    logging.info("a_mAP visibility all per class: " +  str( results["a_mAP_per_class"]))
+    
+    return results
+
+
+
+
+
 
 
 def label2vector(labels, num_classes=17, framerate=2, version=2, EVENT_DICTIONARY={}):
@@ -464,4 +546,5 @@ def LoadJsonFromZip(zippedFile, JsonPath):
             d = json.loads(data.decode("utf-8"))
 
     return d
+
 

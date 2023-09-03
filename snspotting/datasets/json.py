@@ -115,6 +115,7 @@ class ClipsfromJSON(Dataset):
         return len(self.features_clips)
 
 
+
 class VideosfromJSON(Dataset):
     def __init__(self, path,
                 framerate=2,
