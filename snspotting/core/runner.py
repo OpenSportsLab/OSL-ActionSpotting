@@ -28,6 +28,12 @@ def build_runner(cfg, model, default_args=None):
                         infer_game=None,
                         infer_features=None,
                         infer_video=None)
+    elif cfg.type == "runner_Folder":
+        runner = Runner(cfg=cfg,
+                        infer_dataset=infer_dataset_folder,
+                        infer_game=infer_game,
+                        infer_features=infer_features,
+                        infer_video=infer_video) 
     else:
         runner = None
     return runner

@@ -81,8 +81,8 @@ def main():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
 
-    # Dump configuration file
-    cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
+    # Display configuration file
+    # cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
     logging.info(cfg)
 
     # Start Timing
@@ -111,10 +111,14 @@ def main():
         test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
 
         # Run Inference on Dataset
-        zip_results = runner.infer_dataset(cfg, test_loader, model, overwrite=True)
+        results = runner.infer_dataset(cfg, test_loader, model, overwrite=True)
 
         # Evaluate Results
-        results = evaluate_Spotting(cfg, cfg.dataset.test.data_root, zip_results)
+        if "data_root" in cfg.dataset.test:
+            results = evaluate_Spotting(cfg, cfg.dataset.test.data_root, results)
+        else:
+            results = evaluate_Spotting(cfg, cfg.dataset.test.path, results)
+
     
     logging.info(f'Total Execution Time is {time.time()-start} seconds')
 
