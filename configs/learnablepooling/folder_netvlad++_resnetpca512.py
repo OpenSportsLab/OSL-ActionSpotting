@@ -20,5 +20,5 @@ model = dict(
 )
 
 runner = dict(
-    type="runner_Folder"
+    type="runner_JSON"
 )

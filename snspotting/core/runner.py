@@ -5,7 +5,7 @@ from .inference import *
 
 
 
-def build_runner(cfg, model, default_args=None):
+def build_runner(cfg, model=None, default_args=None):
     """Build a runner from config dict.
 
     Args:
@@ -28,9 +28,9 @@ def build_runner(cfg, model, default_args=None):
                         infer_game=None,
                         infer_features=None,
                         infer_video=None)
-    elif cfg.type == "runner_Folder":
+    elif cfg.type == "runner_JSON":
         runner = Runner(cfg=cfg,
-                        infer_dataset=infer_dataset_folder,
+                        infer_dataset=infer_dataset_JSON,
                         infer_game=infer_game,
                         infer_features=infer_features,
                         infer_video=infer_video) 

@@ -23,18 +23,10 @@ def evaluate_Spotting(cfg, GT_path, pred_path):
 
     a_mAP = results["a_mAP"]
     a_mAP_per_class = results["a_mAP_per_class"]
-    a_mAP_visible = results["a_mAP_visible"]
-    a_mAP_per_class_visible = results["a_mAP_per_class_visible"]
-    a_mAP_unshown = results["a_mAP_unshown"]
-    a_mAP_per_class_unshown = results["a_mAP_per_class_unshown"]
 
     logging.info("Best Performance at end of training ")
     logging.info("a_mAP visibility all: " +  str(a_mAP))
     logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
-    logging.info("a_mAP visibility visible: " +  str( a_mAP_visible))
-    logging.info("a_mAP visibility visible per class: " +  str( a_mAP_per_class_visible))
-    logging.info("a_mAP visibility unshown: " +  str( a_mAP_unshown))
-    logging.info("a_mAP visibility unshown per class: " +  str( a_mAP_per_class_unshown))
     
     return results
 
@@ -61,10 +53,6 @@ import glob
 
 
 def evaluateJSON(SoccerNet_path, Predictions_path, metric="loose",):
-            # prediction_file="results_spotting.json",
-            # split="test", version=2, framerate=2, metric="loose", 
-            # label_files="Labels-v2.json", 
-            # num_classes=17, dataset="SoccerNet", task="spotting"):
     # evaluate the prediction with respect to some ground truth
     # Params:
     #   - SoccerNet_path: path for labels (folder or zipped file)
@@ -78,104 +66,42 @@ def evaluateJSON(SoccerNet_path, Predictions_path, metric="loose",):
         GT_data = json.load(f)
     with open(Predictions_path) as f :
         pred_data = json.load(f)
-    # GT_data = 
-    # pred_data  = 
-    # list_games = getListGames(split=split, dataset=dataset, task=task)
+
     targets_numpy = list()
     detections_numpy = list()
     closests_numpy = list()
-    # if dataset == "SoccerNet" and version == 1 and task == "spotting":
-    #     EVENT_DICTIONARY = EVENT_DICTIONARY_V1
-    # elif dataset == "SoccerNet" and version == 2 and task == "spotting":
-    #     EVENT_DICTIONARY = EVENT_DICTIONARY_V2
-    # elif dataset == "Headers":
-    #     EVENT_DICTIONARY = {"Header": 0}
-    # elif dataset == "Headers-headimpacttype":
-    #     EVENT_DICTIONARY = {"1. Purposeful header": 0, "2. Header Duel": 1,
-    #                         "3. Attempted header": 2, "4. Unintentional header": 3, "5. Other head impacts": 4}
-    # elif dataset == "Ball":
-    #     EVENT_DICTIONARY = EVENT_DICTIONARY_BALL
-    # elif dataset == "SoccerNet" and task == "caption":
-    #     EVENT_DICTIONARY = {"comments": 0}
+
     EVENT_DICTIONARY = {cls: i_cls for i_cls, cls in enumerate(GT_data["labels"])}
-    # print(EVENT_DICTIONARY)
 
     for game in tqdm(GT_data["videos"]):
 
-        # # Load labels
-        # if version==2:
-        #     label_files = "Labels-v2.json"
-        #     num_classes = 17
-        # elif version==1:
-        #     label_files = "Labels.json"
-        #     num_classes = 3
-        # if dataset == "Headers":
-        #     label_files = "Labels-Header.json"
-        #     num_classes = 3
-
-        # if zipfile.is_zipfile(SoccerNet_path):
-        #     labels = LoadJsonFromZip(SoccerNet_path, os.path.join(game, label_files))
-        # else:
-        #     labels = json.load(open(os.path.join(SoccerNet_path, game, label_files)))
+        # fetch labels
         labels = game["annotations"]
-        # convert labels to vector
-        label_half_1 = label2vector(
-            labels, 
+
+        # convert labels to dense vector
+        dense_labels = label2vector(labels, 
             num_classes=len(GT_data["labels"]), 
-            # version=version, 
-            EVENT_DICTIONARY=EVENT_DICTIONARY, 
-            # framerate=framerate
-            )
-        # print(version)
-        # print(label_half_1)
-        # print(label_half_2)
+            EVENT_DICTIONARY=EVENT_DICTIONARY)
+        
 
-
-
-        # # infer name of the prediction_file
-        # if prediction_file == None:
-        #     if zipfile.is_zipfile(Predictions_path):
-        #         with zipfile.ZipFile(Predictions_path, "r") as z:
-        #             for filename in z.namelist():
-        #                 #       print(filename)
-        #                 if filename.endswith(".json"):
-        #                     prediction_file = os.path.basename(filename)
-        #                     break
-        #     else:
-        #         for filename in glob.glob(os.path.join(Predictions_path,"*/*/*/*.json")):
-        #             prediction_file = os.path.basename(filename)
-        #             # print(prediction_file)
-        #             break
-
-        # # Load predictions
-        # if zipfile.is_zipfile(Predictions_path):
-        #     predictions = LoadJsonFromZip(Predictions_path, os.path.join(game, prediction_file))
-        # else:
-        #     predictions = json.load(open(os.path.join(Predictions_path, game, prediction_file)))
         for video in pred_data["videos"]:
             if video["path_features"] == game["path_features"]:
                 predictions = video["predictions"]
                 break
-        # print(predictions)
+
 
         # convert predictions to vector
-        predictions_half_1 = predictions2vector(
-            predictions,
+        dense_predictions = predictions2vector(predictions,
             num_classes=len(GT_data["labels"]),
-            # version=version,
-            EVENT_DICTIONARY=EVENT_DICTIONARY,
-            # framerate=framerate
-            )
+            EVENT_DICTIONARY=EVENT_DICTIONARY)
 
-        targets_numpy.append(label_half_1)
-        # targets_numpy.append(label_half_2)
-        detections_numpy.append(predictions_half_1)
-        # detections_numpy.append(predictions_half_2)
+        targets_numpy.append(dense_labels)
+        detections_numpy.append(dense_predictions)
 
-        closest_numpy = np.zeros(label_half_1.shape)-1
+        closest_numpy = np.zeros(dense_labels.shape)-1
         #Get the closest action index
-        for c in np.arange(label_half_1.shape[-1]):
-            indexes = np.where(label_half_1[:,c] != 0)[0].tolist()
+        for c in np.arange(dense_labels.shape[-1]):
+            indexes = np.where(dense_labels[:,c] != 0)[0].tolist()
             if len(indexes) == 0 :
                 continue
             indexes.insert(0,-indexes[0])
@@ -183,62 +109,35 @@ def evaluateJSON(SoccerNet_path, Predictions_path, metric="loose",):
             for i in np.arange(len(indexes)-2)+1:
                 start = max(0,(indexes[i-1]+indexes[i])//2)
                 stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
-                closest_numpy[start:stop,c] = label_half_1[indexes[i],c]
+                closest_numpy[start:stop,c] = dense_labels[indexes[i],c]
         closests_numpy.append(closest_numpy)
 
-        # closest_numpy = np.zeros(label_half_2.shape)-1
-        # for c in np.arange(label_half_2.shape[-1]):
-        #     indexes = np.where(label_half_2[:,c] != 0)[0].tolist()
-        #     if len(indexes) == 0 :
-        #         continue
-        #     indexes.insert(0,-indexes[0])
-        #     indexes.append(2*closest_numpy.shape[0])
-        #     for i in np.arange(len(indexes)-2)+1:
-        #         start = max(0,(indexes[i-1]+indexes[i])//2)
-        #         stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
-        #         closest_numpy[start:stop,c] = label_half_2[indexes[i],c]
-        # closests_numpy.append(closest_numpy)
 
+    if metric == "loose": deltas=np.arange(12)*5 + 5
+    elif metric == "tight": deltas=np.arange(5)*1 + 1
+    elif metric == "at1": deltas=np.array([1])
+    elif metric == "at2": deltas=np.array([2]) 
+    elif metric == "at3": deltas=np.array([3]) 
+    elif metric == "at4": deltas=np.array([4]) 
+    elif metric == "at5": deltas=np.array([5]) 
 
-    if metric == "loose":
-        deltas=np.arange(12)*5 + 5
-    elif metric == "tight":
-        deltas=np.arange(5)*1 + 1
-    elif metric == "at1":
-        deltas=np.array([1]) #np.arange(1)*1 + 1
-    elif metric == "at2":
-        deltas=np.array([2]) 
-    elif metric == "at3":
-        deltas=np.array([3]) 
-    elif metric == "at4":
-        deltas=np.array([4]) 
-    elif metric == "at5":
-        deltas=np.array([5]) 
     # Compute the performances
-    a_mAP, a_mAP_per_class, \
-    a_mAP_visible, a_mAP_per_class_visible, \
-    a_mAP_unshown, a_mAP_per_class_unshown = average_mAP(targets_numpy, 
+    a_mAP, a_mAP_per_class = average_mAP(targets_numpy, 
     detections_numpy, closests_numpy,
     framerate=2, deltas=deltas)
     
     results = {
         "a_mAP": a_mAP,
         "a_mAP_per_class": a_mAP_per_class,
-        "a_mAP_visible": a_mAP_visible, #if version==2 else None,
-        "a_mAP_per_class_visible": a_mAP_per_class_visible, #if version==2 else None,
-        "a_mAP_unshown": a_mAP_unshown, #if version==2 else None,
-        "a_mAP_per_class_unshown": a_mAP_per_class_unshown, #if version==2 else None,
     }
     return results
 
 
 def label2vector(labels, num_classes=17, framerate=2, version=2, EVENT_DICTIONARY={}):
 
-
     vector_size = 90*60*framerate
 
-    label_half1 = np.zeros((vector_size, num_classes))
-    # label_half2 = np.zeros((vector_size, num_classes))
+    dense_labels = np.zeros((vector_size, num_classes))
 
     for annotation in labels:
 
@@ -257,47 +156,21 @@ def label2vector(labels, num_classes=17, framerate=2, version=2, EVENT_DICTIONAR
             frame = framerate * ( seconds + 60 * minutes ) 
 
         label = EVENT_DICTIONARY[event]
-        # if version == 2:
-        #     if event not in EVENT_DICTIONARY:
-        #         continue
-        #     label = EVENT_DICTIONARY[event]
-        # elif version == 1:
-        #     # print(event)
-        #     # label = EVENT_DICTIONARY_V1[event]
-        #     if "card" in event: label = 0
-        #     elif "subs" in event: label = 1
-        #     elif "soccer" in event: label = 2
-        #     else: 
-        #         # print(event)
-        #         continue
-        # print(event, label, half)
 
-        value = 1
-        # if "visibility" in annotation.keys():
-        #     if annotation["visibility"] == "not shown":
-        #         value = -1
-
-        # if half == 1:
         frame = min(frame, vector_size-1)
-        label_half1[frame][label] = value
+        dense_labels[frame][label] = 1
 
-        # if half == 2:
-        #     frame = min(frame, vector_size-1)
-        #     label_half2[frame][label] = value
 
-    return label_half1 #, label_half2
+    return dense_labels
 
 def predictions2vector(predictions, num_classes=17, version=2, framerate=2, EVENT_DICTIONARY={}):
 
-
     vector_size = 90*60*framerate
 
-    prediction_half1 = np.zeros((vector_size, num_classes))-1
-    # prediction_half2 = np.zeros((vector_size, num_classes))-1
+    dense_predictions = np.zeros((vector_size, num_classes))-1
 
     for annotation in predictions:
 
-        # print(annotation)
         time = int(annotation["position"])
         event = annotation["label"]
 
@@ -306,30 +179,11 @@ def predictions2vector(predictions, num_classes=17, version=2, framerate=2, EVEN
         frame = int(framerate * ( time/1000 ))
 
         label = EVENT_DICTIONARY[event]
-        # if version == 2:
-        #     if event not in EVENT_DICTIONARY:
-        #         continue
-        #     label = EVENT_DICTIONARY[event]
-        # elif version == 1:
-        #     label = EVENT_DICTIONARY[event]
-        #     # print(label)
-        #     # EVENT_DICTIONARY_V1[l]
-        #     # if "card" in event: label=0
-        #     # elif "subs" in event: label=1
-        #     # elif "soccer" in event: label=2
-        #     # else: continue
 
-        value = annotation["confidence"]
-
-        # if half == 1:
         frame = min(frame, vector_size-1)
-        prediction_half1[frame][label] = value
+        dense_predictions[frame][label] = annotation["confidence"]
 
-        # if half == 2:
-        #     frame = min(frame, vector_size-1)
-        #     prediction_half2[frame][label] = value
-
-    return prediction_half1 #, prediction_half2
+    return dense_predictions 
 
 
 import numpy as np
@@ -541,20 +395,21 @@ def delta_curve(targets, closests, detections,  framerate, deltas=np.arange(5)*1
         tmp_mAP, tmp_mAP_per_class = compute_mAP(precision, recall)
         mAP.append(tmp_mAP)
         mAP_per_class.append(tmp_mAP_per_class)
-        tmp_mAP_visible, tmp_mAP_per_class_visible = compute_mAP(precision_visible, recall_visible)
-        mAP_visible.append(tmp_mAP_visible)
-        mAP_per_class_visible.append(tmp_mAP_per_class_visible)
-        tmp_mAP_unshown, tmp_mAP_per_class_unshown = compute_mAP(precision_unshown, recall_unshown)
-        mAP_unshown.append(tmp_mAP_unshown)
-        mAP_per_class_unshown.append(tmp_mAP_per_class_unshown)
+        # TODO: compute visible/undshown from another JSON file containing only the visible/unshown annotations
+        # tmp_mAP_visible, tmp_mAP_per_class_visible = compute_mAP(precision_visible, recall_visible)
+        # mAP_visible.append(tmp_mAP_visible)
+        # mAP_per_class_visible.append(tmp_mAP_per_class_visible)
+        # tmp_mAP_unshown, tmp_mAP_per_class_unshown = compute_mAP(precision_unshown, recall_unshown)
+        # mAP_unshown.append(tmp_mAP_unshown)
+        # mAP_per_class_unshown.append(tmp_mAP_per_class_unshown)
 
-    return mAP, mAP_per_class, mAP_visible, mAP_per_class_visible, mAP_unshown, mAP_per_class_unshown
+    return mAP, mAP_per_class
 
 
 def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*1 + 1):
 
 
-    mAP, mAP_per_class, mAP_visible, mAP_per_class_visible, mAP_unshown, mAP_per_class_unshown = delta_curve(targets, closests, detections, framerate, deltas)
+    mAP, mAP_per_class = delta_curve(targets, closests, detections, framerate, deltas)
     
     if len(mAP) == 1:
         return mAP[0], mAP_per_class[0], mAP_visible[0], mAP_per_class_visible[0], mAP_unshown[0], mAP_per_class_unshown[0]
@@ -565,16 +420,16 @@ def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*
         integral += (mAP[i]+mAP[i+1])/2
     a_mAP = integral/((len(mAP)-1))
 
-    integral_visible = 0.0
-    for i in np.arange(len(mAP_visible)-1):
-        integral_visible += (mAP_visible[i]+mAP_visible[i+1])/2
-    a_mAP_visible = integral_visible/((len(mAP_visible)-1))
+    # integral_visible = 0.0
+    # for i in np.arange(len(mAP_visible)-1):
+    #     integral_visible += (mAP_visible[i]+mAP_visible[i+1])/2
+    # a_mAP_visible = integral_visible/((len(mAP_visible)-1))
 
-    integral_unshown = 0.0
-    for i in np.arange(len(mAP_unshown)-1):
-        integral_unshown += (mAP_unshown[i]+mAP_unshown[i+1])/2
-    a_mAP_unshown = integral_unshown/((len(mAP_unshown)-1))
-    a_mAP_unshown = a_mAP_unshown*17/13
+    # integral_unshown = 0.0
+    # for i in np.arange(len(mAP_unshown)-1):
+    #     integral_unshown += (mAP_unshown[i]+mAP_unshown[i+1])/2
+    # a_mAP_unshown = integral_unshown/((len(mAP_unshown)-1))
+    # a_mAP_unshown = a_mAP_unshown*17/13
 
     a_mAP_per_class = list()
     for c in np.arange(len(mAP_per_class[0])):
@@ -583,21 +438,21 @@ def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*
             integral_per_class += (mAP_per_class[i][c]+mAP_per_class[i+1][c])/2
         a_mAP_per_class.append(integral_per_class/((len(mAP_per_class)-1)))
 
-    a_mAP_per_class_visible = list()
-    for c in np.arange(len(mAP_per_class_visible[0])):
-        integral_per_class_visible = 0.0
-        for i in np.arange(len(mAP_per_class_visible)-1):
-            integral_per_class_visible += (mAP_per_class_visible[i][c]+mAP_per_class_visible[i+1][c])/2
-        a_mAP_per_class_visible.append(integral_per_class_visible/((len(mAP_per_class_visible)-1)))
+    # a_mAP_per_class_visible = list()
+    # for c in np.arange(len(mAP_per_class_visible[0])):
+    #     integral_per_class_visible = 0.0
+    #     for i in np.arange(len(mAP_per_class_visible)-1):
+    #         integral_per_class_visible += (mAP_per_class_visible[i][c]+mAP_per_class_visible[i+1][c])/2
+    #     a_mAP_per_class_visible.append(integral_per_class_visible/((len(mAP_per_class_visible)-1)))
 
-    a_mAP_per_class_unshown = list()
-    for c in np.arange(len(mAP_per_class_unshown[0])):
-        integral_per_class_unshown = 0.0
-        for i in np.arange(len(mAP_per_class_unshown)-1):
-            integral_per_class_unshown += (mAP_per_class_unshown[i][c]+mAP_per_class_unshown[i+1][c])/2
-        a_mAP_per_class_unshown.append(integral_per_class_unshown/((len(mAP_per_class_unshown)-1)))
+    # a_mAP_per_class_unshown = list()
+    # for c in np.arange(len(mAP_per_class_unshown[0])):
+    #     integral_per_class_unshown = 0.0
+    #     for i in np.arange(len(mAP_per_class_unshown)-1):
+    #         integral_per_class_unshown += (mAP_per_class_unshown[i][c]+mAP_per_class_unshown[i+1][c])/2
+    #     a_mAP_per_class_unshown.append(integral_per_class_unshown/((len(mAP_per_class_unshown)-1)))
 
-    return a_mAP, a_mAP_per_class, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown
+    return a_mAP, a_mAP_per_class #, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown
 
 
 

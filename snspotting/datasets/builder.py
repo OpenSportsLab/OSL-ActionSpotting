@@ -1,6 +1,7 @@
 
 from .soccernet import SoccerNetClips, SoccerNetGames
-from .folder import FolderClips, FolderGames
+# from .folder import FolderClips, FolderGames
+from .json import ClipsfromJSON, VideosfromJSON
 from .soccernet_CALF import SoccerNetClipsCALF, SoccerNetClipsTestingCALF
 
 import torch
@@ -46,12 +47,12 @@ def build_dataset(cfg, default_args=None):
                 chunk_size=cfg.chunk_size,
                 receptive_field=cfg.receptive_field
             )
-    elif cfg.type == "FolderClips":
-        dataset = FolderClips(path=cfg.path, 
+    elif cfg.type == "ClipsfromJSON":
+        dataset = ClipsfromJSON(path=cfg.path, 
             framerate=cfg.framerate,
             window_size=cfg.window_size)
-    elif cfg.type == "FolderGames":
-        dataset = FolderGames(path=cfg.path, 
+    elif cfg.type == "VideosfromJSON":
+        dataset = VideosfromJSON(path=cfg.path, 
             framerate=cfg.framerate,
             window_size=cfg.window_size)
     else:

@@ -4,7 +4,7 @@ classes = ("Medical",)
 dataset = dict(
     max_num_worker=4,
     train=dict(
-        type="FolderClips",
+        type="ClipsfromJSON",
         path="train.json",
         # features="ResNET_TF2_PCA512.npy",
         # version=2,
@@ -24,7 +24,7 @@ dataset = dict(
             pin_memory=True,
         )),
     val=dict(
-        type="FolderClips",
+        type="ClipsfromJSON",
         path="val.json",
         # features="ResNET_TF2_PCA512.npy",
         # version=2,
@@ -44,7 +44,7 @@ dataset = dict(
             pin_memory=True,
         )),
     test=dict(
-        type="FolderGames",
+        type="VideosfromJSON",
         path="test.json",
         # features="ResNET_TF2_PCA512.npy",
         # version=2,
