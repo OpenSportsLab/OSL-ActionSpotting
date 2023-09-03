@@ -1,7 +1,6 @@
 classes = ("Medical",) 
 
 dataset = dict(
-    max_num_worker=4,
     train=dict(
         type="ClipsfromJSON",
         path="train.json",

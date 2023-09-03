@@ -5,7 +5,6 @@ classes = ("Penalty", "Kick-off", "Goal", "Substitution", "Offside",
     "Yellow card","Red card", "Yellow->red card",) 
 
 dataset = dict(
-    max_num_worker=4,
     train=dict(
         type="SoccerNetClips",
         features="ResNET_TF2_PCA512.npy",
