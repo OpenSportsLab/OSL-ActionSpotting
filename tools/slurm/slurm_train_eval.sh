@@ -2,8 +2,8 @@
 #SBATCH -J snspot
 #SBATCH -o log/%x.%3a.%A.out
 #SBATCH -e log/%x.%3a.%A.err
-#SBATCH --time=1-00:00:00
-#SBATCH --gres=gpu:gtx1080:1
+#SBATCH --time=04:00:00
+#SBATCH --gres=gpu:gtx1080ti:1
 #SBATCH --mem=48G
 #SBATCH --cpus-per-task=4
 #SBATCH -N 1
@@ -22,11 +22,11 @@ echo "...Anaconda env loaded"
 
 
 echo "Running Training python script..."
-bash tools/train.py $1
+python tools/train.py $1
 echo "... training done."
 
 echo "Running Testing python script..."
-bash tools/evaluate.py $1
+python tools/evaluate.py $1
 echo "... testing done."
 
 date
