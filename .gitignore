@@ -161,3 +161,7 @@ cython_debug/
 
 path/*
 outputs/*
+local_test/
+
+log/*
+dgcm/*

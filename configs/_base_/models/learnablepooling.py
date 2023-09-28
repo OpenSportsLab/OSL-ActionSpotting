@@ -24,11 +24,12 @@ model = dict(
 )
 
 training = dict(
+    type="trainer_pooling",
     max_epochs=1000,
     evaluation_frequency=1000,
     framerate=2,
     batch_size=256,
-    GPU=-1,
+    GPU=0,
     criterion = dict(
         type="NLLLoss",
     ),
@@ -48,4 +49,8 @@ training = dict(
         patience=10,
         verbose=True,
     ),
+)
+
+runner = dict(
+    type="runner_pooling"
 )

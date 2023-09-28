@@ -12,11 +12,7 @@ from mmengine.config import Config, DictAction
 
 from snspotting.datasets import build_dataset, build_dataloader
 from snspotting.models import build_model
-from snspotting.loss import build_criterion
-from snspotting.core import build_optimizer, build_scheduler
-
-from snspotting.core.training import train_one_epoch
-# from snspotting.core.evaluation import testClassication, testSpotting
+from snspotting.core import build_trainer 
 
 
 def parse_args():
@@ -91,65 +87,34 @@ def main():
     logging.info('Starting main function')
     
     # Build Model
+    logging.info('Build Model')
     model = build_model(cfg.model).cuda()
     
     # Build Datasets    
+    logging.info('Build Datasets')
     dataset_Train = build_dataset(cfg.dataset.train)
     dataset_Val = build_dataset(cfg.dataset.val)
     
     # Build Dataloaders
+    logging.info('Build Dataloaders')
     train_loader = build_dataloader(dataset_Train, cfg.dataset.train.dataloader)
     val_loader = build_dataloader(dataset_Val, cfg.dataset.val.dataloader)
 
     # Build Trainer
-    criterion = build_criterion(cfg.training.criterion)
-    optimizer = build_optimizer(model.parameters(), cfg.training.optimizer)
-    scheduler = build_scheduler(optimizer, cfg.training.scheduler)
+    logging.info('Build Trainer')
+    trainer = build_trainer(cfg.training, model)
 
-    # Start training
-    logging.info("start training")
+    # Start training`
+    logging.info("Start training")
 
-    best_loss = 9e99
+    best_model = trainer.train(train_loader, val_loader)
+    logging.info("Done training")
 
-    # loop over epochs
-    for epoch in range(cfg.training.max_epochs):
-        best_model_path = os.path.join(cfg.work_dir, "model.pth.tar")
+    torch.save(best_model, 
+               os.path.join(cfg.work_dir, "model.pth.tar"))
 
-        # train for one epoch
-        loss_training = train_one_epoch(train_loader, model, criterion,
-                            optimizer, epoch + 1, backprop=True)
-
-        # evaluate on validation set
-        loss_validation = train_one_epoch(
-            val_loader, model, criterion, optimizer, epoch + 1, backprop=False)
-
-        state = {
-            'epoch': epoch + 1,
-            'state_dict': model.state_dict(),
-            'best_loss': best_loss,
-            'optimizer': optimizer.state_dict(),
-        }
-
-        # remember best prec@1 and save checkpoint
-        is_better = loss_validation < best_loss
-        best_loss = min(loss_validation, best_loss)
-
-        # Save the best model based on loss only if the evaluation frequency too long
-        if is_better:
-            torch.save(state, best_model_path)
-
-        # Reduce LR on Plateau after patience reached
-        prevLR = optimizer.param_groups[0]['lr']
-        scheduler.step(loss_validation)
-        currLR = optimizer.param_groups[0]['lr']
-        if (currLR is not prevLR and scheduler.num_bad_epochs == 0):
-            logging.info("Plateau Reached!")
-
-        if (prevLR < 2 * scheduler.eps and
-                scheduler.num_bad_epochs >= scheduler.patience):
-            logging.info(
-                "Plateau Reached and no more reduction -> Exiting Loop")
-            break
+    logging.info('Model saved')
+    logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
 
     return 
 

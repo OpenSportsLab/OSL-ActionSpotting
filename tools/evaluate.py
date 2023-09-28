@@ -10,13 +10,9 @@ import mmengine
 from mmengine.config import Config, DictAction
 
 
-from snspotting.datasets import build_dataset, build_dataloader
 from snspotting.models import build_model
-from snspotting.loss import build_criterion
-from snspotting.core import build_optimizer, build_scheduler
 
-from snspotting.core.inference import infer_dataset
-from snspotting.core.evaluation import evaluate_Spotting #testClassication, testSpotting
+from snspotting.core import build_runner, build_evaluator
 
 
 def parse_args():
@@ -82,34 +78,32 @@ def main():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
 
-    # Dump configuration file
-    cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
+    # Display configuration file
+    # cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
     logging.info(cfg)
 
     # Start Timing
     start=time.time()
     logging.info('Starting main function')
 
-
     # Ensure weights are not None
     if cfg.model.load_weights is None:
         cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
     
+    # Build Model
     model = build_model(cfg.model).cuda()
 
-    # test on multiple splits [test/challenge]
-    splits_to_evaluate = cfg.dataset.test.split
-    for split in splits_to_evaluate:    
-        # build dataset and dataloader for single split 
-        cfg.dataset.test.split = [split]
-        dataset_Test = build_dataset(cfg.dataset.test)
-        test_loader = build_dataloader(dataset_Test, cfg.dataset.test.dataloader)
 
-        # infer results
-        zip_results = infer_dataset(cfg, test_loader, model, overwrite=True)
+    # Build Evaluator
+    logging.info('Build Evaluator')
+    evaluator = build_evaluator(cfg=cfg, model=model)
 
-        # run evaluation
-        results = evaluate_Spotting(cfg, cfg.dataset.test.data_root, zip_results)
+    # Start evaluate`
+    logging.info("Start evaluate")
+
+    performance = evaluator.evaluate(cfg.dataset.test)
+    logging.info("Done evaluating")
+
     
     logging.info(f'Total Execution Time is {time.time()-start} seconds')
 

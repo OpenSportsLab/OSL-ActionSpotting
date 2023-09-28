@@ -1,5 +1,8 @@
 
 from .soccernet import SoccerNetClips, SoccerNetGames
+# from .folder import FolderClips, FolderGames
+from .json import FeatureClipsfromJSON, FeatureVideosfromJSON
+from .soccernet_CALF import SoccerNetClipsCALF, SoccerNetClipsTestingCALF
 
 import torch
 from mmengine.config import Config, DictAction
@@ -24,6 +27,33 @@ def build_dataset(cfg, default_args=None):
         dataset = SoccerNetGames(path=cfg.data_root, 
             features=cfg.features, split=cfg.split, 
             version=cfg.version, framerate=cfg.framerate,
+            window_size=cfg.window_size)
+    elif cfg.type == "SoccerNetClipsCALF":
+        dataset = SoccerNetClipsCALF(
+                path=cfg.data_root,
+                features=cfg.features,
+                split=cfg.split,
+                framerate=cfg.framerate,
+                chunk_size=cfg.chunk_size,
+                receptive_field=cfg.receptive_field,
+                chunks_per_epoch=cfg.chunks_per_epoch,
+                )
+    elif cfg.type == "SoccerNetClipsTestingCALF":
+        dataset = SoccerNetClipsTestingCALF(
+                path=cfg.data_root,
+                features=cfg.features,
+                split=cfg.split,
+                framerate=cfg.framerate,
+                chunk_size=cfg.chunk_size,
+                receptive_field=cfg.receptive_field
+            )
+    elif cfg.type == "FeatureClipsfromJSON":
+        dataset = FeatureClipsfromJSON(path=cfg.path, 
+            framerate=cfg.framerate,
+            window_size=cfg.window_size)
+    elif cfg.type == "FeatureVideosfromJSON":
+        dataset = FeatureVideosfromJSON(path=cfg.path, 
+            framerate=cfg.framerate,
             window_size=cfg.window_size)
     else:
         dataset=None
