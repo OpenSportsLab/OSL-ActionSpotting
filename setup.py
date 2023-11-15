@@ -1,4 +1,4 @@
-# from distutils.core import setup
+# from distutils.core import setup1
 import os
 import sys
 from shutil import rmtree
