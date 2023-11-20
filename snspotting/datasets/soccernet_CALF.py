@@ -22,19 +22,26 @@ from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V2
 # from preprocessing import oneHotToShifts, getTimestampTargets, getChunks_anchors
 
 K_V2 = torch.FloatTensor([[-100, -98, -20, -40, -96, -5, -8, -93, -99, -31, -75, -10, -97, -75, -20, -84, -18], [-50, -49, -10, -20, -48, -3, -4, -46, -50, -15, -37, -
-                                                                                                                 5, -49, -38, -10, -42, -9], [50, 49, 60, 10, 48, 3, 4, 46, 50, 15, 37, 5, 49, 38, 10, 42, 9], [100, 98, 90, 20, 96, 5, 8, 93, 99, 31, 75, 10, 97, 75, 20, 84, 18]]).cuda()
+                                                                                                                 5, -49, -38, -10, -42, -9], [50, 49, 60, 10, 48, 3, 4, 46, 50, 15, 37, 5, 49, 38, 10, 42, 9], [100, 98, 90, 20, 96, 5, 8, 93, 99, 31, 75, 10, 97, 75, 20, 84, 18]])
 
+# # Move to GPU if available
+# if cfg.training.GPU:
+#     K_V2=K_V2.cuda()
 
 
 class SoccerNetClipsCALF(Dataset):
     def __init__(self, path, features="ResNET_PCA512.npy", split="train", 
-                framerate=2, chunk_size=240, receptive_field=80, chunks_per_epoch=6000):
+                framerate=2, chunk_size=240, receptive_field=80, chunks_per_epoch=6000,gpu=True):
         self.path = path
         self.listGames = getListGames(split)
         self.features = features
         self.chunk_size = chunk_size
         self.receptive_field = receptive_field
         self.chunks_per_epoch = chunks_per_epoch
+        self.gpu = gpu
+
+        if(self.gpu):
+            K_V2=K_V2.cuda()
 
         self.dict_event = EVENT_DICTIONARY_V2
         self.num_classes = 17
@@ -161,13 +168,17 @@ class SoccerNetClipsCALF(Dataset):
 
 class SoccerNetClipsTestingCALF(Dataset):
     def __init__(self, path, features="ResNET_PCA512.npy", split="test", 
-                framerate=2, chunk_size=240, receptive_field=80):
+                framerate=2, chunk_size=240, receptive_field=80,gpu=True):
         self.path = path
         self.listGames = getListGames(split)
         self.features = features
         self.chunk_size = chunk_size
         self.receptive_field = receptive_field
         self.framerate = framerate
+        self.gpu = gpu
+
+        if(self.gpu):
+            K_V2=K_V2.cuda()
 
         self.dict_event = EVENT_DICTIONARY_V2
         self.num_classes = 17

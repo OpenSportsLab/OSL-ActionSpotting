@@ -76,11 +76,11 @@ class Trainer():
 
             # train for one epoch
             loss_training = self.train_one_epoch(train_loader, self.model, self.criterion,
-                                self.optimizer, epoch + 1, backprop=True)
+                                self.optimizer, self.cfg.GPU, epoch + 1, backprop=True)
 
             # evaluate on validation set
             loss_validation = self.train_one_epoch(
-                val_loader, self.model, self.criterion, self.optimizer, epoch + 1, backprop=False)
+                val_loader, self.model, self.criterion, self.optimizer, self.cfg.GPU, epoch + 1, backprop=False)
 
             state = {
                 'epoch': epoch + 1,
@@ -126,6 +126,7 @@ def train_one_epoch(dataloader,
         model,
         criterion,
         optimizer,
+        gpu,
         epoch,
         backprop=False):
 
@@ -145,9 +146,10 @@ def train_one_epoch(dataloader,
             # measure data loading time
             data_time.update(time.time() - end)
 
-            # if cfg.GPU >= 0:
-            feats = feats.cuda()
-            labels = labels.cuda()
+            # if cfg.GPU != 0:
+            if gpu:
+                feats = feats.cuda()
+                labels = labels.cuda()
 
             # compute output
             output = model(feats)

@@ -37,6 +37,7 @@ def build_dataset(cfg, default_args=None):
                 chunk_size=cfg.chunk_size,
                 receptive_field=cfg.receptive_field,
                 chunks_per_epoch=cfg.chunks_per_epoch,
+                gpu = cfg.training.GPU
                 )
     elif cfg.type == "SoccerNetClipsTestingCALF":
         dataset = SoccerNetClipsTestingCALF(
@@ -45,7 +46,7 @@ def build_dataset(cfg, default_args=None):
                 split=cfg.split,
                 framerate=cfg.framerate,
                 chunk_size=cfg.chunk_size,
-                receptive_field=cfg.receptive_field
+                receptive_field=cfg.receptive_field,gpu = cfg.training.GPU
             )
     elif cfg.type == "FeatureClipsfromJSON":
         dataset = FeatureClipsfromJSON(path=cfg.path, 
@@ -73,6 +74,7 @@ def build_dataloader(dataset, cfg):
         Dataloader: The constructed dataloader.
     """
     dataloader = torch.utils.data.DataLoader(dataset,
-            batch_size=cfg.batch_size, shuffle=cfg.shuffle,
-            num_workers=cfg.num_workers, pin_memory=cfg.pin_memory)
+            batch_size=cfg.batch_size, shuffle=cfg.shuffle,)
+            # num_workers=cfg.num_workers, 
+            # pin_memory=cfg.pin_memory)
     return dataloader
