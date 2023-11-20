@@ -62,7 +62,7 @@ def build_dataset(cfg, default_args=None):
 
 
 # def build_dataloader(dataset, batch_size, shuffle=True, max_num_worker=4, pin_memory=True):
-def build_dataloader(dataset, cfg):
+def build_dataloader(dataset, cfg, gpu):
     """Build a dataloader from config dict.
 
     Args:
@@ -74,7 +74,7 @@ def build_dataloader(dataset, cfg):
         Dataloader: The constructed dataloader.
     """
     dataloader = torch.utils.data.DataLoader(dataset,
-            batch_size=cfg.batch_size, shuffle=cfg.shuffle,)
-            # num_workers=cfg.num_workers, 
-            # pin_memory=cfg.pin_memory)
+            batch_size=cfg.batch_size, shuffle=cfg.shuffle,
+            num_workers=cfg.num_workers if gpu else 0, 
+            pin_memory=cfg.pin_memory if gpu else False)
     return dataloader

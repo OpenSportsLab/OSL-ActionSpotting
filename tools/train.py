@@ -107,8 +107,8 @@ def main():
     
     # Build Dataloaders
     logging.info('Build Dataloaders')
-    train_loader = build_dataloader(dataset_Train, cfg.dataset.train.dataloader)
-    val_loader = build_dataloader(dataset_Val, cfg.dataset.val.dataloader)
+    train_loader = build_dataloader(dataset_Train, cfg.dataset.train.dataloader,cfg.training.GPU)
+    val_loader = build_dataloader(dataset_Val, cfg.dataset.val.dataloader,cfg.training.GPU)
 
     # Build Trainer
     logging.info('Build Trainer')
