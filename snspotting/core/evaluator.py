@@ -72,7 +72,7 @@ class Evaluator():
             dataset_Test = build_dataset(cfg_testset)
 
             # Build Dataloader
-            test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader)
+            test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader,self.cfg.training.GPU)
 
             # Run Inference on Dataset
             results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True)
