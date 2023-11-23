@@ -119,7 +119,7 @@ def main():
 
     best_model = trainer.train(train_loader, val_loader)
     logging.info("Done training")
-
+    print(best_model.get("epoch"))
     torch.save(best_model, 
                os.path.join(cfg.work_dir, "model.pth.tar"))
 
