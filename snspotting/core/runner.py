@@ -219,6 +219,7 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
 
 
     end = time.time()
+    #infer_data set loop
     with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
         for i, (game_ID, feat_half1, feat_half2, label_half1, label_half2) in t:
             # measure data loading time
@@ -230,6 +231,7 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
             feat_half2 = feat_half2.squeeze(0)
 
             # Compute the output for batches of frames
+            logging.info('Compute the output for batches of frames')
             BS = 256
             timestamp_long_half_1 = []
             for b in range(int(np.ceil(len(feat_half1)/BS))):
