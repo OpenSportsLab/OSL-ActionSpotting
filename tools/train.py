@@ -75,12 +75,12 @@ def main():
 
     # check if cuda available
     has_gpu=torch.cuda.is_available()
-    if cfg.training.GPU != 0:
+    if cfg.training.GPU >= 0:
         if not has_gpu:
-            cfg.training.GPU = 0
+            cfg.training.GPU = -1
 
     # define GPUs
-    if cfg.training.GPU != 0:
+    if cfg.training.GPU >= 0:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
 
@@ -95,7 +95,7 @@ def main():
     # Build Model
     logging.info('Build Model')
 
-    if(cfg.training.GPU):
+    if cfg.training.GPU >=0 :
         model = build_model(cfg.model).cuda()
     else:
         model = build_model(cfg.model)

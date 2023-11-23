@@ -146,8 +146,8 @@ def train_one_epoch(dataloader,
             # measure data loading time
             data_time.update(time.time() - end)
 
-            # if cfg.GPU != 0:
-            if gpu:
+            # if cfg.GPU >= 0:
+            if gpu >=0:
                 feats = feats.cuda()
                 labels = labels.cuda()
 

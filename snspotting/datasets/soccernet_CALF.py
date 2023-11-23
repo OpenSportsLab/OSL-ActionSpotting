@@ -40,7 +40,7 @@ class SoccerNetClipsCALF(Dataset):
         self.chunks_per_epoch = chunks_per_epoch
         self.gpu = gpu
 
-        if(self.gpu):
+        if self.gpu >=0 :
             K_V2=K_V2.cuda()
 
         self.dict_event = EVENT_DICTIONARY_V2
@@ -177,7 +177,7 @@ class SoccerNetClipsTestingCALF(Dataset):
         self.framerate = framerate
         self.gpu = gpu
 
-        if(self.gpu):
+        if self.gpu >=0 :
             K_V2=K_V2.cuda()
 
         self.dict_event = EVENT_DICTIONARY_V2

@@ -4,7 +4,7 @@ training = dict(
     evaluation_frequency=1000,
     framerate=2,
     batch_size=256,
-    GPU=1,
+    GPU=-1,
     criterion = dict(
         type="NLLLoss",
     ),

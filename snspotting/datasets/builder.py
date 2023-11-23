@@ -1,5 +1,5 @@
 
-from .soccernet import SoccerNetClips, SoccerNetGames
+from .soccernet import SoccerNetClips, SoccerNetGames, SoccerNet
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipsfromJSON, FeatureVideosfromJSON
 from .soccernet_CALF import SoccerNetClipsCALF, SoccerNetClipsTestingCALF
@@ -19,10 +19,14 @@ def build_dataset(cfg, default_args=None):
         Dataset: The constructed dataset.
     """
     if cfg.type == "SoccerNetClips":
-        dataset = SoccerNetClips(path=cfg.data_root, 
+        dataset = SoccerNet(path=cfg.data_root, 
             features=cfg.features, split=cfg.split,
             version=cfg.version, framerate=cfg.framerate,
-            window_size=cfg.window_size)
+            window_size=cfg.window_size,clips=True)
+        # dataset = SoccerNetClips(path=cfg.data_root, 
+        #     features=cfg.features, split=cfg.split,
+        #     version=cfg.version, framerate=cfg.framerate,
+        #     window_size=cfg.window_size)
     elif cfg.type == "SoccerNetGames":
         dataset = SoccerNetGames(path=cfg.data_root, 
             features=cfg.features, split=cfg.split, 
@@ -75,6 +79,6 @@ def build_dataloader(dataset, cfg, gpu):
     """
     dataloader = torch.utils.data.DataLoader(dataset,
             batch_size=cfg.batch_size, shuffle=cfg.shuffle,
-            num_workers=cfg.num_workers if gpu else 0, 
-            pin_memory=cfg.pin_memory if gpu else False)
+            num_workers=cfg.num_workers if gpu >=0 else 0, 
+            pin_memory=cfg.pin_memory if gpu >=0 else False)
     return dataloader
