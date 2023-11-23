@@ -65,7 +65,8 @@ class Evaluator():
 
         # Loop over dataset to evaluate
         splits_to_evaluate = cfg_testset.split
-        for split in splits_to_evaluate:    
+        for split in splits_to_evaluate:
+            logging.info('split is %s',split)    
             cfg_testset.split = [split]
 
             # Build Dataset
@@ -77,7 +78,7 @@ class Evaluator():
             # Run Inference on Dataset
             results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True)
 
-            # exxtract performances from results
+            # extract performances from results
             performances = self.evaluate_Spotting(cfg_testset, results)
 
             return performances

@@ -79,6 +79,10 @@ def main():
         if not has_gpu:
             cfg.training.GPU = -1
 
+    if(cfg.training.GPU >=0):
+        logging.info('On GPU')
+    else:
+        logging.info('On CPU')
     # define GPUs
     if cfg.training.GPU >= 0:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -110,6 +114,7 @@ def main():
     logging.info("Start evaluate")
 
     performance = evaluator.evaluate(cfg.dataset.test)
+    print(performance)
     logging.info("Done evaluating")
 
     
