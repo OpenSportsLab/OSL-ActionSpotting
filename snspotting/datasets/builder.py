@@ -1,5 +1,5 @@
 
-from .soccernet import SoccerNetClips, SoccerNetGames, SoccerNet
+from .soccernet import SoccerNet
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipsfromJSON, FeatureVideosfromJSON
 from .soccernet_CALF import SoccerNetClipsCALF, SoccerNetClipsTestingCALF
