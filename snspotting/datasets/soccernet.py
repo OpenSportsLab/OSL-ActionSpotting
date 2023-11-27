@@ -99,24 +99,9 @@ class SoccerNet(Dataset):
 
                 for annotation in labels["annotations"]:
 
-                    time = annotation["gameTime"]
-                    event = annotation["label"]
-
-                    half = int(time[0])
-
-                    minutes = int(time[-5:-3])
-                    seconds = int(time[-2::])
-                    frame = framerate * ( seconds + 60 * minutes ) 
-
-                    if version == 1:
-                        if "card" in event: label = 0
-                        elif "subs" in event: label = 1
-                        elif "soccer" in event: label = 2
-                        else: continue
-                    elif version == 2:
-                        if event not in self.dict_event:
-                            continue
-                        label = self.dict_event[event]
+                    label,half,frame,cont=self.annotation(annotation)
+                    if cont:
+                        continue
 
                     # if label outside temporal of view
                     if half == 1 and frame//self.window_size_frame>=label_half1.shape[0]:
@@ -171,17 +156,9 @@ class SoccerNet(Dataset):
 
                 for annotation in labels["annotations"]:
 
-                    event,half,frame=self.annotation(annotation)
-
-                    if self.version == 1:
-                        if "card" in event: label = 0
-                        elif "subs" in event: label = 1
-                        elif "soccer" in event: label = 2
-                        else: continue
-                    elif self.version == 2:
-                        if event not in self.dict_event:
-                            continue
-                        label = self.dict_event[event]
+                    label,half,frame,cont=self.annotation(annotation)
+                    if cont:
+                        continue
 
                     value = 1
                     if "visibility" in annotation.keys():
@@ -196,9 +173,6 @@ class SoccerNet(Dataset):
                         frame = min(frame, feat_half2.shape[0]-1)
                         label_half2[frame][label] = value
 
-            
-                
-
             feat_half1 = feats2clip(torch.from_numpy(feat_half1), 
                             stride=1, off=int(self.window_size_frame/2), 
                             clip_length=self.window_size_frame)
@@ -206,46 +180,32 @@ class SoccerNet(Dataset):
             feat_half2 = feats2clip(torch.from_numpy(feat_half2), 
                             stride=1, off=int(self.window_size_frame/2), 
                             clip_length=self.window_size_frame)
-
             
             return self.listGames[index], feat_half1, feat_half2, label_half1, label_half2
 
     def __len__(self):
-        if(self.clips):
-            return len(self.game_feats)
-        else:
-            logging.info("len non clips")
-            return len(self.listGames)
+        return len(self.game_feats) if self.clips else len(self.listGames)
 
     def load_features(self,index=0,game="",clips=True):
-        if(self.clips):
-            path_bis=game
-        else:
-            logging.info("load_features non clips")
-            path_bis=self.listGames[index]
         # Load features
-        feat_half1 = np.load(os.path.join(self.path, path_bis, "1_" + self.features))
+        feat_half1 = np.load(os.path.join(self.path, game if self.clips else self.listGames[index], "1_" + self.features))
         feat_half1 = feat_half1.reshape(-1, feat_half1.shape[-1])
-        feat_half2 = np.load(os.path.join(self.path, path_bis, "2_" + self.features))
+        feat_half2 = np.load(os.path.join(self.path, game if self.clips else self.listGames[index], "2_" + self.features))
         feat_half2 = feat_half2.reshape(-1, feat_half2.shape[-1])
 
         return feat_half1,feat_half2
     
     def load_labels(self,feat_half1,feat_half2,clips):
-        if(self.clips):
-            num=self.num_classes + 1
-        else:
-            logging.info("load_labels non clips")
-            num=self.num_classes
         # Load labels
-        label_half1 = np.zeros((feat_half1.shape[0], num))
-        label_half2 = np.zeros((feat_half2.shape[0], num))
+        label_half1 = np.zeros((feat_half1.shape[0], self.num_classes+1 if self.clips else self.num_classes))
+        label_half2 = np.zeros((feat_half2.shape[0], self.num_classes+1 if self.clips else self.num_classes))
         if self.clips:
             label_half1[:,0]=1 # those are BG classes
             label_half2[:,0]=1 # those are BG classes
         return label_half1,label_half2
     
     def annotation(self,annotation):
+
         time = annotation["gameTime"]
         event = annotation["label"]
 
@@ -255,61 +215,19 @@ class SoccerNet(Dataset):
         seconds = int(time[-2::])
         frame = self.framerate * ( seconds + 60 * minutes )
 
-        return event,half,frame
-    def annotation_loop(self,labels,feat_half1,feat_half2,label_half1,label_half2):
-        
-        for annotation in labels["annotations"]:
-
-            time = annotation["gameTime"]
-            event = annotation["label"]
-
-            half = int(time[0])
-
-            minutes = int(time[-5:-3])
-            seconds = int(time[-2::])
-            frame = self.framerate * ( seconds + 60 * minutes ) 
-
-            if self.version == 1:
-                if "card" in event: label = 0
-                elif "subs" in event: label = 1
-                elif "soccer" in event: label = 2
-                else: continue
-            elif self.version == 2:
-                if event not in self.dict_event:
-                    continue
+        cont =False
+        if self.version == 1:
+            if "card" in event: label = 0
+            elif "subs" in event: label = 1
+            elif "soccer" in event: label = 2
+            else: cont=True
+        elif self.version == 2:
+            if event not in self.dict_event:
+                cont=True
+            else:
                 label = self.dict_event[event]
 
-            if self.clips:
-                # if label outside temporal of view
-                if half == 1 and frame//self.window_size_frame>=label_half1.shape[0]:
-                    continue
-                if half == 2 and frame//self.window_size_frame>=label_half2.shape[0]:
-                    continue
-
-                if half == 1:
-                    label_half1[frame//self.window_size_frame][0] = 0 # not BG anymore
-                    label_half1[frame//self.window_size_frame][label+1] = 1 # that's my class
-
-                if half == 2:
-                    label_half2[frame//self.window_size_frame][0] = 0 # not BG anymore
-                    label_half2[frame//self.window_size_frame][label+1] = 1 # that's my class
-            else:
-                value = 1
-                if "visibility" in annotation.keys():
-                    if annotation["visibility"] == "not shown":
-                        value = -1
-
-                if half == 1:
-                    frame = min(frame, feat_half1.shape[0]-1)
-                    label_half1[frame][label] = value
-
-                if half == 2:
-                    frame = min(frame, feat_half2.shape[0]-1)
-                    label_half2[frame][label] = value
-            
-            return label_half1,label_half2
-
-                
+        return label,half,frame,cont                
     
 class SoccerNetClips(Dataset):
     def __init__(self, path, features="ResNET_PCA512.npy", split=["train"], version=1, 
