@@ -94,34 +94,6 @@ class SoccerNet(Dataset):
                 labels = json.load(open(os.path.join(self.path, game, self.labels)))
                 
                 label_half1,label_half2=self.load_labels(feat_half1,feat_half2,True)
-
-                # for annotation in labels["annotations"]:
-                    
-                #     event,half,frame=self.annotation(annotation)
-
-                #     if version == 1:
-                #         if "card" in event: label = 0
-                #         elif "subs" in event: label = 1
-                #         elif "soccer" in event: label = 2
-                #         else: continue
-                #     elif version == 2:
-                #         if event not in self.dict_event:
-                #             continue
-                #         label = self.dict_event[event]
-
-                #     # if label outside temporal of view
-                #     if half == 1 and frame//self.window_size_frame>=label_half1.shape[0]:
-                #         continue
-                #     if half == 2 and frame//self.window_size_frame>=label_half2.shape[0]:
-                #         continue
-
-                #     if half == 1:
-                #         label_half1[frame//self.window_size_frame][0] = 0 # not BG anymore
-                #         label_half1[frame//self.window_size_frame][label+1] = 1 # that's my class
-
-                #     if half == 2:
-                #         label_half2[frame//self.window_size_frame][0] = 0 # not BG anymore
-                #         label_half2[frame//self.window_size_frame][label+1] = 1 # that's my class
                 
                 label_half1,label_half2 = self.annotation_loop(labels,feat_half1,feat_half2,label_half1,label_half2)
 
@@ -149,9 +121,10 @@ class SoccerNet(Dataset):
                 label_half2 (np.array): labels (one-hot) for the 2nd half.
         """
         if self.clips :
+            logging.info("get_item clips")
             return self.game_feats[index,:,:], self.game_labels[index,:]
         else:
-
+            logging.info("get_item non clips")
             # Load features
             feat_half1,feat_half2=self.load_features(index=index,clips=False)
 
@@ -204,22 +177,40 @@ class SoccerNet(Dataset):
             return self.listGames[index], feat_half1, feat_half2, label_half1, label_half2
 
     def __len__(self):
-        return len(self.game_feats) if self.clips else len(self.listGames)
+        if(self.clips):
+            logging.info("len clips")
+            return len(self.game_feats)
+        else:
+            logging.info("len non clips")
+            return len(self.listGames)
 
     def load_features(self,index=0,game="",clips=True):
+        if(self.clips):
+            logging.info("load_features clips")
+            path_bis=game
+        else:
+            logging.info("load_features non clips")
+            path_bis=self.listGames[index]
         # Load features
-        feat_half1 = np.load(os.path.join(self.path, game if clips else self.listGames[index], "1_" + self.features))
+        feat_half1 = np.load(os.path.join(self.path, path_bis, "1_" + self.features))
         feat_half1 = feat_half1.reshape(-1, feat_half1.shape[-1])
-        feat_half2 = np.load(os.path.join(self.path, game if clips else self.listGames[index], "2_" + self.features))
+        feat_half2 = np.load(os.path.join(self.path, path_bis, "2_" + self.features))
         feat_half2 = feat_half2.reshape(-1, feat_half2.shape[-1])
 
         return feat_half1,feat_half2
     
     def load_labels(self,feat_half1,feat_half2,clips):
+        if(self.clips):
+            logging.info("load_labels clips")
+            num=self.num_classes + 1
+        else:
+            logging.info("load_labels non clips")
+            num=self.num_classes
         # Load labels
-        label_half1 = np.zeros((feat_half1.shape[0], self.num_classes + 1 if clips else self.num_classes))
-        label_half2 = np.zeros((feat_half2.shape[0], self.num_classes + 1 if clips else self.num_classes))
-        if clips:
+        label_half1 = np.zeros((feat_half1.shape[0], num))
+        label_half2 = np.zeros((feat_half2.shape[0], num))
+        if self.clips:
+            logging.info("load_labels clips")
             label_half1[:,0]=1 # those are BG classes
             label_half2[:,0]=1 # those are BG classes
         return label_half1,label_half2

@@ -19,14 +19,14 @@ def build_dataset(cfg, default_args=None):
         Dataset: The constructed dataset.
     """
     if cfg.type == "SoccerNetClips":
-        # dataset = SoccerNet(path=cfg.data_root, 
-        #     features=cfg.features, split=cfg.split,
-        #     version=cfg.version, framerate=cfg.framerate,
-        #     window_size=cfg.window_size,clips=True)
-        dataset = SoccerNetClips(path=cfg.data_root, 
+        dataset = SoccerNet(path=cfg.data_root, 
             features=cfg.features, split=cfg.split,
             version=cfg.version, framerate=cfg.framerate,
-            window_size=cfg.window_size)
+            window_size=cfg.window_size,clips=True)
+        # dataset = SoccerNetClips(path=cfg.data_root, 
+        #     features=cfg.features, split=cfg.split,
+        #     version=cfg.version, framerate=cfg.framerate,
+        #     window_size=cfg.window_size)
     elif cfg.type == "SoccerNetGames":
         dataset = SoccerNetGames(path=cfg.data_root, 
             features=cfg.features, split=cfg.split, 
