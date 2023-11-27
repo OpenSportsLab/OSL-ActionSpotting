@@ -1,7 +1,7 @@
 _base_ = [
     "../_base_/datasets/soccernet/features_clips.py",  # dataset config
     "../_base_/models/learnablepooling.py",  # model config
-    # "../_base_/schedules/pooling_1000_adam.py" # trainer config
+    "../_base_/schedules/pooling_1000_adam.py" # trainer config
 ]
 
 work_dir = "outputs/learnablepooling/soccernet_netvlad_resnetpca512"
