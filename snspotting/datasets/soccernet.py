@@ -143,7 +143,6 @@ class SoccerNet(Dataset):
         if self.clips :
             return self.game_feats[index,:,:], self.game_labels[index,:]
         else:
-            logging.info("get_item non clips")
             # Load features
             feat_half1,feat_half2=self.load_features(index=index,clips=False)
 

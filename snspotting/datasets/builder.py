@@ -28,10 +28,14 @@ def build_dataset(cfg, default_args=None):
         #     version=cfg.version, framerate=cfg.framerate,
         #     window_size=cfg.window_size)
     elif cfg.type == "SoccerNetGames":
-        dataset = SoccerNetGames(path=cfg.data_root, 
-            features=cfg.features, split=cfg.split, 
+        dataset = SoccerNet(path=cfg.data_root, 
+            features=cfg.features, split=cfg.split,
             version=cfg.version, framerate=cfg.framerate,
-            window_size=cfg.window_size)
+            window_size=cfg.window_size,clips=False)
+        # dataset = SoccerNetGames(path=cfg.data_root, 
+        #     features=cfg.features, split=cfg.split, 
+        #     version=cfg.version, framerate=cfg.framerate,
+        #     window_size=cfg.window_size)
     elif cfg.type == "SoccerNetClipsCALF":
         dataset = SoccerNetClipsCALF(
                 path=cfg.data_root,
