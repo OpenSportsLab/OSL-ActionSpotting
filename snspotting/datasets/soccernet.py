@@ -121,7 +121,6 @@ class SoccerNet(Dataset):
                 label_half2 (np.array): labels (one-hot) for the 2nd half.
         """
         if self.clips :
-            logging.info("get_item clips")
             return self.game_feats[index,:,:], self.game_labels[index,:]
         else:
             logging.info("get_item non clips")
