@@ -114,7 +114,7 @@ def main():
     logging.info("Start evaluate")
 
     performance = evaluator.evaluate(cfg.dataset.test)
-    print(performance)
+
     logging.info("Done evaluating")
 
     
