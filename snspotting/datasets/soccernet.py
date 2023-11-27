@@ -87,7 +87,6 @@ class SoccerNet(Dataset):
                 feat_half1,feat_half2=self.load_features(game=game,clips=True)
                 
                 if clips:
-                    logging.info("feats2clips")
                     feat_half1 = feats2clip(torch.from_numpy(feat_half1), stride=self.window_size_frame, clip_length=self.window_size_frame)
                     feat_half2 = feats2clip(torch.from_numpy(feat_half2), stride=self.window_size_frame, clip_length=self.window_size_frame)
 
