@@ -87,6 +87,7 @@ class SoccerNet(Dataset):
                 feat_half1,feat_half2=self.load_features(game=game,clips=True)
                 
                 if clips:
+                    logging.info("feats2clips")
                     feat_half1 = feats2clip(torch.from_numpy(feat_half1), stride=self.window_size_frame, clip_length=self.window_size_frame)
                     feat_half2 = feats2clip(torch.from_numpy(feat_half2), stride=self.window_size_frame, clip_length=self.window_size_frame)
 
@@ -177,7 +178,6 @@ class SoccerNet(Dataset):
 
     def __len__(self):
         if(self.clips):
-            logging.info("len clips")
             return len(self.game_feats)
         else:
             logging.info("len non clips")
@@ -185,7 +185,6 @@ class SoccerNet(Dataset):
 
     def load_features(self,index=0,game="",clips=True):
         if(self.clips):
-            logging.info("load_features clips")
             path_bis=game
         else:
             logging.info("load_features non clips")
@@ -200,7 +199,6 @@ class SoccerNet(Dataset):
     
     def load_labels(self,feat_half1,feat_half2,clips):
         if(self.clips):
-            logging.info("load_labels clips")
             num=self.num_classes + 1
         else:
             logging.info("load_labels non clips")
@@ -209,7 +207,6 @@ class SoccerNet(Dataset):
         label_half1 = np.zeros((feat_half1.shape[0], num))
         label_half2 = np.zeros((feat_half2.shape[0], num))
         if self.clips:
-            logging.info("load_labels clips")
             label_half1[:,0]=1 # those are BG classes
             label_half2[:,0]=1 # those are BG classes
         return label_half1,label_half2
