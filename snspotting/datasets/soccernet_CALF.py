@@ -21,13 +21,7 @@ from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V2
 
 # from preprocessing import oneHotToShifts, getTimestampTargets, getChunks_anchors
 
-K_V2 = torch.FloatTensor([[-100, -98, -20, -40, -96, -5, -8, -93, -99, -31, -75, -10, -97, -75, -20, -84, -18], [-50, -49, -10, -20, -48, -3, -4, -46, -50, -15, -37, -
-                                                                                                                 5, -49, -38, -10, -42, -9], [50, 49, 60, 10, 48, 3, 4, 46, 50, 15, 37, 5, 49, 38, 10, 42, 9], [100, 98, 90, 20, 96, 5, 8, 93, 99, 31, 75, 10, 97, 75, 20, 84, 18]])
-
-# # Move to GPU if available
-# if cfg.training.GPU:
-#     K_V2=K_V2.cuda()
-
+K_V2 = torch.FloatTensor([[-100, -98, -20, -40, -96, -5, -8, -93, -99, -31, -75, -10, -97, -75, -20, -84, -18], [-50, -49, -10, -20, -48, -3, -4, -46, -50, -15, -37, -5, -49, -38, -10, -42, -9], [50, 49, 60, 10, 48, 3, 4, 46, 50, 15, 37, 5, 49, 38, 10, 42, 9], [100, 98, 90, 20, 96, 5, 8, 93, 99, 31, 75, 10, 97, 75, 20, 84, 18]])
 
 class SoccerNetClipsCALF(Dataset):
     def __init__(self, path, features="ResNET_PCA512.npy", split="train", 
@@ -40,6 +34,7 @@ class SoccerNetClipsCALF(Dataset):
         self.chunks_per_epoch = chunks_per_epoch
         self.gpu = gpu
 
+        global K_V2
         if self.gpu >=0 :
             K_V2=K_V2.cuda()
 
@@ -177,6 +172,7 @@ class SoccerNetClipsTestingCALF(Dataset):
         self.framerate = framerate
         self.gpu = gpu
 
+        global K_V2
         if self.gpu >=0 :
             K_V2=K_V2.cuda()
 

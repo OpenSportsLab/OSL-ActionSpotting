@@ -3,11 +3,11 @@ from .soccernet import SoccerNet
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipsfromJSON, FeatureVideosfromJSON
 from .soccernet_CALF import SoccerNetClipsCALF, SoccerNetClipsTestingCALF
-
+from .soccernet_CALF import *
 import torch
 from mmengine.config import Config, DictAction
 
-def build_dataset(cfg, default_args=None):
+def build_dataset(cfg, gpu,  default_args=None):
     """Build a dataset from config dict.
 
     Args:
@@ -29,16 +29,25 @@ def build_dataset(cfg, default_args=None):
             version=cfg.version, framerate=cfg.framerate,
             window_size=cfg.window_size,clips=False)
     elif cfg.type == "SoccerNetClipsCALF":
-        dataset = SoccerNetClipsCALF(
-                path=cfg.data_root,
-                features=cfg.features,
+        dataset=SoccerNet(path=cfg.data_root, features=cfg.features,
                 split=cfg.split,
+                version=cfg.version, 
                 framerate=cfg.framerate,
                 chunk_size=cfg.chunk_size,
                 receptive_field=cfg.receptive_field,
                 chunks_per_epoch=cfg.chunks_per_epoch,
-                gpu = cfg.training.GPU
-                )
+                gpu = gpu,
+                calf = True)
+        # dataset = SoccerNetClipsCALF(
+        #         path=cfg.data_root,
+        #         features=cfg.features,
+        #         split=cfg.split,
+        #         framerate=cfg.framerate,
+        #         chunk_size=cfg.chunk_size,
+        #         receptive_field=cfg.receptive_field,
+        #         chunks_per_epoch=cfg.chunks_per_epoch,
+        #         gpu = gpu
+        #         )
     elif cfg.type == "SoccerNetClipsTestingCALF":
         dataset = SoccerNetClipsTestingCALF(
                 path=cfg.data_root,
@@ -46,7 +55,7 @@ def build_dataset(cfg, default_args=None):
                 split=cfg.split,
                 framerate=cfg.framerate,
                 chunk_size=cfg.chunk_size,
-                receptive_field=cfg.receptive_field,gpu = cfg.training.GPU
+                receptive_field=cfg.receptive_field,gpu = gpu
             )
     elif cfg.type == "FeatureClipsfromJSON":
         dataset = FeatureClipsfromJSON(path=cfg.path, 

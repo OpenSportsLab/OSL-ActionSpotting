@@ -102,8 +102,8 @@ def main():
     
     # Build Datasets    
     logging.info('Build Datasets')
-    dataset_Train = build_dataset(cfg.dataset.train)
-    dataset_Val = build_dataset(cfg.dataset.val)
+    dataset_Train = build_dataset(cfg.dataset.train,cfg.training.GPU)
+    dataset_Val = build_dataset(cfg.dataset.val,cfg.training.GPU)
     
     # Build Dataloaders
     logging.info('Build Dataloaders')
