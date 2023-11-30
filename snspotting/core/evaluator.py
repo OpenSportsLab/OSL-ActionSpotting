@@ -70,7 +70,7 @@ class Evaluator():
             cfg_testset.split = [split]
 
             # Build Dataset
-            dataset_Test = build_dataset(cfg_testset)
+            dataset_Test = build_dataset(cfg_testset,self.cfg.training.GPU)
 
             # Build Dataloader
             test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader,self.cfg.training.GPU)
