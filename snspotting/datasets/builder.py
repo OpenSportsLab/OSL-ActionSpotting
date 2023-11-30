@@ -49,14 +49,23 @@ def build_dataset(cfg, gpu,  default_args=None):
         #         gpu = gpu
         #         )
     elif cfg.type == "SoccerNetClipsTestingCALF":
-        dataset = SoccerNetClipsTestingCALF(
-                path=cfg.data_root,
-                features=cfg.features,
+        dataset=SoccerNet(path=cfg.data_root, features=cfg.features,
                 split=cfg.split,
+                version=cfg.version, 
                 framerate=cfg.framerate,
                 chunk_size=cfg.chunk_size,
-                receptive_field=cfg.receptive_field,gpu = gpu
-            )
+                receptive_field=cfg.receptive_field,
+                chunks_per_epoch=cfg.chunks_per_epoch,
+                gpu = gpu,
+                calf = True,clips=False)
+        # dataset = SoccerNetClipsTestingCALF(
+        #         path=cfg.data_root,
+        #         features=cfg.features,
+        #         split=cfg.split,
+        #         framerate=cfg.framerate,
+        #         chunk_size=cfg.chunk_size,
+        #         receptive_field=cfg.receptive_field,gpu = gpu
+        #     )
     elif cfg.type == "FeatureClipsfromJSON":
         dataset = FeatureClipsfromJSON(path=cfg.path, 
             framerate=cfg.framerate,

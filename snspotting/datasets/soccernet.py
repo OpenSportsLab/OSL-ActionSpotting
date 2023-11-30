@@ -20,7 +20,7 @@ from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIO
 
 K_V2 = torch.FloatTensor([[-100, -98, -20, -40, -96, -5, -8, -93, -99, -31, -75, -10, -97, -75, -20, -84, -18], [-50, -49, -10, -20, -48, -3, -4, -46, -50, -15, -37, -5, -49, -38, -10, -42, -9], [50, 49, 60, 10, 48, 3, 4, 46, 50, 15, 37, 5, 49, 38, 10, 42, 9], [100, 98, 90, 20, 96, 5, 8, 93, 99, 31, 75, 10, 97, 75, 20, 84, 18]])
 
-def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0):
+def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0, calf=False):
     if padding =="zeropad":
         print("beforepadding", feats.shape)
         pad = feats.shape[0] - int(feats.shape[0]/stride)*stride
@@ -29,7 +29,7 @@ def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0):
         feats = m(feats)
         print("afterpadding", feats.shape)
         # nn.ZeroPad2d(2)
-
+    if calf: off=0
     idx = torch.arange(start=0, end=feats.shape[0]-1, step=stride)
     idxs = []
     for i in torch.arange(-off, clip_length-off):
@@ -38,6 +38,9 @@ def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0):
 
     if padding=="replicate_last":
         idx = idx.clamp(0, feats.shape[0]-1)
+    if(calf):
+        idx[-1] = torch.arange(clip_length)+feats.shape[0]-clip_length
+        return feats[idx,:]
     # print(idx)
     return feats[idx,...]
 
@@ -83,9 +86,9 @@ class SoccerNet(Dataset):
         else:
             for s in split:
                 if s == "challenge":
-                    downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True)
+                    downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True if not calf else False)
                 else:
-                    downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True)
+                    downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True if not calf else False)
 
         if clips:
             logging.info("Pre-compute clips")
@@ -241,6 +244,7 @@ class SoccerNet(Dataset):
                         if annotation["visibility"] == "not shown":
                             value = -1
 
+
                     if half == 1:
                         frame = min(frame, feat_half1.shape[0]-1)
                         label_half1[frame][label] = value
@@ -250,14 +254,16 @@ class SoccerNet(Dataset):
                         label_half2[frame][label] = value
 
             feat_half1 = feats2clip(torch.from_numpy(feat_half1), 
-                            stride=1, off=int(self.window_size_frame/2), 
-                            clip_length=self.window_size_frame)
+                            stride=1 if not self.calf else self.chunk_size-self.receptive_field, off=int(self.window_size_frame/2), 
+                            clip_length=self.window_size_frame if not self.calf else self.chunk_size, calf=self.calf)
 
             feat_half2 = feats2clip(torch.from_numpy(feat_half2), 
-                            stride=1, off=int(self.window_size_frame/2), 
-                            clip_length=self.window_size_frame)
-            
-            return self.listGames[index], feat_half1, feat_half2, label_half1, label_half2
+                            stride=1 if not self.calf else self.chunk_size-self.receptive_field, off=int(self.window_size_frame/2), 
+                            clip_length=self.window_size_frame if not self.calf else self.chunk_size, calf=self.calf)
+            if not self.calf:
+                return self.listGames[index], feat_half1, feat_half2, label_half1, label_half2
+            else:
+                return feat_half1, feat_half2, torch.from_numpy(label_half1), torch.from_numpy(label_half2)
 
     def __len__(self):
         if self.clips :
