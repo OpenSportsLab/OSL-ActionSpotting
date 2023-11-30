@@ -188,6 +188,7 @@ def train_one_epoch_CALF(dataloader,
         model,
         criterion,
         optimizer,
+        gpu,
         epoch,
         backprop=False):
 
@@ -207,10 +208,10 @@ def train_one_epoch_CALF(dataloader,
             # measure data loading time
             data_time.update(time.time() - end)
 
-            # if cfg.GPU >= 0:
-            feats = feats.cuda()
-            labels = labels.cuda().float()
-            targets = targets.cuda().float()
+            if gpu >= 0:
+                feats = feats.cuda()
+                labels = labels.cuda().float()
+                targets = targets.cuda().float()
 
 
             feats=feats.unsqueeze(1)
