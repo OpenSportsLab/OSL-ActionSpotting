@@ -221,10 +221,10 @@ class SoccerNet(Dataset):
                 return self.game_feats[index,:,:], self.game_labels[index,:]
         else:
             # Load features
-            feat_half1,feat_half2=self.load_features(index=index,clips=False)
+            feat_half1,feat_half2=self.load_features(index=index)
 
             # Load labels
-            label_half1,label_half2=self.load_labels(feat_half1,feat_half2,clips=False)
+            label_half1,label_half2=self.load_labels(feat_half1,feat_half2)
 
             # check if annotation exists
             if os.path.exists(os.path.join(self.path, self.listGames[index], self.labels)):
