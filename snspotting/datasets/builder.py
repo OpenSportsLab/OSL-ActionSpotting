@@ -22,12 +22,12 @@ def build_dataset(cfg, gpu,  default_args=None):
         dataset = SoccerNet(path=cfg.data_root, 
             features=cfg.features, split=cfg.split,
             version=cfg.version, framerate=cfg.framerate,
-            window_size=cfg.window_size,clips=True)
+            window_size=cfg.window_size,train=True)
     elif cfg.type == "SoccerNetGames":
         dataset = SoccerNet(path=cfg.data_root, 
             features=cfg.features, split=cfg.split,
             version=cfg.version, framerate=cfg.framerate,
-            window_size=cfg.window_size,clips=False)
+            window_size=cfg.window_size,train=False)
     elif cfg.type == "SoccerNetClipsCALF":
         dataset=SoccerNet(path=cfg.data_root, features=cfg.features,
                 split=cfg.split,
@@ -57,7 +57,7 @@ def build_dataset(cfg, gpu,  default_args=None):
                 receptive_field=cfg.receptive_field,
                 chunks_per_epoch=cfg.chunks_per_epoch,
                 gpu = gpu,
-                calf = True,clips=False)
+                calf = True,train=False)
         # dataset = SoccerNetClipsTestingCALF(
         #         path=cfg.data_root,
         #         features=cfg.features,

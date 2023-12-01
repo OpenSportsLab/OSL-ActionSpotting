@@ -46,9 +46,9 @@ def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0, ca
 
 class SoccerNet(Dataset):
     def __init__(self, path, features="ResNET_PCA512.npy", split=["train"], version=1, 
-                framerate=2, window_size=15,clips=True,calf=False,chunk_size=240, receptive_field=80, chunks_per_epoch=6000,gpu=True):
+                framerate=2, window_size=15,train=True,calf=False,chunk_size=240, receptive_field=80, chunks_per_epoch=6000,gpu=True):
         self.path = path
-        self.clips = clips
+        self.train = train
         self.calf = calf
         # split=["train"] if clips else ["test"]
         self.listGames = getListGames(split)
@@ -57,12 +57,12 @@ class SoccerNet(Dataset):
         self.framerate = framerate
         self.version = version
         self.split=split
+
         if calf:
             self.chunk_size = chunk_size
             self.receptive_field = receptive_field
             self.chunks_per_epoch = chunks_per_epoch
             self.gpu = gpu
-
             global K_V2
             if self.gpu >=0 :
                 K_V2=K_V2.cuda()
@@ -81,7 +81,7 @@ class SoccerNet(Dataset):
         logging.info("Checking/Download features and labels locally")
         downloader = SoccerNetDownloader(path)
 
-        if clips:
+        if train:
             downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=split, verbose=False,randomized=True if not calf else False)
         else:
             for s in split:
@@ -90,7 +90,7 @@ class SoccerNet(Dataset):
                 else:
                     downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True if not calf else False)
 
-        if clips:
+        if train:
             logging.info("Pre-compute clips")
 
             self.game_feats = list()
@@ -107,7 +107,7 @@ class SoccerNet(Dataset):
                 # Load features
                 feat_half1,feat_half2=self.load_features(game=game)
                 
-                if clips and not calf:
+                if train and not calf:
                     feat_half1 = feats2clip(torch.from_numpy(feat_half1), stride=self.window_size_frame, clip_length=self.window_size_frame)
                     feat_half2 = feats2clip(torch.from_numpy(feat_half2), stride=self.window_size_frame, clip_length=self.window_size_frame)
 
@@ -177,7 +177,7 @@ class SoccerNet(Dataset):
         Args:
             index (int): Index
         Returns:
-            if clips :
+            if train :
                 clip_feat (np.array): clip of features.
                 clip_labels (np.array): clip of labels for the segmentation.
                 clip_targets (np.array): clip of targets for the spotting.
@@ -187,7 +187,7 @@ class SoccerNet(Dataset):
                 label_half1 (np.array): labels (one-hot) for the 1st half.
                 label_half2 (np.array): labels (one-hot) for the 2nd half.
         """
-        if self.clips :
+        if self.train :
             if self.calf:
                 # Retrieve the game index and the anchor
                 class_selection = random.randint(0, self.num_classes)
@@ -266,7 +266,7 @@ class SoccerNet(Dataset):
                 return feat_half1, feat_half2, torch.from_numpy(label_half1), torch.from_numpy(label_half2)
 
     def __len__(self):
-        if self.clips :
+        if self.train :
             if self.calf:
                 return self.chunks_per_epoch
             else:
@@ -276,8 +276,8 @@ class SoccerNet(Dataset):
 
     def load_features(self,index=0,game=""):
         # Load features
-        feat_half1 = np.load(os.path.join(self.path, game if self.clips else self.listGames[index], "1_" + self.features))
-        feat_half2 = np.load(os.path.join(self.path, game if self.clips else self.listGames[index], "2_" + self.features))
+        feat_half1 = np.load(os.path.join(self.path, game if self.train else self.listGames[index], "1_" + self.features))
+        feat_half2 = np.load(os.path.join(self.path, game if self.train else self.listGames[index], "2_" + self.features))
         if not self.calf:
             feat_half1 = feat_half1.reshape(-1, feat_half1.shape[-1])
             feat_half2 = feat_half2.reshape(-1, feat_half2.shape[-1])
@@ -286,9 +286,9 @@ class SoccerNet(Dataset):
     
     def load_labels(self,feat_half1,feat_half2):
         # Load labels
-        label_half1 = np.zeros((feat_half1.shape[0], self.num_classes+1 if (self.clips and not self.calf) else self.num_classes))
-        label_half2 = np.zeros((feat_half2.shape[0], self.num_classes+1 if (self.clips and not self.calf) else self.num_classes))
-        if self.clips and not self.calf:
+        label_half1 = np.zeros((feat_half1.shape[0], self.num_classes+1 if (self.train and not self.calf) else self.num_classes))
+        label_half2 = np.zeros((feat_half2.shape[0], self.num_classes+1 if (self.train and not self.calf) else self.num_classes))
+        if self.train and not self.calf:
             label_half1[:,0]=1 # those are BG classes
             label_half2[:,0]=1 # those are BG classes
         return label_half1,label_half2

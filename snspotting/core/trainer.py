@@ -32,15 +32,15 @@ def build_trainer(cfg, model, default_args=None):
                         model=model,
                         criterion=criterion,
                         optimizer=optimizer,
-                        scheduler=scheduler)
+                        scheduler=scheduler,calf=False)
     elif cfg.type == "trainer_CALF":
         trainer = Trainer(cfg=cfg,
-                        train_one_epoch=train_one_epoch_CALF,
-                        valid_one_epoch=train_one_epoch_CALF,
+                        train_one_epoch=train_one_epoch,
+                        valid_one_epoch=train_one_epoch,
                         model=model,
                         criterion=criterion,
                         optimizer=optimizer,
-                        scheduler=scheduler)
+                        scheduler=scheduler,calf=True)
     else:
         trainer = None
     return trainer
@@ -53,7 +53,8 @@ class Trainer():
                 model,
                 criterion,
                 optimizer,
-                scheduler):
+                scheduler,
+                calf):
         self.train_one_epoch = train_one_epoch
         self.valid_one_epoch = valid_one_epoch
 
@@ -64,6 +65,8 @@ class Trainer():
 
         self.cfg = cfg
         self.max_epochs = cfg.max_epochs
+
+        self.calf = calf
 
     def train(self,
             train_loader,
@@ -76,11 +79,11 @@ class Trainer():
 
             # train for one epoch
             loss_training = self.train_one_epoch(train_loader, self.model, self.criterion,
-                                self.optimizer, self.cfg.GPU, epoch + 1, backprop=True)
+                                self.optimizer, self.cfg.GPU, epoch + 1, self.calf, backprop=True)
 
             # evaluate on validation set
             loss_validation = self.train_one_epoch(
-                val_loader, self.model, self.criterion, self.optimizer, self.cfg.GPU, epoch + 1, backprop=False)
+                val_loader, self.model, self.criterion, self.optimizer, self.cfg.GPU, epoch + 1, self.calf, backprop=False)
 
             state = {
                 'epoch': epoch + 1,
@@ -128,6 +131,7 @@ def train_one_epoch(dataloader,
         optimizer,
         gpu,
         epoch,
+        calf,
         backprop=False):
 
     batch_time = AverageMeter()
@@ -142,20 +146,28 @@ def train_one_epoch(dataloader,
 
     end = time.time()
     with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
-        for i, (feats, labels) in t:
-            # measure data loading time
-            data_time.update(time.time() - end)
-
+        for i, tuples in t:
+            if calf:
+                feats, labels, targets = tuples
+            else:
+                feats, labels = tuples
+            
             # if cfg.GPU >= 0:
             if gpu >=0:
                 feats = feats.cuda()
-                labels = labels.cuda()
+                labels = labels.cuda().float() if calf else labels.cuda()
+                if calf : targets = targets.cuda().float()
+            
+            if calf : feats=feats.unsqueeze(1)
 
             # compute output
-            output = model(feats)
+            if calf : 
+                output_segmentation, output_spotting = model(feats)
+            else :
+                output = model(feats)
 
             # hand written NLL criterion
-            loss = criterion(labels, output)
+            loss = criterion([labels, targets] if calf else labels, [output_segmentation, output_spotting] if calf else output)
 
             # measure accuracy and record loss
             losses.update(loss.item(), feats.size(0))
