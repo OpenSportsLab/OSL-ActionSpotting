@@ -560,7 +560,7 @@ def get_json_data(calf,game_info=None,game_ID=None):
     json_data["predictions"] = list()
     return json_data
 
-def get_prediction_data(calf,frame_index, framerate, class_index, confidence, half, l, version, half_1):
+def get_prediction_data(calf,frame_index, framerate, class_index, confidence, half=None, l=None, version=None, half_1=None):
     seconds = int((frame_index//framerate)%60)
     minutes = int((frame_index//framerate)//60)
 
