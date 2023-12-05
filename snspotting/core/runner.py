@@ -291,67 +291,118 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
                 feat_half1=feat_half1.unsqueeze(1)
                 feat_half2=feat_half2.unsqueeze(1)
             #label half en plus
+            if calf:
+                # Compute the output
+                output_segmentation_half_1, output_spotting_half_1 = model(feat_half1)
+                output_segmentation_half_2, output_spotting_half_2 = model(feat_half2)
+
+                timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
+                timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+                segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
+                segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+
+                spotting_grountruth.append(torch.abs(label_half1))
+                spotting_grountruth.append(torch.abs(label_half2))
+                spotting_grountruth_visibility.append(label_half1)
+                spotting_grountruth_visibility.append(label_half2)
+                spotting_predictions.append(timestamp_long_half_1)
+                spotting_predictions.append(timestamp_long_half_2)
+                segmentation_predictions.append(segmentation_long_half_1)
+                segmentation_predictions.append(segmentation_long_half_2)
             
-            # Compute the output for batches of frames
-            BS = 256
-            timestamp_long_half_1 = timestamp_half(feat_half1,model,BS)
-            timestamp_long_half_2 = timestamp_half(feat_half2,model,BS)
-            
-            timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
-            timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
+            else:
+                # Compute the output for batches of frames
+                BS = 256
+                timestamp_long_half_1 = timestamp_half(feat_half1,model,BS)
+                timestamp_long_half_2 = timestamp_half(feat_half2,model,BS)
+                
+                timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
+                timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
 
-            spotting_predictions.append(timestamp_long_half_1)
-            spotting_predictions.append(timestamp_long_half_2)
+                spotting_predictions.append(timestamp_long_half_1)
+                spotting_predictions.append(timestamp_long_half_2)
 
-            batch_time.update(time.time() - end)
-            end = time.time()
+                batch_time.update(time.time() - end)
+                end = time.time()
 
-            desc = f'Test (spot.): '
-            desc += f'Time {batch_time.avg:.3f}s '
-            desc += f'(it:{batch_time.val:.3f}s) '
-            desc += f'Data:{data_time.avg:.3f}s '
-            desc += f'(it:{data_time.val:.3f}s) '
-            t.set_description(desc)
+                desc = f'Test (spot.): '
+                desc += f'Time {batch_time.avg:.3f}s '
+                desc += f'(it:{batch_time.val:.3f}s) '
+                desc += f'Data:{data_time.avg:.3f}s '
+                desc += f'(it:{data_time.val:.3f}s) '
+                t.set_description(desc)
 
-            framerate = dataloader.dataset.framerate
-            get_spot = get_spot_from_NMS
+                framerate = dataloader.dataset.framerate
+                get_spot = get_spot_from_NMS
 
-            json_data = dict()
-            json_data["UrlLocal"] = game_ID
-            json_data["predictions"] = list()
+                json_data = get_json_data(False,game_ID=game_ID)
+                
+                # json_data = dict()
+                # json_data["UrlLocal"] = game_ID
+                # json_data["predictions"] = list()
 
-            for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
-                for l in range(dataloader.dataset.num_classes):
-                    spots = get_spot(
-                        timestamp[:, l], window=cfg.model.post_proc.NMS_window*cfg.model.backbone.framerate, thresh=cfg.model.post_proc.NMS_threshold)
-                    for spot in spots:
-                        # print("spot", int(spot[0]), spot[1], spot)
-                        frame_index = int(spot[0])
-                        confidence = spot[1]
-                        if confidence < confidence_threshold:
-                            continue
-                        # confidence = predictions_half_1[frame_index, l]
+                for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
+                    for l in range(dataloader.dataset.num_classes):
+                        spots = get_spot(
+                            timestamp[:, l], window=cfg.model.post_proc.NMS_window*cfg.model.backbone.framerate, thresh=cfg.model.post_proc.NMS_threshold)
+                        for spot in spots:
+                            # print("spot", int(spot[0]), spot[1], spot)
+                            frame_index = int(spot[0])
+                            confidence = spot[1]
+                            if confidence < confidence_threshold:
+                                continue
+                            # confidence = predictions_half_1[frame_index, l]
 
-                        seconds = int((frame_index//framerate)%60)
-                        minutes = int((frame_index//framerate)//60)
+                            # seconds = int((frame_index//framerate)%60)
+                            # minutes = int((frame_index//framerate)//60)
 
-                        prediction_data = dict()
-                        prediction_data["gameTime"] = f"{half+1} - {minutes:02.0f}:{seconds:02.0f}"
-                        if dataloader.dataset.version == 2:
-                            prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[l]
-                        else:
-                            prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V1[l]
-                        prediction_data["position"] = str(int((frame_index/framerate)*1000))
-                        prediction_data["half"] = str(half+1)
-                        prediction_data["confidence"] = str(confidence)
-                        json_data["predictions"].append(prediction_data)
-            
-                json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
-                json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
+                            # prediction_data = dict()
+                            # prediction_data["gameTime"] = f"{half+1} - {minutes:02.0f}:{seconds:02.0f}"
+                            # if dataloader.dataset.version == 2:
+                            #     prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[l]
+                            # else:
+                            #     prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V1[l]
+                            # prediction_data["position"] = str(int((frame_index/framerate)*1000))
+                            # prediction_data["half"] = str(half+1)
+                            # prediction_data["confidence"] = str(confidence)
+                            # get_prediction_data(False,frame_index,framerate,half=half,version=dataloader.dataset.version,l=l,confidence=confidence)
 
-            os.makedirs(os.path.join(cfg.work_dir, output_folder, game_ID), exist_ok=True)
-            with open(os.path.join(cfg.work_dir, output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
-                json.dump(json_data, output_file, indent=4)
+                            json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=dataloader.dataset.version,l=l,confidence=confidence))
+                
+                    json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
+                    json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
+
+                os.makedirs(os.path.join(cfg.work_dir, output_folder, game_ID), exist_ok=True)
+                with open(os.path.join(cfg.work_dir, output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
+                    json.dump(json_data, output_file, indent=4)
+    if calf :
+        # Transformation to numpy for evaluation
+        targets_numpy = list()
+        closests_numpy = list()
+        detections_numpy = list()
+        for target, detection in zip(spotting_grountruth_visibility,spotting_predictions):
+            target_numpy = target.numpy()
+            targets_numpy.append(target_numpy)
+            detections_numpy.append(NMS(detection.numpy(), 20*model.framerate))
+            closest_numpy = np.zeros(target_numpy.shape)-1
+            #Get the closest action index
+            for c in np.arange(target_numpy.shape[-1]):
+                indexes = np.where(target_numpy[:,c] != 0)[0].tolist()
+                if len(indexes) == 0 :
+                    continue
+                indexes.insert(0,-indexes[0])
+                indexes.append(2*closest_numpy.shape[0])
+                for i in np.arange(len(indexes)-2)+1:
+                    start = max(0,(indexes[i-1]+indexes[i])//2)
+                    stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
+                    closest_numpy[start:stop,c] = target_numpy[indexes[i],c]
+            closests_numpy.append(closest_numpy)
+
+        # Save the predictions to the json format
+        # if save_predictions:
+        list_game = getListGames(dataloader.dataset.split)
+        for index in np.arange(len(list_game)):
+            predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],cfg.work_dir+"/"+output_folder+"/", list_game[index], model.framerate)
 
     # zip folder
     zipResults(zip_path = output_results,
@@ -503,6 +554,25 @@ def NMS(detections, delta):
 
     return detections_NMS
 
+def get_json_data(calf,game_info=None,game_ID=None):
+    json_data = dict()
+    json_data["UrlLocal"] = game_info if calf else game_ID
+    json_data["predictions"] = list()
+    return json_data
+
+def get_prediction_data(calf,frame_index, framerate, class_index, confidence, half, l, version, half_1):
+    seconds = int((frame_index//framerate)%60)
+    minutes = int((frame_index//framerate)//60)
+
+    prediction_data = dict()
+    prediction_data["gameTime"] = (str(1 if half_1 else 2 ) + " - " + str(minutes) + ":" + str(seconds)) if calf else f"{half+1} - {minutes:02.0f}:{seconds:02.0f}"
+    prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index if calf else l] if version == 2 else INVERSE_EVENT_DICTIONARY_V1[l]
+    prediction_data["position"] = str(int((frame_index/framerate)*1000))
+    prediction_data["half"] = str(1 if half_1 else 2) if calf else str(half+1)
+    prediction_data["confidence"] = str(confidence)
+
+    return prediction_data
+    
 def predictions2json(predictions_half_1, predictions_half_2, output_path, game_info, framerate=2):
 
     os.makedirs(output_path + game_info, exist_ok=True)
@@ -510,42 +580,45 @@ def predictions2json(predictions_half_1, predictions_half_2, output_path, game_i
 
     frames_half_1, class_half_1 = np.where(predictions_half_1 >= 0)
     frames_half_2, class_half_2 = np.where(predictions_half_2 >= 0)
-
-    json_data = dict()
-    json_data["UrlLocal"] = game_info
-    json_data["predictions"] = list()
+    
+    json_data = get_json_data(True,game_info=game_info)
+    
+    # json_data = dict()
+    # json_data["UrlLocal"] = game_info
+    # json_data["predictions"] = list()
 
     for frame_index, class_index in zip(frames_half_1, class_half_1):
 
         confidence = predictions_half_1[frame_index, class_index]
 
-        seconds = int((frame_index//framerate)%60)
-        minutes = int((frame_index//framerate)//60)
+        # seconds = int((frame_index//framerate)%60)
+        # minutes = int((frame_index//framerate)//60)
 
-        prediction_data = dict()
-        prediction_data["gameTime"] = str(1) + " - " + str(minutes) + ":" + str(seconds)
-        prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index]
-        prediction_data["position"] = str(int((frame_index/framerate)*1000))
-        prediction_data["half"] = str(1)
-        prediction_data["confidence"] = str(confidence)
+        # prediction_data = dict()
+        # prediction_data["gameTime"] = str(1) + " - " + str(minutes) + ":" + str(seconds)
+        # prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index]
+        # prediction_data["position"] = str(int((frame_index/framerate)*1000))
+        # prediction_data["half"] = str(1)
+        # prediction_data["confidence"] = str(confidence)
 
-        json_data["predictions"].append(prediction_data)
+        json_data["predictions"].append(get_prediction_data(True,frame_index,framerate,class_index=class_index,confidence=confidence,version=2,half_1=True))
+        # json_data["predictions"].append(prediction_data)
 
     for frame_index, class_index in zip(frames_half_2, class_half_2):
 
         confidence = predictions_half_2[frame_index, class_index]
 
-        seconds = int((frame_index//framerate)%60)
-        minutes = int((frame_index//framerate)//60)
+        # seconds = int((frame_index//framerate)%60)
+        # minutes = int((frame_index//framerate)//60)
 
-        prediction_data = dict()
-        prediction_data["gameTime"] = str(2) + " - " + str(minutes) + ":" + str(seconds)
-        prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index]
-        prediction_data["position"] = str(int((frame_index/framerate)*1000))
-        prediction_data["half"] = str(2)
-        prediction_data["confidence"] = str(confidence)
+        # prediction_data = dict()
+        # prediction_data["gameTime"] = str(2) + " - " + str(minutes) + ":" + str(seconds)
+        # prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index]
+        # prediction_data["position"] = str(int((frame_index/framerate)*1000))
+        # prediction_data["half"] = str(2)
+        # prediction_data["confidence"] = str(confidence)
 
-        json_data["predictions"].append(prediction_data)
+        json_data["predictions"].append(get_prediction_data(True,frame_index,framerate,class_index=class_index,confidence=confidence,version=2,half_1=False))
     
     with open(output_file_path, 'w') as output_file:
         json.dump(json_data, output_file, indent=4)
