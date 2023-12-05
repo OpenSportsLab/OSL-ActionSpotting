@@ -47,7 +47,7 @@ def build_evaluator(cfg, model, default_args=None):
     elif cfg.runner.type == "runner_CALF":
         evaluator = Evaluator(cfg=cfg,
                         evaluate_Spotting=evaluate_SN,
-                        model=model)
+                        model=model,calf=True)
     
     return evaluator
 
@@ -55,11 +55,12 @@ def build_evaluator(cfg, model, default_args=None):
 class Evaluator():
     def __init__(self, cfg, 
                 evaluate_Spotting,
-                model):
+                model,calf=False):
         self.cfg = cfg
         self.model = model
         self.runner = build_runner(cfg.runner, model)
         self.evaluate_Spotting = evaluate_Spotting
+        self.calf=calf
 
     def evaluate(self, cfg_testset):
 
@@ -76,7 +77,7 @@ class Evaluator():
             test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader,self.cfg.training.GPU)
 
             # Run Inference on Dataset
-            results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True)
+            results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True,calf=self.calf)
 
             # extract performances from results
             performances = self.evaluate_Spotting(cfg_testset, results)

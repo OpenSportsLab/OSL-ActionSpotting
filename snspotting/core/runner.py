@@ -197,8 +197,46 @@ def infer_dataset_JSON(cfg,
     return output_results_json
 
 
+def timestamp_half(feat_half,model,BS):
+    timestamp_long_half = []
+    for b in range(int(np.ceil(len(feat_half)/BS))):
+        start_frame = BS*b
+        end_frame = BS*(b+1) if BS * \
+            (b+1) < len(feat_half) else len(feat_half)
+        feat = feat_half[start_frame:end_frame].cuda()
+        output = model(feat).cpu().detach().numpy()
+        timestamp_long_half.append(output)
+    return np.concatenate(timestamp_long_half)
 
-def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=False):
+def get_spot_from_NMS(Input, window=60, thresh=0.0):
+    detections_tmp = np.copy(Input)
+    indexes = []
+    MaxValues = []
+    while(np.max(detections_tmp) >= thresh):
+
+        # Get the max remaining index and value
+        max_value = np.max(detections_tmp)
+        max_index = np.argmax(detections_tmp)
+        MaxValues.append(max_value)
+        indexes.append(max_index)
+        # detections_NMS[max_index,i] = max_value
+
+        nms_from = int(np.maximum(-(window/2)+max_index,0))
+        nms_to = int(np.minimum(max_index+int(window/2), len(detections_tmp)))
+        detections_tmp[nms_from:nms_to] = -1
+
+    return np.transpose([indexes, MaxValues])
+
+def zipResults(zip_path, target_dir, filename="results_spotting.json"):            
+    zipobj = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+    rootlen = len(target_dir) + 1
+    for base, dirs, files in os.walk(target_dir):
+        for file in files:
+            if file == filename:
+                fn = os.path.join(base, file)
+                zipobj.write(fn, fn[rootlen:])
+
+def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=False, calf = False):
 
     # Create folder name and zip file name
     output_folder=f"results_spotting_{'_'.join(cfg.dataset.test.split)}"
@@ -211,8 +249,16 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
 
     batch_time = AverageMeter()
     data_time = AverageMeter()
+    if calf : losses = AverageMeter()
 
     spotting_predictions = list()
+    if calf : 
+        spotting_grountruth = list()
+        spotting_grountruth_visibility = list()
+        segmentation_predictions = list()
+        chunk_size = model.chunk_size
+        receptive_field = model.receptive_field
+    
 
     # put model in eval mode
     model.eval()
@@ -221,38 +267,36 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
     end = time.time()
     #infer_data set loop
     with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
-        for i, (game_ID, feat_half1, feat_half2, label_half1, label_half2) in t:
+        for i, tuples in t:
+            if calf :
+                feat_half1, feat_half2, label_half1, label_half2 = tuples
+            else :
+                game_ID, feat_half1, feat_half2, label_half1, label_half2 = tuples
             # measure data loading time
             data_time.update(time.time() - end)
 
+            if calf:
+                feat_half1 = feat_half1.cuda()
+                label_half1 = label_half1.float().squeeze(0)
+                feat_half2 = feat_half2.cuda()
+                label_half2 = label_half2.float().squeeze(0)
+
+            
             # Batch size of 1
-            game_ID = game_ID[0]
+            if not calf : game_ID = game_ID[0]
             feat_half1 = feat_half1.squeeze(0)
             feat_half2 = feat_half2.squeeze(0)
 
+            if calf :
+                feat_half1=feat_half1.unsqueeze(1)
+                feat_half2=feat_half2.unsqueeze(1)
+            #label half en plus
+            
             # Compute the output for batches of frames
             BS = 256
-            timestamp_long_half_1 = []
-            for b in range(int(np.ceil(len(feat_half1)/BS))):
-                start_frame = BS*b
-                end_frame = BS*(b+1) if BS * \
-                    (b+1) < len(feat_half1) else len(feat_half1)
-                feat = feat_half1[start_frame:end_frame].cuda()
-                output = model(feat).cpu().detach().numpy()
-                timestamp_long_half_1.append(output)
-            timestamp_long_half_1 = np.concatenate(timestamp_long_half_1)
-
-            timestamp_long_half_2 = []
-            for b in range(int(np.ceil(len(feat_half2)/BS))):
-                start_frame = BS*b
-                end_frame = BS*(b+1) if BS * \
-                    (b+1) < len(feat_half2) else len(feat_half2)
-                feat = feat_half2[start_frame:end_frame].cuda()
-                output = model(feat).cpu().detach().numpy()
-                timestamp_long_half_2.append(output)
-            timestamp_long_half_2 = np.concatenate(timestamp_long_half_2)
-
-
+            timestamp_long_half_1 = timestamp_half(feat_half1,model,BS)
+            timestamp_long_half_2 = timestamp_half(feat_half2,model,BS)
+            
             timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
             timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
 
@@ -268,28 +312,6 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
             desc += f'Data:{data_time.avg:.3f}s '
             desc += f'(it:{data_time.val:.3f}s) '
             t.set_description(desc)
-
-
-
-            def get_spot_from_NMS(Input, window=60, thresh=0.0):
-
-                detections_tmp = np.copy(Input)
-                indexes = []
-                MaxValues = []
-                while(np.max(detections_tmp) >= thresh):
-
-                    # Get the max remaining index and value
-                    max_value = np.max(detections_tmp)
-                    max_index = np.argmax(detections_tmp)
-                    MaxValues.append(max_value)
-                    indexes.append(max_index)
-                    # detections_NMS[max_index,i] = max_value
-
-                    nms_from = int(np.maximum(-(window/2)+max_index,0))
-                    nms_to = int(np.minimum(max_index+int(window/2), len(detections_tmp)))
-                    detections_tmp[nms_from:nms_to] = -1
-
-                return np.transpose([indexes, MaxValues])
 
             framerate = dataloader.dataset.framerate
             get_spot = get_spot_from_NMS
@@ -330,16 +352,6 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
             os.makedirs(os.path.join(cfg.work_dir, output_folder, game_ID), exist_ok=True)
             with open(os.path.join(cfg.work_dir, output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
                 json.dump(json_data, output_file, indent=4)
-
-
-    def zipResults(zip_path, target_dir, filename="results_spotting.json"):            
-        zipobj = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
-        rootlen = len(target_dir) + 1
-        for base, dirs, files in os.walk(target_dir):
-            for file in files:
-                if file == filename:
-                    fn = os.path.join(base, file)
-                    zipobj.write(fn, fn[rootlen:])
 
     # zip folder
     zipResults(zip_path = output_results,
