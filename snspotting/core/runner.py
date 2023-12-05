@@ -24,7 +24,7 @@ def build_runner(cfg, model=None, default_args=None):
                         infer_video=infer_video)
     elif cfg.type == "runner_CALF":
         runner = Runner(cfg=cfg,
-                        infer_dataset=infer_dataset_CALF,
+                        infer_dataset=infer_dataset,
                         infer_game=None,
                         infer_features=None,
                         infer_video=None)
