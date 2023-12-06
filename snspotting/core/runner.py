@@ -515,7 +515,7 @@ def infer_video(cfg, video, model, confidence_threshold=0.5, overwrite=False):
     return
 
 ## CODE CALF
-from snspotting.datasets.soccernet_CALF import timestamps2long, batch2long
+from snspotting.datasets.soccernet import timestamps2long, batch2long
 from SoccerNet.Downloader import getListGames
 
 def NMS(detections, delta):
