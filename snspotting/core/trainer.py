@@ -25,22 +25,15 @@ def build_trainer(cfg, model, default_args=None):
     optimizer = build_optimizer(model.parameters(), cfg.optimizer)
     scheduler = build_scheduler(optimizer, cfg.scheduler)
 
-    if cfg.type == "trainer_pooling":
+
+    if cfg.type == "trainer_pooling" or cfg.type == "trainer_CALF":
         trainer = Trainer(cfg=cfg,
                         train_one_epoch=train_one_epoch,
                         valid_one_epoch=train_one_epoch,
                         model=model,
                         criterion=criterion,
                         optimizer=optimizer,
-                        scheduler=scheduler,calf=False)
-    elif cfg.type == "trainer_CALF":
-        trainer = Trainer(cfg=cfg,
-                        train_one_epoch=train_one_epoch,
-                        valid_one_epoch=train_one_epoch,
-                        model=model,
-                        criterion=criterion,
-                        optimizer=optimizer,
-                        scheduler=scheduler,calf=True)
+                        scheduler=scheduler,calf=False if cfg.type == "trainer_pooling" else True)
     else:
         trainer = None
     return trainer
@@ -194,69 +187,3 @@ def train_one_epoch(dataloader,
             t.set_description(desc)
 
     return losses.avg
-
-
-def train_one_epoch_CALF(dataloader,
-        model,
-        criterion,
-        optimizer,
-        gpu,
-        epoch,
-        backprop=False):
-
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    losses = AverageMeter()
-
-    # switch to train mode
-    if backprop:
-        model.train()
-    else:
-        model.eval()
-
-    end = time.time()
-    with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
-        for i, (feats, labels, targets) in t:
-            # measure data loading time
-            data_time.update(time.time() - end)
-
-            if gpu >= 0:
-                feats = feats.cuda()
-                labels = labels.cuda().float()
-                targets = targets.cuda().float()
-
-
-            feats=feats.unsqueeze(1)
-            
-            # compute output
-            output_segmentation, output_spotting = model(feats)
-
-            # hand written NLL criterion
-            loss = criterion([labels, targets], [output_segmentation, output_spotting])
-
-            # measure accuracy and record loss
-            losses.update(loss.item(), feats.size(0))
-
-            if backprop:
-                # compute gradient and do SGD step
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            if backprop:
-                desc = f'Train {epoch}: '
-            else:
-                desc = f'Evaluate {epoch}: '
-            desc += f'Time {batch_time.avg:.3f}s '
-            desc += f'(it:{batch_time.val:.3f}s) '
-            desc += f'Data:{data_time.avg:.3f}s '
-            desc += f'(it:{data_time.val:.3f}s) '
-            desc += f'Loss {losses.avg:.4e} '
-            t.set_description(desc)
-
-    return losses.avg
-
