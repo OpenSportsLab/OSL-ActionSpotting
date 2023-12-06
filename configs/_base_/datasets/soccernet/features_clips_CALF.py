@@ -21,7 +21,7 @@ dataset = dict(
         ],
         classes=classes,
         dataloader=dict(
-            num_workers=0,
+            num_workers=4,
             batch_size=256,
             shuffle=True,
             pin_memory=True,
@@ -42,7 +42,7 @@ dataset = dict(
         ],
         classes=classes,
         dataloader=dict(
-            num_workers=0,
+            num_workers=4,
             batch_size=256,
             shuffle=False,
             pin_memory=True,
