@@ -336,10 +336,6 @@ def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=Fa
                 get_spot = get_spot_from_NMS
 
                 json_data = get_json_data(False,game_ID=game_ID)
-                
-                # json_data = dict()
-                # json_data["UrlLocal"] = game_ID
-                # json_data["predictions"] = list()
 
                 for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
                     for l in range(dataloader.dataset.num_classes):
