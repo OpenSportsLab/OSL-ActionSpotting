@@ -213,7 +213,7 @@ def process(labels,targets,feats):
     targets=targets.cuda().float()
     feats=feats.unsqueeze(1)
     return labels,targets,feats
-def post(backprop,optimizer,loss,batch_time,epoch,data_time,losses):
+def post(backprop,optimizer,loss,batch_time,end,epoch,data_time,losses):
     if backprop:
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -234,6 +234,7 @@ def post(backprop,optimizer,loss,batch_time,epoch,data_time,losses):
     desc += f'(it:{data_time.val:.3f}s) '
     desc += f'Loss {losses.avg:.4e} '
     return desc
+
 def train_one_epoch(
         dataloader,
         model,
@@ -261,6 +262,6 @@ def train_one_epoch(
             # measure accuracy and record loss
             losses.update(loss.item(), feats.size(0))
 
-            t.set_description(post(backprop,optimizer,loss,batch_time,epoch,data_time,losses))
+            t.set_description(post(backprop,optimizer,loss,batch_time,end,epoch,data_time,losses))
 
     return losses.avg
