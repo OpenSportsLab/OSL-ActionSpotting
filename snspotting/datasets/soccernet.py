@@ -404,6 +404,143 @@ class SoccerNet(Dataset):
 
         return label,half,frame,cont
 
+class SoccerNetClips(SoccerNet):
+    def __init__(self,  path, features="ResNET_PCA512.npy", split=["train"], version=1, 
+                framerate=2, window_size=15,train=True):
+        
+        super().__init__(path,features,split,version,framerate)
+        self.window_size_frame = window_size*self.framerate
+        self.train=train
+
+        logging.info("Checking/Download features and labels locally")
+        downloader = SoccerNetDownloader(path)
+
+        if train : 
+            downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=split, verbose=False,randomized=True)
+        else : 
+            for s in split:
+                if s == "challenge":
+                    downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True)
+                else:
+                    downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True)
+
+        if train:
+            logging.info("Pre-compute clips")
+
+            self.game_feats = list()
+            self.game_labels = list()
+
+            for game in tqdm(self.listGames):
+
+                # Load features
+                feat_half1,feat_half2=self.load_features(game=game)
+                
+                feat_half1 = feats2clip(torch.from_numpy(feat_half1), stride=self.window_size_frame, clip_length=self.window_size_frame)
+                feat_half2 = feats2clip(torch.from_numpy(feat_half2), stride=self.window_size_frame, clip_length=self.window_size_frame)
+
+                # Load labels
+                labels = json.load(open(os.path.join(self.path, game, self.labels)))
+                
+                label_half1,label_half2=self.load_labels(feat_half1,feat_half2)
+                
+                for annotation in labels["annotations"]:
+
+                    label,half,frame,cont=self.annotation(annotation)
+                    if cont:
+                        continue
+
+                    # if label outside temporal of view
+                    if half == 1 and frame//self.window_size_frame>=label_half1.shape[0]:
+                        continue
+                    if half == 2 and frame//self.window_size_frame>=label_half2.shape[0]:
+                        continue
+
+                    if half == 1:
+                        label_half1[frame//self.window_size_frame][0] = 0 # not BG anymore
+                        label_half1[frame//self.window_size_frame][label+1] = 1 # that's my class
+
+                    if half == 2:
+                        label_half2[frame//self.window_size_frame][0] = 0 # not BG anymore
+                        label_half2[frame//self.window_size_frame][label+1] = 1 # that's my class
+                self.game_feats.append(feat_half1)
+                self.game_feats.append(feat_half2)
+                self.game_labels.append(label_half1)
+                self.game_labels.append(label_half2)
+
+            self.game_feats = np.concatenate(self.game_feats)
+            self.game_labels = np.concatenate(self.game_labels)
+
+    def __getitem__(self,index):
+        """
+        Args:
+            index (int): Index
+        Returns:
+            if train :
+                clip_feat (np.array): clip of features.
+                clip_labels (np.array): clip of labels for the segmentation.
+                clip_targets (np.array): clip of targets for the spotting.
+        """
+        if self.train:
+            return self.game_feats[index,:,:], self.game_labels[index,:]
+        else:
+            # Load features
+            feat_half1,feat_half2=self.load_features(index=index)
+
+            # Load labels
+            label_half1,label_half2=self.load_labels(feat_half1,feat_half2)
+
+            # check if annotation exists
+            if os.path.exists(os.path.join(self.path, self.listGames[index], self.labels)):
+                labels = json.load(open(os.path.join(self.path, self.listGames[index], self.labels)))
+
+                for annotation in labels["annotations"]:
+
+                    label,half,frame,cont=self.annotation(annotation)
+                    if cont:
+                        continue
+
+                    value = 1
+                    if "visibility" in annotation.keys():
+                        if annotation["visibility"] == "not shown":
+                            value = -1
+
+
+                    if half == 1:
+                        frame = min(frame, feat_half1.shape[0]-1)
+                        label_half1[frame][label] = value
+
+                    if half == 2:
+                        frame = min(frame, feat_half2.shape[0]-1)
+                        label_half2[frame][label] = value
+
+            feat_half1 = feats2clip(torch.from_numpy(feat_half1), 
+                            stride=1, off=int(self.window_size_frame/2), 
+                            clip_length=self.window_size_frame , calf=False)
+
+            feat_half2 = feats2clip(torch.from_numpy(feat_half2), 
+                            stride=1, off=int(self.window_size_frame/2), 
+                            clip_length=self.window_size_frame, calf=False)
+
+            return self.listGames[index], feat_half1, feat_half2, label_half1, label_half2
+            
+    def __len__(self):
+        if self.train :
+            return len(self.game_feats)
+        else:
+            return len(self.listGames) 
+        
+    def load_features(self,index=0,game=""):
+        super().load_features(index,game)
+        return self.feat_half1,self.feat_half2
+
+    def load_labels(self,feat_half1,feat_half2):
+        super().load_labels(feat_half1,feat_half2,self.num_classes + 1 if self.train else self.num_classes)
+        if self.train : 
+            self.label_half1[:,0]=1 # those are BG classes
+            self.label_half2[:,0]=1 # those are BG classes
+        return self.label_half1,self.label_half2
+
+
 def rulesToCombineShifts(shift_from_last_event, shift_until_next_event, params):
     
     s1  = shift_from_last_event
@@ -636,140 +773,6 @@ def batch2long(output_segmentation, video_size, chunk_size, receptive_field):
             last = True
     return segmentation_long
 
-class SoccerNetClips(SoccerNet):
-    def __init__(self,  path, features="ResNET_PCA512.npy", split=["train"], version=1, 
-                framerate=2, window_size=15,train=True):
-        super().__init__(path,features,split,version,framerate)
-        self.window_size_frame = window_size*self.framerate
-        self.train=train
-
-        logging.info("Checking/Download features and labels locally")
-        downloader = SoccerNetDownloader(path)
-
-        if train : 
-            downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=split, verbose=False,randomized=True)
-        else : 
-            for s in split:
-                if s == "challenge":
-                    downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True)
-                else:
-                    downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], verbose=False,randomized=True)
-
-        if train:
-            logging.info("Pre-compute clips")
-
-            self.game_feats = list()
-            self.game_labels = list()
-
-            for game in tqdm(self.listGames):
-
-                # Load features
-                feat_half1,feat_half2=self.load_features(game=game)
-                
-                feat_half1 = feats2clip(torch.from_numpy(feat_half1), stride=self.window_size_frame, clip_length=self.window_size_frame)
-                feat_half2 = feats2clip(torch.from_numpy(feat_half2), stride=self.window_size_frame, clip_length=self.window_size_frame)
-
-                # Load labels
-                labels = json.load(open(os.path.join(self.path, game, self.labels)))
-                
-                label_half1,label_half2=self.load_labels(feat_half1,feat_half2)
-                
-                for annotation in labels["annotations"]:
-
-                    label,half,frame,cont=self.annotation(annotation)
-                    if cont:
-                        continue
-
-                    # if label outside temporal of view
-                    if half == 1 and frame//self.window_size_frame>=label_half1.shape[0]:
-                        continue
-                    if half == 2 and frame//self.window_size_frame>=label_half2.shape[0]:
-                        continue
-
-                    if half == 1:
-                        label_half1[frame//self.window_size_frame][0] = 0 # not BG anymore
-                        label_half1[frame//self.window_size_frame][label+1] = 1 # that's my class
-
-                    if half == 2:
-                        label_half2[frame//self.window_size_frame][0] = 0 # not BG anymore
-                        label_half2[frame//self.window_size_frame][label+1] = 1 # that's my class
-                self.game_feats.append(feat_half1)
-                self.game_feats.append(feat_half2)
-                self.game_labels.append(label_half1)
-                self.game_labels.append(label_half2)
-
-        self.game_feats = np.concatenate(self.game_feats)
-        self.game_labels = np.concatenate(self.game_labels)
-
-    def __getitem__(self,index):
-        """
-        Args:
-            index (int): Index
-        Returns:
-            if train :
-                clip_feat (np.array): clip of features.
-                clip_labels (np.array): clip of labels for the segmentation.
-                clip_targets (np.array): clip of targets for the spotting.
-        """
-        if self.train:
-            return self.game_feats[index,:,:], self.game_labels[index,:]
-        else:
-            # Load features
-            feat_half1,feat_half2=self.load_features(index=index)
-
-            # Load labels
-            label_half1,label_half2=self.load_labels(feat_half1,feat_half2)
-
-            # check if annotation exists
-            if os.path.exists(os.path.join(self.path, self.listGames[index], self.labels)):
-                labels = json.load(open(os.path.join(self.path, self.listGames[index], self.labels)))
-
-                for annotation in labels["annotations"]:
-
-                    label,half,frame,cont=self.annotation(annotation)
-                    if cont:
-                        continue
-
-                    value = 1
-                    if "visibility" in annotation.keys():
-                        if annotation["visibility"] == "not shown":
-                            value = -1
-
-
-                    if half == 1:
-                        frame = min(frame, feat_half1.shape[0]-1)
-                        label_half1[frame][label] = value
-
-                    if half == 2:
-                        frame = min(frame, feat_half2.shape[0]-1)
-                        label_half2[frame][label] = value
-
-            feat_half1 = feats2clip(torch.from_numpy(feat_half1), 
-                            stride=1, off=int(self.window_size_frame/2), 
-                            clip_length=self.window_size_frame , calf=False)
-
-            feat_half2 = feats2clip(torch.from_numpy(feat_half2), 
-                            stride=1, off=int(self.window_size_frame/2), 
-                            clip_length=self.window_size_frame, calf=False)
-
-            return self.listGames[index], feat_half1, feat_half2, label_half1, label_half2
-            
-    def __len__(self):
-        if self.train :
-            return len(self.game_feats)
-        else:
-            return len(self.listGames) 
-        
-    def load_features(self,index=0,game=""):
-        super().load_features(index,game)
-        return self.feat_half1,self.feat_half2
-
-    def load_labels(self,feat_half1,feat_half2):
-        super().load_labels(feat_half1,feat_half2,self.num_classes + 1 if self.train else self.num_classes)
-        if self.train : 
-            self.label_half1[:,0]=1 # those are BG classes
-            self.label_half2[:,0]=1 # those are BG classes
-        return self.label_half1,self.label_half2
 
 
         
