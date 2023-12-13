@@ -641,7 +641,8 @@ class SoccerNetClips(SoccerNet):
                 framerate=2, window_size=15,train=True):
         super().__init__(path,features,split,version,framerate)
         self.window_size_frame = window_size*self.framerate
-
+        self.train=train
+        
         logging.info("Checking/Download features and labels locally")
         downloader = SoccerNetDownloader(path)
 
