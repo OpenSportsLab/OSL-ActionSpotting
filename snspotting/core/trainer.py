@@ -213,7 +213,27 @@ def process(labels,targets,feats):
     targets=targets.cuda().float()
     feats=feats.unsqueeze(1)
     return labels,targets,feats
+def post(backprop,optimizer,loss,batch_time,epoch,data_time,losses):
+    if backprop:
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
+    # measure elapsed time
+    batch_time.update(time.time() - end)
+    end = time.time()
+
+    if backprop:
+        desc = f'Train {epoch}: '
+    else:
+        desc = f'Evaluate {epoch}: '
+    desc += f'Time {batch_time.avg:.3f}s '
+    desc += f'(it:{batch_time.val:.3f}s) '
+    desc += f'Data:{data_time.avg:.3f}s '
+    desc += f'(it:{data_time.val:.3f}s) '
+    desc += f'Loss {losses.avg:.4e} '
+    return desc
 def train_one_epoch(
         dataloader,
         model,
@@ -232,7 +252,7 @@ def train_one_epoch(
             # if cfg.GPU >= 0:
             if gpu >=0:
                 feats,labels=to_gpu(feats,labels)
-                
+
             output = model(feats)
 
             # hand written NLL criterion
@@ -241,25 +261,6 @@ def train_one_epoch(
             # measure accuracy and record loss
             losses.update(loss.item(), feats.size(0))
 
-            if backprop:
-                # compute gradient and do SGD step
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            if backprop:
-                desc = f'Train {epoch}: '
-            else:
-                desc = f'Evaluate {epoch}: '
-            desc += f'Time {batch_time.avg:.3f}s '
-            desc += f'(it:{batch_time.val:.3f}s) '
-            desc += f'Data:{data_time.avg:.3f}s '
-            desc += f'(it:{data_time.val:.3f}s) '
-            desc += f'Loss {losses.avg:.4e} '
-            t.set_description(desc)
+            t.set_description(post(backprop,optimizer,loss,batch_time,epoch,data_time,losses))
 
     return losses.avg
