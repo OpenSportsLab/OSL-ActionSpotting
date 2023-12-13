@@ -202,6 +202,18 @@ def pre_loop(model,backprop):
 
     end = time.time()
     return batch_time,data_time,losses,end
+
+def to_gpu(feats,labels):
+    feats = feats.cuda()
+    labels = labels.cuda()
+    return feats,labels
+def process(labels,targets,feats):
+    feats,labels=to_gpu(feats,labels)
+    labels=labels.float()
+    targets=targets.cuda().float()
+    feats=feats.unsqueeze(1)
+    return labels,targets,feats
+
 def train_one_epoch(
         dataloader,
         model,
@@ -219,9 +231,8 @@ def train_one_epoch(
             
             # if cfg.GPU >= 0:
             if gpu >=0:
-                feats = feats.cuda()
-                labels = labels.cuda()
-            
+                feats,labels=to_gpu(feats,labels)
+                
             output = model(feats)
 
             # hand written NLL criterion
