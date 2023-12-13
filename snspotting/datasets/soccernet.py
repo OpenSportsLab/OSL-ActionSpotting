@@ -642,7 +642,7 @@ class SoccerNetClips(SoccerNet):
         super().__init__(path,features,split,version,framerate)
         self.window_size_frame = window_size*self.framerate
         self.train=train
-        
+
         logging.info("Checking/Download features and labels locally")
         downloader = SoccerNetDownloader(path)
 
@@ -764,7 +764,7 @@ class SoccerNetClips(SoccerNet):
         super().load_features(index,game)
         return self.feat_half1,self.feat_half2
 
-    def load_labels(self,feat_half1,feat_half2,number_classes):
+    def load_labels(self,feat_half1,feat_half2):
         super().load_labels(feat_half1,feat_half2,self.num_classes + 1 if self.train else self.num_classes)
         if self.train : 
             self.label_half1[:,0]=1 # those are BG classes
