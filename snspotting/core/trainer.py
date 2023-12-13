@@ -72,11 +72,11 @@ class Trainer():
 
             # train for one epoch
             loss_training = self.train_one_epoch(train_loader, self.model, self.criterion,
-                                self.optimizer, self.cfg.GPU, epoch + 1, self.calf, backprop=True)
+                                self.optimizer, self.cfg.GPU, epoch + 1, backprop=True)
 
             # evaluate on validation set
             loss_validation = self.train_one_epoch(
-                val_loader, self.model, self.criterion, self.optimizer, self.cfg.GPU, epoch + 1, self.calf, backprop=False)
+                val_loader, self.model, self.criterion, self.optimizer, self.cfg.GPU, epoch + 1, backprop=False)
 
             state = {
                 'epoch': epoch + 1,
@@ -118,15 +118,78 @@ import torch
 
 from SoccerNet.Evaluation.utils import AverageMeter
 
-def train_one_epoch(dataloader,
-        model,
-        criterion,
-        optimizer,
-        gpu,
-        epoch,
-        calf,
-        backprop=False):
+# def train_one_epoch(
+#         dataloader,
+#         model,
+#         criterion,
+#         optimizer,
+#         gpu,
+#         epoch,
+#         calf,
+#         backprop=False):
 
+#     batch_time = AverageMeter()
+#     data_time = AverageMeter()
+#     losses = AverageMeter()
+
+#     # switch to train mode
+#     if backprop:
+#         model.train()
+#     else:
+#         model.eval()
+
+#     end = time.time()
+#     with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
+#         for i, tuples in t:
+#             if calf:
+#                 feats, labels, targets = tuples
+#             else:
+#                 feats, labels = tuples
+            
+#             # if cfg.GPU >= 0:
+#             if gpu >=0:
+#                 feats = feats.cuda()
+#                 labels = labels.cuda().float() if calf else labels.cuda()
+#                 if calf : targets = targets.cuda().float()
+            
+#             if calf : feats=feats.unsqueeze(1)
+
+#             # compute output
+#             if calf : 
+#                 output_segmentation, output_spotting = model(feats)
+#             else :
+#                 output = model(feats)
+
+#             # hand written NLL criterion
+#             loss = criterion([labels, targets] if calf else labels, [output_segmentation, output_spotting] if calf else output)
+
+#             # measure accuracy and record loss
+#             losses.update(loss.item(), feats.size(0))
+
+#             if backprop:
+#                 # compute gradient and do SGD step
+#                 optimizer.zero_grad()
+#                 loss.backward()
+#                 optimizer.step()
+
+#             # measure elapsed time
+#             batch_time.update(time.time() - end)
+#             end = time.time()
+
+#             if backprop:
+#                 desc = f'Train {epoch}: '
+#             else:
+#                 desc = f'Evaluate {epoch}: '
+#             desc += f'Time {batch_time.avg:.3f}s '
+#             desc += f'(it:{batch_time.val:.3f}s) '
+#             desc += f'Data:{data_time.avg:.3f}s '
+#             desc += f'(it:{data_time.val:.3f}s) '
+#             desc += f'Loss {losses.avg:.4e} '
+#             t.set_description(desc)
+
+#     return losses.avg
+
+def pre_loop(model,backprop):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -138,29 +201,31 @@ def train_one_epoch(dataloader,
         model.eval()
 
     end = time.time()
+    return batch_time,data_time,losses,end
+def train_one_epoch(
+        dataloader,
+        model,
+        criterion,
+        optimizer,
+        gpu,
+        epoch,
+        backprop=False):
+    
+    
+    batch_time,data_time,losses,end = pre_loop(model,backprop)
+
     with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
-        for i, tuples in t:
-            if calf:
-                feats, labels, targets = tuples
-            else:
-                feats, labels = tuples
+        for i, (feats, labels)  in t:
             
             # if cfg.GPU >= 0:
             if gpu >=0:
                 feats = feats.cuda()
-                labels = labels.cuda().float() if calf else labels.cuda()
-                if calf : targets = targets.cuda().float()
+                labels = labels.cuda()
             
-            if calf : feats=feats.unsqueeze(1)
-
-            # compute output
-            if calf : 
-                output_segmentation, output_spotting = model(feats)
-            else :
-                output = model(feats)
+            output = model(feats)
 
             # hand written NLL criterion
-            loss = criterion([labels, targets] if calf else labels, [output_segmentation, output_spotting] if calf else output)
+            loss = criterion(labels,output)
 
             # measure accuracy and record loss
             losses.update(loss.item(), feats.size(0))
