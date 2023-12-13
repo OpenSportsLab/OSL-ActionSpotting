@@ -371,8 +371,8 @@ class SoccerNet(Dataset):
     
     def load_labels(self,feat_half1,feat_half2,number_classes):
         # Load labels
-        self.label_half1 = np.zeros((feat_half1.shape[0], self.num_classes+1 if (self.train and not self.calf) else self.num_classes))
-        self.label_half2 = np.zeros((feat_half2.shape[0], self.num_classes+1 if (self.train and not self.calf) else self.num_classes))
+        self.label_half1 = np.zeros((feat_half1.shape[0], number_classes))
+        self.label_half2 = np.zeros((feat_half2.shape[0], number_classes))
         
         # if self.train and not self.calf:
         #     label_half1[:,0]=1 # those are BG classes
