@@ -22,10 +22,13 @@ def build_dataset(cfg, gpu,  default_args=None):
     #         version=cfg.version, framerate=cfg.framerate,
     #         window_size=cfg.window_size,train=True if cfg.type == "SoccerNetClips" else False)
     if cfg.type == "SoccerNetClips" or cfg.type == "SoccerNetGames":
-        dataset=SoccerNetClips(path=cfg.data_root, features=cfg.features,split=cfg.split,
-                version=cfg.version, 
-                framerate=cfg.framerate,framerate=cfg.framerate,
-            window_size=cfg.window_size,train=True if cfg.type == "SoccerNetClips" else False)
+        dataset=SoccerNetClips(path=cfg.data_root, 
+                               features=cfg.features, 
+                               split=cfg.split,
+                               version=cfg.version, 
+                               framerate=cfg.framerate,
+                               window_size=cfg.window_size,
+                               train=True if cfg.type == "SoccerNetClips" else False)
     elif cfg.type == "SoccerNetClipsCALF" or cfg.type == "SoccerNetClipsTestingCALF":
         dataset=SoccerNet(path=cfg.data_root, features=cfg.features,
                 split=cfg.split,
