@@ -207,12 +207,14 @@ def to_gpu(feats,labels):
     feats = feats.cuda()
     labels = labels.cuda()
     return feats,labels
+
 def process(labels,targets,feats):
     feats,labels=to_gpu(feats,labels)
     labels=labels.float()
     targets=targets.cuda().float()
     feats=feats.unsqueeze(1)
     return labels,targets,feats
+
 def post(backprop,optimizer,loss,batch_time,end,epoch,data_time,losses):
     if backprop:
         # compute gradient and do SGD step
@@ -258,6 +260,36 @@ def train_one_epoch(
 
             # hand written NLL criterion
             loss = criterion(labels,output)
+
+            # measure accuracy and record loss
+            losses.update(loss.item(), feats.size(0))
+
+            t.set_description(post(backprop,optimizer,loss,batch_time,end,epoch,data_time,losses))
+
+    return losses.avg
+
+def train_one_epoch_calf(
+        dataloader,
+        model,
+        criterion,
+        optimizer,
+        gpu,
+        epoch,
+        backprop=False):
+    
+    batch_time,data_time,losses,end = pre_loop(model,backprop)
+
+    with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
+        for i, (feats, labels, targets)  in t:
+            
+            # if cfg.GPU >= 0:
+            if gpu >=0:
+                labels,targets,feats=process(labels,targets,feats)
+
+            output_segmentation, output_spotting = model(feats)
+
+            # hand written NLL criterion
+            loss = criterion([labels, targets], [output_segmentation, output_spotting])
 
             # measure accuracy and record loss
             losses.update(loss.item(), feats.size(0))
