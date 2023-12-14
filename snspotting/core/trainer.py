@@ -28,12 +28,12 @@ def build_trainer(cfg, model, default_args=None):
 
     if cfg.type == "trainer_pooling" or cfg.type == "trainer_CALF":
         trainer = Trainer(cfg=cfg,
-                        train_one_epoch=train_one_epoch,
-                        valid_one_epoch=train_one_epoch,
+                        train_one_epoch=train_one_epoch if cfg.type == "trainer_pooling" else train_one_epoch_calf,
+                        valid_one_epoch=train_one_epoch if cfg.type == "trainer_pooling" else train_one_epoch_calf,
                         model=model,
                         criterion=criterion,
                         optimizer=optimizer,
-                        scheduler=scheduler,calf=False if cfg.type == "trainer_pooling" else True)
+                        scheduler=scheduler)
     else:
         trainer = None
     return trainer
@@ -46,8 +46,7 @@ class Trainer():
                 model,
                 criterion,
                 optimizer,
-                scheduler,
-                calf):
+                scheduler):
         self.train_one_epoch = train_one_epoch
         self.valid_one_epoch = valid_one_epoch
 
@@ -58,8 +57,6 @@ class Trainer():
 
         self.cfg = cfg
         self.max_epochs = cfg.max_epochs
-
-        self.calf = calf
 
     def train(self,
             train_loader,
