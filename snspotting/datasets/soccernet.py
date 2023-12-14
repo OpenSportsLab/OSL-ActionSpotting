@@ -609,15 +609,15 @@ class SoccerNetClipsChunks(SoccerNet):
                 anchors_half2 = getChunks_anchors(shift_half2, game_counter, self.K_parameters.cpu().numpy(), self.chunk_size, self.receptive_field)
 
                 game_counter = game_counter+1
-            self.game_feats.append(feat_half1)
-            self.game_feats.append(feat_half2)
-            self.game_labels.append(shift_half1)
-            self.game_labels.append(shift_half2)
+                self.game_feats.append(feat_half1)
+                self.game_feats.append(feat_half2)
+                self.game_labels.append(shift_half1)
+                self.game_labels.append(shift_half2)
 
-            for anchor in anchors_half1:
-                self.game_anchors[anchor[2]].append(anchor)
-            for anchor in anchors_half2:
-                self.game_anchors[anchor[2]].append(anchor)
+                for anchor in anchors_half1:
+                    self.game_anchors[anchor[2]].append(anchor)
+                for anchor in anchors_half2:
+                    self.game_anchors[anchor[2]].append(anchor)
     def __getitem__(self, index):
         if self.train:
         # Retrieve the game index and the anchor
