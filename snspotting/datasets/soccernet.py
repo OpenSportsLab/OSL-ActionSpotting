@@ -540,6 +540,8 @@ class SoccerNetClips(SoccerNet):
             self.label_half2[:,0]=1 # those are BG classes
         return self.label_half1,self.label_half2
 
+class SoccerNetChunks(SoccerNet):
+    def __init__(self,)
 
 def rulesToCombineShifts(shift_from_last_event, shift_until_next_event, params):
     
