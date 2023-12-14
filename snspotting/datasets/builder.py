@@ -1,5 +1,5 @@
 
-from .soccernet import SoccerNet,SoccerNetClips
+from .soccernet import SoccerNet,SoccerNetClips,SoccerNetClipsChunks
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipsfromJSON, FeatureVideosfromJSON
 import torch
@@ -30,15 +30,14 @@ def build_dataset(cfg, gpu,  default_args=None):
                                window_size=cfg.window_size,
                                train=True if cfg.type == "SoccerNetClips" else False)
     elif cfg.type == "SoccerNetClipsCALF" or cfg.type == "SoccerNetClipsTestingCALF":
-        dataset=SoccerNet(path=cfg.data_root, features=cfg.features,
+        dataset=SoccerNetClipsChunks(path=cfg.data_root, features=cfg.features,
                 split=cfg.split,
-                version=cfg.version, 
                 framerate=cfg.framerate,
                 chunk_size=cfg.chunk_size,
                 receptive_field=cfg.receptive_field,
                 chunks_per_epoch=cfg.chunks_per_epoch,
                 gpu = gpu,
-                calf = True,train=True if cfg.type == "SoccerNetClipsCALF" else False)
+                train=True if cfg.type == "SoccerNetClipsCALF" else False)
     elif cfg.type == "FeatureClipsfromJSON":
         dataset = FeatureClipsfromJSON(path=cfg.path, 
             framerate=cfg.framerate,
