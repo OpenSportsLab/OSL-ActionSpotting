@@ -59,8 +59,8 @@ class MyCallback(pl.Callback):
             }
 
         # remember best prec@1 and save checkpoint
-        is_better = loss_validation < best_loss
-        best_loss = min(loss_validation, best_loss)
+        is_better = loss_validation < pl_module.best_loss
+        pl_module.best_loss = min(loss_validation, pl_module.best_loss)
 
         # Save the best model based on loss only if the evaluation frequency too long
         if is_better:
