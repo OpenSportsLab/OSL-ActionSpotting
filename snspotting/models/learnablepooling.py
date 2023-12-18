@@ -104,7 +104,7 @@ class LearnablePoolingModel(pl.LightningModule):
     def on_validation_epoch_end(self):
         pass
     def configure_optimizers(self):
-        return self.optimizer,self.scheduler
+        return {"optimizer": self.optimizer, "lr_scheduler": self.scheduler}
     
     def pre_loop(self):
         batch_time = AverageMeter()
