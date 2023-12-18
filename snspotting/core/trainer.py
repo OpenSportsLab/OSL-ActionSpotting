@@ -81,7 +81,7 @@ class MyCallback(pl.Callback):
 
 def build_trainer(cfg, default_args=None):
     call=MyCallback()
-    trainer = pl.Trainer(max_epochs=cfg.max_epochs,callbacks=[call,CustomProgressBar(refresh_rate=1)],num_sanity_val_steps=0)
+    trainer = pl.Trainer(max_epochs=cfg.max_epochs,devices=[0],callbacks=[call,CustomProgressBar(refresh_rate=1)],num_sanity_val_steps=0)
     return trainer,call
 # class Trainer():
 #     def __init__(self, cfg, 
