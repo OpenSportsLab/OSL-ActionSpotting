@@ -113,7 +113,7 @@ def main():
 
     # Build Trainer
     logging.info('Build Trainer')
-    trainer,call = build_trainer(cfg.training, model)
+    trainer = build_trainer(cfg.training, model)
 
     # Start training`
     logging.info("Start training")
