@@ -50,7 +50,6 @@ class MyCallback(pl.Callback):
     def __init__(self):
         super().__init__()
     def on_validation_epoch_end(self, trainer, pl_module):
-        logging.info("validation end")
         loss_validation = pl_module.losses.avg
         state = {
                 'epoch': trainer.current_epoch + 1,
@@ -74,10 +73,10 @@ class MyCallback(pl.Callback):
         currLR = pl_module.optimizer.param_groups[0]['lr']
 
         if (currLR is not prevLR and pl_module.scheduler.num_bad_epochs == 0):
-            logging.info("Plateau Reached!")
+            logging.info("\nPlateau Reached!")
         if (prevLR < 2 * pl_module.scheduler.eps and
             pl_module.scheduler.num_bad_epochs >= pl_module.scheduler.patience):
-            logging.info("Plateau Reached and no more reduction -> Exiting Loop")
+            logging.info("\nPlateau Reached and no more reduction -> Exiting Loop")
             trainer.should_stop=True
 
 def build_trainer(cfg, default_args=None):

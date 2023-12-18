@@ -90,6 +90,9 @@ class LearnablePoolingModel(pl.LightningModule):
         print('')
         self.losses_avg = self.losses.avg
 
+    def on_validation_epoch_start(self):
+        print(self.losses.count)
+        
     def validation_step(self, batch, batch_idx):
         feats,labels=batch
         output = self.forward(feats)
