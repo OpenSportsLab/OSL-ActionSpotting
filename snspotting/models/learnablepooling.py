@@ -53,7 +53,8 @@ class LearnablePoolingModel(pl.LightningModule):
 
         self.criterion = build_criterion(cfg_train.criterion)
         
-
+        self.cfg_train = cfg_train
+        
         self.best_loss = 9e99
 
     def load_weights(self, weights=None):
