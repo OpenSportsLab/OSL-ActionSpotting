@@ -68,16 +68,16 @@ class MyCallback(pl.Callback):
             # torch.save(state, best_model_path)
 
         # Reduce LR on Plateau after patience reached
-        prevLR = self.optimizer.param_groups[0]['lr']
-        self.scheduler.step(loss_validation)
-        currLR = self.optimizer.param_groups[0]['lr']
+        prevLR = pl_module.optimizer.param_groups[0]['lr']
+        pl_module.scheduler.step(loss_validation)
+        currLR = pl_module.optimizer.param_groups[0]['lr']
 
-        if (currLR is not prevLR and self.scheduler.num_bad_epochs == 0):
+        if (currLR is not prevLR and pl_module.scheduler.num_bad_epochs == 0):
             logging.info("Plateau Reached!")
-        if (prevLR < 2 * self.scheduler.eps and
-            self.scheduler.num_bad_epochs >= self.scheduler.patience):
+        if (prevLR < 2 * pl_module.scheduler.eps and
+            pl_module.scheduler.num_bad_epochs >= pl_module.scheduler.patience):
             logging.info("Plateau Reached and no more reduction -> Exiting Loop")
-            self.should_stop=True
+            trainer.should_stop=True
 
 def build_trainer(cfg, default_args=None):
     call=MyCallback()
