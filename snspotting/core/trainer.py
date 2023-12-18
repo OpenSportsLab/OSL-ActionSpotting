@@ -1,13 +1,11 @@
 import torch
 import os
 
-from .optimizer import build_optimizer
-from .scheduler import build_scheduler
-from .loss import build_criterion
+
 # from .training import * 
 # from .evaluation import *
 import logging
-from models.learnablepooling import CustomProgressBar, MyCallback
+# from snspotting.models.learnablepooling import CustomProgressBar, MyCallback
 import pytorch_lightning as pl
 
 
@@ -39,6 +37,47 @@ import pytorch_lightning as pl
 #     else:
 #         trainer = None
 #     return trainer
+from pytorch_lightning.callbacks.progress import TQDMProgressBar
+
+class CustomProgressBar(TQDMProgressBar):
+    def get_metrics(self, trainer, pl_module):
+        # don't show the version number
+        items = super().get_metrics(trainer,pl_module)
+        items.pop("v_num", None)
+        return items
+    
+class MyCallback(pl.Callback):
+    def __init__(self):
+        super().__init__()
+    def on_validation_epoch_end(self, trainer, pl_module):
+        loss_validation = pl_module.losses.avg
+        state = {
+                'epoch': trainer.current_epoch + 1,
+                'state_dict': pl_module.model.state_dict(),
+                'best_loss': pl_module.best_loss,
+                'optimizer': pl_module.optimizer.state_dict(),
+            }
+
+        # remember best prec@1 and save checkpoint
+        is_better = loss_validation < best_loss
+        best_loss = min(loss_validation, best_loss)
+
+        # Save the best model based on loss only if the evaluation frequency too long
+        if is_better:
+            pl_module.best_state = state
+            # torch.save(state, best_model_path)
+
+        # Reduce LR on Plateau after patience reached
+        prevLR = self.optimizer.param_groups[0]['lr']
+        self.scheduler.step(loss_validation)
+        currLR = self.optimizer.param_groups[0]['lr']
+
+        if (currLR is not prevLR and self.scheduler.num_bad_epochs == 0):
+            logging.info("Plateau Reached!")
+        if (prevLR < 2 * self.scheduler.eps and
+            self.scheduler.num_bad_epochs >= self.scheduler.patience):
+            logging.info("Plateau Reached and no more reduction -> Exiting Loop")
+            self.should_stop=True
 
 def build_trainer(cfg, default_args=None):
     call=MyCallback()
