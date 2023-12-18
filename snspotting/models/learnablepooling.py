@@ -52,8 +52,7 @@ class LearnablePoolingModel(pl.LightningModule):
         self.load_weights(weights=weights)
 
         self.criterion = build_criterion(cfg_train.criterion)
-        self.optimizer = build_optimizer(self.parameters(), cfg_train.optimizer)
-        self.scheduler = build_scheduler(self.optimizer, cfg_train.scheduler)
+        
 
         self.best_loss = 9e99
 
@@ -103,7 +102,10 @@ class LearnablePoolingModel(pl.LightningModule):
 
     def on_validation_epoch_end(self):
         pass
+    
     def configure_optimizers(self):
+        self.optimizer = build_optimizer(self.parameters(), self.cfg_train.optimizer)
+        self.scheduler = build_scheduler(self.optimizer, self.cfg_train.scheduler)
         return self.optimizer
     
     def pre_loop(self):
