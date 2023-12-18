@@ -96,7 +96,8 @@ def main():
     logging.info('Build Model')
 
     if cfg.training.GPU >=0 :
-        model = build_model(cfg.model,cfg.training).cuda()
+        model = build_model(cfg.model,cfg.training)
+        # .cuda()
     else:
         model = build_model(cfg.model,cfg.training)
     
