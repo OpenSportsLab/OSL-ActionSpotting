@@ -75,11 +75,11 @@ class LearnablePoolingModel(pl.LightningModule):
         return
 
     def on_train_epoch_start(self):
-        self.batch_time,self.data_time,self.losses,self.end = self.pre_loop(self.model,True)
+        self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
 
     def training_step(self, batch, batch_idx):
         feats,labels=batch
-        output = self.model(feats)
+        output = self.forward(feats)
         loss = self.criterion(labels,output)
         self.log_dict({"loss":loss},on_step=True,on_epoch=True,prog_bar=True)
         self.losses.update(loss.item(), feats.size(0))
@@ -91,7 +91,7 @@ class LearnablePoolingModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         feats,labels=batch
-        output = self.model(feats)
+        output = self.forward(feats)
         val_loss = self.criterion(labels,output)
         self.log_dict({"val_loss":val_loss},on_step=False,on_epoch=True,prog_bar=True)
         self.losses.update(val_loss.item(), feats.size(0))
@@ -102,7 +102,7 @@ class LearnablePoolingModel(pl.LightningModule):
 
     def on_validation_epoch_end(self):
         pass
-    
+
     def configure_optimizers(self):
         self.optimizer = build_optimizer(self.parameters(), self.cfg_train.optimizer)
         self.scheduler = build_scheduler(self.optimizer, self.cfg_train.scheduler)
