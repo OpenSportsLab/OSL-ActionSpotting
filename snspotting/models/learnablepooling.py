@@ -33,7 +33,7 @@ class LearnablePoolingModel(pl.LightningModule):
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
-        super(LearnablePoolingModel, self).__init__()
+        super().__init__()
 
         # check compatibility dims Backbone - Neck - Head
         assert(backbone.output_dim == neck.input_dim)
