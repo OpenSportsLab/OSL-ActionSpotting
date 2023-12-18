@@ -50,6 +50,7 @@ class MyCallback(pl.Callback):
     def __init__(self):
         super().__init__()
     def on_validation_epoch_end(self, trainer, pl_module):
+        logging.info("validation end")
         loss_validation = pl_module.losses.avg
         state = {
                 'epoch': trainer.current_epoch + 1,
