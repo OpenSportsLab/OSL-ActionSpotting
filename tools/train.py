@@ -79,10 +79,10 @@ def main():
         if not has_gpu:
             cfg.training.GPU = -1
 
-    # define GPUs
-    if cfg.training.GPU >= 0:
-        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
+    # # define GPUs
+    # if cfg.training.GPU >= 0:
+    #     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    #     os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
 
     # Dump configuration file
     cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
