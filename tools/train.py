@@ -96,9 +96,9 @@ def main():
     logging.info('Build Model')
 
     if cfg.training.GPU >=0 :
-        model = build_model(cfg.model).cuda()
+        model = build_model(cfg.model,cfg.training).cuda()
     else:
-        model = build_model(cfg.model)
+        model = build_model(cfg.model,cfg.training)
     
     # Build Datasets    
     logging.info('Build Datasets')
@@ -112,12 +112,14 @@ def main():
 
     # Build Trainer
     logging.info('Build Trainer')
-    trainer = build_trainer(cfg.training, model)
+    trainer,call = build_trainer(cfg.training, model)
 
     # Start training`
     logging.info("Start training")
 
-    best_model = trainer.train(train_loader, val_loader)
+    trainer.fit(model,train_loader,val_loader)
+    best_model = model.best_state
+    # best_model = trainer.train(train_loader, val_loader)
     logging.info("Done training")
     print(best_model.get("epoch"))
     torch.save(best_model, 
