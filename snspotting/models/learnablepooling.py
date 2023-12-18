@@ -17,9 +17,9 @@ from .heads import build_head
 from .backbones import build_backbone
 from .necks import build_neck
 
-from core.optimizer import build_optimizer
-from core.scheduler import build_scheduler
-from core.loss import build_criterion
+from snspotting.core.optimizer import build_optimizer
+from snspotting.core.scheduler import build_scheduler
+from snspotting.core.loss import build_criterion
 
 import logging
 
