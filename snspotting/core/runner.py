@@ -410,161 +410,161 @@ def infer_dataset_CALF(cfg, dataloader, model, confidence_threshold=0.0, overwri
 
     return output_results
 
-def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=False, calf = False):
+# def infer_dataset(cfg, dataloader, model, confidence_threshold=0.0, overwrite=False, calf = False):
 
-    # Create folder name and zip file name
-    output_folder=f"results_spotting_{'_'.join(cfg.dataset.test.split)}"
-    output_results=os.path.join(cfg.work_dir, f"{output_folder}.zip")
+#     # Create folder name and zip file name
+#     output_folder=f"results_spotting_{'_'.join(cfg.dataset.test.split)}"
+#     output_results=os.path.join(cfg.work_dir, f"{output_folder}.zip")
     
-    # Prevent overwriting existing results
-    if os.path.exists(output_results) and not overwrite:
-        logging.warning("Results already exists in zip format. Use [overwrite=True] to overwrite the previous results.The inference will not run over the previous results.")
-        return output_results
+#     # Prevent overwriting existing results
+#     if os.path.exists(output_results) and not overwrite:
+#         logging.warning("Results already exists in zip format. Use [overwrite=True] to overwrite the previous results.The inference will not run over the previous results.")
+#         return output_results
 
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    if calf : losses = AverageMeter()
+#     batch_time = AverageMeter()
+#     data_time = AverageMeter()
+#     if calf : losses = AverageMeter()
 
-    spotting_predictions = list()
-    if calf : 
-        spotting_grountruth = list()
-        spotting_grountruth_visibility = list()
-        segmentation_predictions = list()
-        chunk_size = model.chunk_size
-        receptive_field = model.receptive_field
+#     spotting_predictions = list()
+#     if calf : 
+#         spotting_grountruth = list()
+#         spotting_grountruth_visibility = list()
+#         segmentation_predictions = list()
+#         chunk_size = model.chunk_size
+#         receptive_field = model.receptive_field
     
 
-    # put model in eval mode
-    model.eval()
+#     # put model in eval mode
+#     model.eval()
 
 
-    end = time.time()
-    #infer_data set loop
-    with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
-        for i, tuples in t:
-            if calf :
-                feat_half1, feat_half2, label_half1, label_half2 = tuples
-            else :
-                game_ID, feat_half1, feat_half2, label_half1, label_half2 = tuples
-            # measure data loading time
-            data_time.update(time.time() - end)
+#     end = time.time()
+#     #infer_data set loop
+#     with tqdm(enumerate(dataloader), total=len(dataloader)) as t:
+#         for i, tuples in t:
+#             if calf :
+#                 feat_half1, feat_half2, label_half1, label_half2 = tuples
+#             else :
+#                 game_ID, feat_half1, feat_half2, label_half1, label_half2 = tuples
+#             # measure data loading time
+#             data_time.update(time.time() - end)
 
-            if calf:
-                feat_half1 = feat_half1.cuda()
-                label_half1 = label_half1.float().squeeze(0)
-                feat_half2 = feat_half2.cuda()
-                label_half2 = label_half2.float().squeeze(0)
+#             if calf:
+#                 feat_half1 = feat_half1.cuda()
+#                 label_half1 = label_half1.float().squeeze(0)
+#                 feat_half2 = feat_half2.cuda()
+#                 label_half2 = label_half2.float().squeeze(0)
 
             
-            # Batch size of 1
-            if not calf : game_ID = game_ID[0]
-            feat_half1 = feat_half1.squeeze(0)
-            feat_half2 = feat_half2.squeeze(0)
+#             # Batch size of 1
+#             if not calf : game_ID = game_ID[0]
+#             feat_half1 = feat_half1.squeeze(0)
+#             feat_half2 = feat_half2.squeeze(0)
 
-            if calf :
-                feat_half1=feat_half1.unsqueeze(1)
-                feat_half2=feat_half2.unsqueeze(1)
+#             if calf :
+#                 feat_half1=feat_half1.unsqueeze(1)
+#                 feat_half2=feat_half2.unsqueeze(1)
             
-            if calf:
-                # Compute the output
-                output_segmentation_half_1, output_spotting_half_1 = model(feat_half1)
-                output_segmentation_half_2, output_spotting_half_2 = model(feat_half2)
+#             if calf:
+#                 # Compute the output
+#                 output_segmentation_half_1, output_spotting_half_1 = model(feat_half1)
+#                 output_segmentation_half_2, output_spotting_half_2 = model(feat_half2)
 
-                timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
-                timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
-                segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
-                segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+#                 timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
+#                 timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+#                 segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
+#                 segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
 
-                spotting_grountruth.append(torch.abs(label_half1))
-                spotting_grountruth.append(torch.abs(label_half2))
-                spotting_grountruth_visibility.append(label_half1)
-                spotting_grountruth_visibility.append(label_half2)
-                spotting_predictions.append(timestamp_long_half_1)
-                spotting_predictions.append(timestamp_long_half_2)
-                segmentation_predictions.append(segmentation_long_half_1)
-                segmentation_predictions.append(segmentation_long_half_2)
+#                 spotting_grountruth.append(torch.abs(label_half1))
+#                 spotting_grountruth.append(torch.abs(label_half2))
+#                 spotting_grountruth_visibility.append(label_half1)
+#                 spotting_grountruth_visibility.append(label_half2)
+#                 spotting_predictions.append(timestamp_long_half_1)
+#                 spotting_predictions.append(timestamp_long_half_2)
+#                 segmentation_predictions.append(segmentation_long_half_1)
+#                 segmentation_predictions.append(segmentation_long_half_2)
             
-            else:
-                # Compute the output for batches of frames
-                BS = 256
-                timestamp_long_half_1 = timestamp_half(feat_half1,model,BS)
-                timestamp_long_half_2 = timestamp_half(feat_half2,model,BS)
+#             else:
+#                 # Compute the output for batches of frames
+#                 BS = 256
+#                 timestamp_long_half_1 = timestamp_half(feat_half1,model,BS)
+#                 timestamp_long_half_2 = timestamp_half(feat_half2,model,BS)
                 
-                timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
-                timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
+#                 timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
+#                 timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
 
-                spotting_predictions.append(timestamp_long_half_1)
-                spotting_predictions.append(timestamp_long_half_2)
+#                 spotting_predictions.append(timestamp_long_half_1)
+#                 spotting_predictions.append(timestamp_long_half_2)
 
-                batch_time.update(time.time() - end)
-                end = time.time()
+#                 batch_time.update(time.time() - end)
+#                 end = time.time()
 
-                desc = f'Test (spot.): '
-                desc += f'Time {batch_time.avg:.3f}s '
-                desc += f'(it:{batch_time.val:.3f}s) '
-                desc += f'Data:{data_time.avg:.3f}s '
-                desc += f'(it:{data_time.val:.3f}s) '
-                t.set_description(desc)
+#                 desc = f'Test (spot.): '
+#                 desc += f'Time {batch_time.avg:.3f}s '
+#                 desc += f'(it:{batch_time.val:.3f}s) '
+#                 desc += f'Data:{data_time.avg:.3f}s '
+#                 desc += f'(it:{data_time.val:.3f}s) '
+#                 t.set_description(desc)
 
-                framerate = dataloader.dataset.framerate
-                get_spot = get_spot_from_NMS
+#                 framerate = dataloader.dataset.framerate
+#                 get_spot = get_spot_from_NMS
 
-                json_data = get_json_data(False,game_ID=game_ID)
+#                 json_data = get_json_data(False,game_ID=game_ID)
 
-                for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
-                    for l in range(dataloader.dataset.num_classes):
-                        spots = get_spot(
-                            timestamp[:, l], window=cfg.model.post_proc.NMS_window*cfg.model.backbone.framerate, thresh=cfg.model.post_proc.NMS_threshold)
-                        for spot in spots:
-                            # print("spot", int(spot[0]), spot[1], spot)
-                            frame_index = int(spot[0])
-                            confidence = spot[1]
-                            if confidence < confidence_threshold:
-                                continue
+#                 for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
+#                     for l in range(dataloader.dataset.num_classes):
+#                         spots = get_spot(
+#                             timestamp[:, l], window=cfg.model.post_proc.NMS_window*cfg.model.backbone.framerate, thresh=cfg.model.post_proc.NMS_threshold)
+#                         for spot in spots:
+#                             # print("spot", int(spot[0]), spot[1], spot)
+#                             frame_index = int(spot[0])
+#                             confidence = spot[1]
+#                             if confidence < confidence_threshold:
+#                                 continue
                             
-                            json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=dataloader.dataset.version,l=l,confidence=confidence))
+#                             json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=dataloader.dataset.version,l=l,confidence=confidence))
                 
-                    json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
-                    json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
+#                     json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
+#                     json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
 
-                os.makedirs(os.path.join(cfg.work_dir, output_folder, game_ID), exist_ok=True)
-                with open(os.path.join(cfg.work_dir, output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
-                    json.dump(json_data, output_file, indent=4)
-    if calf :
-        # Transformation to numpy for evaluation
-        targets_numpy = list()
-        closests_numpy = list()
-        detections_numpy = list()
-        for target, detection in zip(spotting_grountruth_visibility,spotting_predictions):
-            target_numpy = target.numpy()
-            targets_numpy.append(target_numpy)
-            detections_numpy.append(NMS(detection.numpy(), 20*model.framerate))
-            closest_numpy = np.zeros(target_numpy.shape)-1
-            #Get the closest action index
-            for c in np.arange(target_numpy.shape[-1]):
-                indexes = np.where(target_numpy[:,c] != 0)[0].tolist()
-                if len(indexes) == 0 :
-                    continue
-                indexes.insert(0,-indexes[0])
-                indexes.append(2*closest_numpy.shape[0])
-                for i in np.arange(len(indexes)-2)+1:
-                    start = max(0,(indexes[i-1]+indexes[i])//2)
-                    stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
-                    closest_numpy[start:stop,c] = target_numpy[indexes[i],c]
-            closests_numpy.append(closest_numpy)
+#                 os.makedirs(os.path.join(cfg.work_dir, output_folder, game_ID), exist_ok=True)
+#                 with open(os.path.join(cfg.work_dir, output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
+#                     json.dump(json_data, output_file, indent=4)
+#     if calf :
+#         # Transformation to numpy for evaluation
+#         targets_numpy = list()
+#         closests_numpy = list()
+#         detections_numpy = list()
+#         for target, detection in zip(spotting_grountruth_visibility,spotting_predictions):
+#             target_numpy = target.numpy()
+#             targets_numpy.append(target_numpy)
+#             detections_numpy.append(NMS(detection.numpy(), 20*model.framerate))
+#             closest_numpy = np.zeros(target_numpy.shape)-1
+#             #Get the closest action index
+#             for c in np.arange(target_numpy.shape[-1]):
+#                 indexes = np.where(target_numpy[:,c] != 0)[0].tolist()
+#                 if len(indexes) == 0 :
+#                     continue
+#                 indexes.insert(0,-indexes[0])
+#                 indexes.append(2*closest_numpy.shape[0])
+#                 for i in np.arange(len(indexes)-2)+1:
+#                     start = max(0,(indexes[i-1]+indexes[i])//2)
+#                     stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
+#                     closest_numpy[start:stop,c] = target_numpy[indexes[i],c]
+#             closests_numpy.append(closest_numpy)
 
-        # Save the predictions to the json format
-        # if save_predictions:
-        list_game = getListGames(dataloader.dataset.split)
-        for index in np.arange(len(list_game)):
-            predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],cfg.work_dir+"/"+output_folder+"/", list_game[index], model.framerate)
+#         # Save the predictions to the json format
+#         # if save_predictions:
+#         list_game = getListGames(dataloader.dataset.split)
+#         for index in np.arange(len(list_game)):
+#             predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],cfg.work_dir+"/"+output_folder+"/", list_game[index], model.framerate)
 
-    # zip folder
-    zipResults(zip_path = output_results,
-            target_dir = os.path.join(cfg.work_dir, output_folder),
-            filename="results_spotting.json")
+#     # zip folder
+#     zipResults(zip_path = output_results,
+#             target_dir = os.path.join(cfg.work_dir, output_folder),
+#             filename="results_spotting.json")
 
-    return output_results
+#     return output_results
 
 
 from snspotting.datasets.soccernet import feats2clip
