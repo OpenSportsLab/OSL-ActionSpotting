@@ -110,7 +110,7 @@ def main():
     model = LearnablePoolingModel(weights=cfg.model.load_weights, 
                   backbone=cfg.model.backbone, head=cfg.model.head, 
                   neck=cfg.model.neck, post_proc=cfg.model.post_proc)
-    model.cuda()
+    model=model.cuda()
 
     print("=> loading checkpoint '{}'".format(cfg.model.load_weights))
     checkpoint = torch.load(cfg.model.load_weights)
