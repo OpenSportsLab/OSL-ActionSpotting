@@ -90,6 +90,9 @@ class LiteLearnablePoolingModel(pl.LightningModule):
 
             self.best_loss = 9e99
 
+    def forward(self, inputs):
+        return self.model(inputs)
+    
     def on_train_epoch_start(self):
         self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
         
