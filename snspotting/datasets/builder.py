@@ -16,11 +16,6 @@ def build_dataset(cfg, gpu,  default_args=None):
     Returns:
         Dataset: The constructed dataset.
     """
-    # if cfg.type == "SoccerNetClips" or cfg.type == "SoccerNetGames":
-    #     dataset = SoccerNet(path=cfg.data_root, 
-    #         features=cfg.features, split=cfg.split,
-    #         version=cfg.version, framerate=cfg.framerate,
-    #         window_size=cfg.window_size,train=True if cfg.type == "SoccerNetClips" else False)
     if cfg.type == "SoccerNetClips" or cfg.type == "SoccerNetGames":
         dataset=SoccerNetClips(path=cfg.data_root, 
                                features=cfg.features, 
