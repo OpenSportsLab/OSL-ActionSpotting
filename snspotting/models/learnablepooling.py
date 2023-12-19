@@ -83,11 +83,12 @@ class LiteLearnablePoolingModel(pl.LightningModule):
 
         self.model=LearnablePoolingModel(weights,backbone,neck,head,post_proc)
 
-        self.criterion = build_criterion(cfg_train.criterion)
-        
-        self.cfg_train = cfg_train
+        if cfg_train:
+            self.criterion = build_criterion(cfg_train.criterion)
+            
+            self.cfg_train = cfg_train
 
-        self.best_loss = 9e99
+            self.best_loss = 9e99
 
     def on_train_epoch_start(self):
         self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
