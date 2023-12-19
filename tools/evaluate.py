@@ -13,6 +13,7 @@ from mmengine.config import Config, DictAction
 from snspotting.models import build_model
 
 from snspotting.core import build_runner, build_evaluator
+from snspotting.models.learnablepooling import LearnablePoolingModel
 
 
 def parse_args():
@@ -101,14 +102,18 @@ def main():
         cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
     
     # Build Model
-    if cfg.training.GPU >=0 :
-        model = build_model(cfg.model)
-    else:
-        model = build_model(cfg.model)
+    # if cfg.training.GPU >=0 :
+    #     model = build_model(cfg.model)
+    # else:
+    #     model = build_model(cfg.model)
+    
+    model = LearnablePoolingModel(weights=cfg.model.load_weights, 
+                  backbone=cfg.model.backbone, head=cfg.model.head, 
+                  neck=cfg.model.neck, post_proc=cfg.model.post_proc)
 
     print("=> loading checkpoint '{}'".format(cfg.model.load_weights))
     checkpoint = torch.load(cfg.model.load_weights)
-    model.model.load_state_dict(checkpoint['state_dict'])
+    model.load_state_dict(checkpoint['state_dict'])
     print("=> loaded checkpoint '{}' (epoch {})".format(cfg.model.load_weights, checkpoint['epoch']))
     
     # Build Evaluator
