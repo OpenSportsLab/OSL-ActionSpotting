@@ -13,7 +13,6 @@ from mmengine.config import Config, DictAction
 from snspotting.models import build_model
 
 from snspotting.core import build_runner, build_evaluator
-from snspotting.models.learnablepooling import LearnablePoolingModel
 
 
 def parse_args():
@@ -84,6 +83,7 @@ def main():
         logging.info('On GPU')
     else:
         logging.info('On CPU')
+        
     # define GPUs
     # if cfg.training.GPU >= 0:
     #     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
