@@ -7,7 +7,6 @@ class CustomProgressBar(TQDMProgressBar):
         # don't show the version number
         items = super().get_metrics(trainer,pl_module)
         items.pop("v_num", None)
-        print(items)
         return items
     
 class MyCallback(pl.Callback):
