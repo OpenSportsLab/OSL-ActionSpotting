@@ -13,6 +13,8 @@ import pytorch_lightning as pl
 from SoccerNet.Evaluation.utils import AverageMeter
 import time
 
+from snspotting.models.litebase import LiteBaseModel
+
 from .heads import build_head
 from .backbones import build_backbone
 from .necks import build_neck
@@ -66,8 +68,9 @@ class LearnablePoolingModel(nn.Module):
     
     def post_proc(self):
         return
-    
-class LiteLearnablePoolingModel(pl.LightningModule):
+
+
+class LiteLearnablePoolingModel(LiteBaseModel):
     def __init__(self, cfg_train=None, weights=None, 
                 backbone="PreExtracted", 
                 neck="NetVLAD++", 
@@ -77,26 +80,9 @@ class LiteLearnablePoolingModel(pl.LightningModule):
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
-        super().__init__()
+        super().__init__(cfg_train)
 
         self.model=LearnablePoolingModel(weights,backbone,neck,head,post_proc)
-
-        if cfg_train:
-            self.criterion = build_criterion(cfg_train.criterion)
-            
-            self.cfg_train = cfg_train
-
-            self.best_loss = 9e99
-
-    def forward(self, inputs):
-        return self.model(inputs)
-    
-    def on_train_epoch_start(self):
-        self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
-        
-    def on_validation_epoch_start(self):
-        self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
-
 
     def training_step(self, batch, batch_idx):
         feats,labels=batch
@@ -106,10 +92,6 @@ class LiteLearnablePoolingModel(pl.LightningModule):
         self.losses.update(loss.item(), feats.size(0))
         return loss
 
-    def on_train_epoch_end(self):
-        print('')
-        self.losses_avg = self.losses.avg
-        
     def validation_step(self, batch, batch_idx):
         feats,labels=batch
         output = self.model(feats)
@@ -118,17 +100,68 @@ class LiteLearnablePoolingModel(pl.LightningModule):
         self.losses.update(val_loss.item(), feats.size(0))
         return val_loss
     
-    def on_fit_end(self) -> None:
-        return self.best_state
+# class LiteLearnablePoolingModel(pl.LightningModule):
+#     def __init__(self, cfg_train=None, weights=None, 
+#                 backbone="PreExtracted", 
+#                 neck="NetVLAD++", 
+#                 head="LinearLayer", 
+#                 post_proc="NMS"):
+#         """
+#         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
+#         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
+#         """
+#         super().__init__()
 
-    def configure_optimizers(self):
-        self.optimizer = build_optimizer(self.parameters(), self.cfg_train.optimizer)
-        self.scheduler = build_scheduler(self.optimizer, self.cfg_train.scheduler)
-        return self.optimizer
+#         self.model=LearnablePoolingModel(weights,backbone,neck,head,post_proc)
+
+#         if cfg_train:
+#             self.criterion = build_criterion(cfg_train.criterion)
+            
+#             self.cfg_train = cfg_train
+
+#             self.best_loss = 9e99
+
+#     def forward(self, inputs):
+#         return self.model(inputs)
     
-    def pre_loop(self):
-        batch_time = AverageMeter()
-        data_time = AverageMeter()
-        losses = AverageMeter()
-        end = time.time()
-        return batch_time,data_time,losses,end
+#     def on_train_epoch_start(self):
+#         self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
+        
+#     def on_validation_epoch_start(self):
+#         self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
+
+
+#     def training_step(self, batch, batch_idx):
+#         feats,labels=batch
+#         output = self.model(feats)
+#         loss = self.criterion(labels,output)
+#         self.log_dict({"loss":loss},on_step=True,on_epoch=True,prog_bar=True)
+#         self.losses.update(loss.item(), feats.size(0))
+#         return loss
+
+#     def on_train_epoch_end(self):
+#         print('')
+#         self.losses_avg = self.losses.avg
+        
+#     def validation_step(self, batch, batch_idx):
+#         feats,labels=batch
+#         output = self.model(feats)
+#         val_loss = self.criterion(labels,output)
+#         self.log_dict({"val_loss":val_loss},on_step=False,on_epoch=True,prog_bar=True)
+#         self.losses.update(val_loss.item(), feats.size(0))
+#         return val_loss
+    
+#     def on_fit_end(self) -> None:
+#         return self.best_state
+
+#     def configure_optimizers(self):
+#         self.optimizer = build_optimizer(self.parameters(), self.cfg_train.optimizer)
+#         self.scheduler = build_scheduler(self.optimizer, self.cfg_train.scheduler)
+#         return self.optimizer
+    
+#     def pre_loop(self):
+#         batch_time = AverageMeter()
+#         data_time = AverageMeter()
+#         losses = AverageMeter()
+#         end = time.time()
+#         return batch_time,data_time,losses,end
