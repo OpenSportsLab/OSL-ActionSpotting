@@ -53,7 +53,7 @@ class MyCallback(pl.Callback):
         loss_validation = pl_module.losses.avg
         state = {
                 'epoch': trainer.current_epoch + 1,
-                'state_dict': pl_module.state_dict(),
+                'state_dict': pl_module.model.state_dict(),
                 'best_loss': pl_module.best_loss,
                 'optimizer': pl_module.optimizer.state_dict(),
             }
