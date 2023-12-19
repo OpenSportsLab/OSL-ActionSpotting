@@ -273,7 +273,7 @@ class LiteContextAwareModel(pl.LightningModule):
     def on_fit_end(self):
         return self.best_state
     
-    def process(labels,targets,feats):
+    def process(self,labels,targets,feats):
         labels=labels.float()
         targets=targets.float()
         feats=feats.unsqueeze(1)
