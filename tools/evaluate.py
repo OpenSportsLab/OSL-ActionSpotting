@@ -107,11 +107,6 @@ def main():
     else:
         model = build_model(cfg.model)
     
-    # model = LearnablePoolingModel(weights=cfg.model.load_weights, 
-    #               backbone=cfg.model.backbone, head=cfg.model.head, 
-    #               neck=cfg.model.neck, post_proc=cfg.model.post_proc)
-    # model=model.cuda()
-    
     # Build Evaluator
     logging.info('Build Evaluator')
     evaluator = build_evaluator(cfg=cfg, model=model.model)
