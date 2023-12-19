@@ -23,8 +23,8 @@ from snspotting.core.loss import build_criterion
 
 import logging
 
-class LearnablePoolingModel(pl.LightningModule):
-    def __init__(self, cfg_train=None, weights=None, 
+class LearnablePoolingModel(nn.Module):
+    def __init__(self, weights=None, 
                 backbone="PreExtracted", 
                 neck="NetVLAD++", 
                 head="LinearLayer", 
@@ -33,7 +33,7 @@ class LearnablePoolingModel(pl.LightningModule):
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
-        super().__init__()
+        super(LearnablePoolingModel, self).__init__()
 
         # check compatibility dims Backbone - Neck - Head
         assert(backbone.output_dim == neck.input_dim)
@@ -51,29 +51,43 @@ class LearnablePoolingModel(pl.LightningModule):
         # load weight if needed
         self.load_weights(weights=weights)
 
-        self.criterion = build_criterion(cfg_train.criterion)
-        
-        self.cfg_train = cfg_train
-
-        self.best_loss = 9e99
-
     def load_weights(self, weights=None):
         if(weights is not None):
             print("=> loading checkpoint '{}'".format(weights))
-            checkpoint = torch.load(weights,map_location=torch.device('cuda'))
+            checkpoint = torch.load(weights)
             self.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(weights, checkpoint['epoch']))
-
+    
     def forward(self, inputs):
         # input_shape: (batch,frames,dim_features)
         features = self.backbone(inputs)
         feature_pooled = self.neck(features)
         output = self.head(feature_pooled)
         return output
-
+    
     def post_proc(self):
         return
+    
+class LiteLearnablePoolingModel(pl.LightningModule):
+    def __init__(self, cfg_train=None, weights=None, 
+                backbone="PreExtracted", 
+                neck="NetVLAD++", 
+                head="LinearLayer", 
+                post_proc="NMS"):
+        """
+        INPUT: a Tensor of shape (batch_size,window_size,feature_size)
+        OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
+        """
+        super().__init__()
+
+        self.model=LearnablePoolingModel(weights,backbone,neck,head,post_proc)
+
+        self.criterion = build_criterion(cfg_train.criterion)
+        
+        self.cfg_train = cfg_train
+
+        self.best_loss = 9e99
 
     def on_train_epoch_start(self):
         self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
@@ -84,7 +98,7 @@ class LearnablePoolingModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         feats,labels=batch
-        output = self.forward(feats)
+        output = self.model(feats)
         loss = self.criterion(labels,output)
         self.log_dict({"loss":loss},on_step=True,on_epoch=True,prog_bar=True)
         self.losses.update(loss.item(), feats.size(0))
@@ -96,7 +110,7 @@ class LearnablePoolingModel(pl.LightningModule):
         
     def validation_step(self, batch, batch_idx):
         feats,labels=batch
-        output = self.forward(feats)
+        output = self.model(feats)
         val_loss = self.criterion(labels,output)
         self.log_dict({"val_loss":val_loss},on_step=False,on_epoch=True,prog_bar=True)
         self.losses.update(val_loss.item(), feats.size(0))
