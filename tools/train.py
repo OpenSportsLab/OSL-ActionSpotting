@@ -120,7 +120,6 @@ def main():
 
     trainer.fit(model,train_loader,val_loader)
     best_model = model.best_state
-    print(best_model)
     # best_model = trainer.train(train_loader, val_loader)
     logging.info("Done training")
     print(best_model.get("epoch"))
