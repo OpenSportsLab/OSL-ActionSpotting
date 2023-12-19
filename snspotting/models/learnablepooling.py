@@ -49,7 +49,7 @@ class LearnablePoolingModel(nn.Module):
         self.head = build_head(head)
         
         # load weight if needed
-        self.load_weights(weights=weights)
+        # self.load_weights(weights=weights)
 
     def load_weights(self, weights=None):
         if(weights is not None):
