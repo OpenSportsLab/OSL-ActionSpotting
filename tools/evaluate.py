@@ -84,9 +84,9 @@ def main():
     else:
         logging.info('On CPU')
     # define GPUs
-    if cfg.training.GPU >= 0:
-        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
+    # if cfg.training.GPU >= 0:
+    #     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    #     os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
 
     # Display configuration file
     # cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
