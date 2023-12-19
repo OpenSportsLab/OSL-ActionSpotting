@@ -21,8 +21,6 @@ from snspotting.core.optimizer import build_optimizer
 from snspotting.core.scheduler import build_scheduler
 from snspotting.core.loss import build_criterion
 
-import logging
-
 class LearnablePoolingModel(nn.Module):
     def __init__(self, weights=None, 
                 backbone="PreExtracted", 
