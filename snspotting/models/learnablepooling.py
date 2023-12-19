@@ -84,20 +84,21 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
         self.model=LearnablePoolingModel(weights,backbone,neck,head,post_proc)
 
-    def training_step(self, batch, batch_idx):
+    def _common_step(self, batch, batch_idx):
         feats,labels=batch
         output = self.model(feats)
-        loss = self.criterion(labels,output)
+        return self.criterion(labels,output),feats.size(0)
+
+    def training_step(self, batch, batch_idx):
+        loss, size = self._common_step(batch,batch_idx)
         self.log_dict({"loss":loss},on_step=True,on_epoch=True,prog_bar=True)
-        self.losses.update(loss.item(), feats.size(0))
+        self.losses.update(loss.item(), size)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        feats,labels=batch
-        output = self.model(feats)
-        val_loss = self.criterion(labels,output)
+        val_loss, size = self._common_step(batch,batch_idx)
         self.log_dict({"val_loss":val_loss},on_step=False,on_epoch=True,prog_bar=True)
-        self.losses.update(val_loss.item(), feats.size(0))
+        self.losses.update(val_loss.item(), size)
         return val_loss
     
 # class LiteLearnablePoolingModel(pl.LightningModule):
