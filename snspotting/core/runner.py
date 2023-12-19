@@ -204,7 +204,8 @@ def timestamp_half(feat_half,model,BS):
         end_frame = BS*(b+1) if BS * \
             (b+1) < len(feat_half) else len(feat_half)
         feat = feat_half[start_frame:end_frame].cuda()
-        output = model(feat).cpu().detach().numpy()
+        output = model(feat)
+        output.cpu().detach().numpy()
         timestamp_long_half.append(output)
     return np.concatenate(timestamp_long_half)
 
