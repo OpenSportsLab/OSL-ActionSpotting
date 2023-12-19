@@ -8,17 +8,8 @@ import warnings
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pytorch_lightning as pl
-from snspotting.core.evaluator import AverageMeter
 
-
-from snspotting.core.optimizer import build_optimizer
-from snspotting.core.scheduler import build_scheduler
-from snspotting.core.loss import build_criterion
 from snspotting.models.litebase import LiteBaseModel
-
-
-
 
 class ContextAwareModel(nn.Module):
     def __init__(self, weights=None, 
@@ -255,80 +246,3 @@ class LiteContextAwareModel(LiteBaseModel):
         self.log_dict({"val_loss":val_loss},on_step=False,on_epoch=True,prog_bar=True)
         self.losses.update(val_loss.item(), size)
         return val_loss
-
-# class LiteContextAwareModel(pl.LightningModule):
-#     def __init__(self, cfg_train=None, weights=None, 
-#                  input_size=512, num_classes=3, 
-#                  chunk_size=240, dim_capsule=16,
-#                  receptive_field=80, num_detections=5, 
-#                  framerate=2):
-#         """
-#         INPUT: a Tensor of the form (batch_size,1,chunk_size,input_size)
-#         OUTPUTS:    1. The segmentation of the form (batch_size,chunk_size,num_classes)
-#                     2. The action spotting of the form (batch_size,num_detections,2+num_classes)
-#         """
-#         super().__init__()
-
-#         self.model=ContextAwareModel(weights,input_size,
-#                                      num_classes,chunk_size,
-#                                      dim_capsule,receptive_field,
-#                                      num_detections,framerate)
-        
-#         if cfg_train:
-#             self.criterion = build_criterion(cfg_train.criterion)
-            
-#             self.cfg_train = cfg_train
-
-#             self.best_loss = 9e99
-
-#     def forward(self, inputs):
-#         return self.model(inputs)
-    
-#     def on_train_epoch_start(self):
-#         self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
-        
-#     def on_validation_epoch_start(self):
-#         self.batch_time,self.data_time,self.losses,self.end = self.pre_loop()
-
-#     def training_step(self, batch, batch_idx):
-#         feats,labels,targets=batch
-#         labels,targets,feats=self.process(labels,targets,feats)
-#         output_segmentation, output_spotting = self.forward(feats)
-#         loss = self.criterion([labels, targets], [output_segmentation, output_spotting])
-#         self.log_dict({"loss":loss},on_step=True,on_epoch=True,prog_bar=True)
-#         self.losses.update(loss.item(), feats.size(0))
-#         return loss
-    
-#     def on_train_epoch_end(self):
-#         print('')
-#         self.losses_avg = self.losses.avg
-
-#     def validation_step(self, batch, batch_idx):
-#         feats,labels,targets=batch
-#         labels,targets,feats=self.process(labels,targets,feats)
-#         output_segmentation, output_spotting = self.forward(feats)
-#         val_loss = self.criterion([labels, targets], [output_segmentation, output_spotting])
-#         self.log_dict({"val_loss":val_loss},on_step=False,on_epoch=True,prog_bar=True)
-#         self.losses.update(val_loss.item(), feats.size(0))
-#         return val_loss
-    
-#     def on_fit_end(self):
-#         return self.best_state
-    
-#     def process(self,labels,targets,feats):
-#         labels=labels.float()
-#         targets=targets.float()
-#         feats=feats.unsqueeze(1)
-#         return labels,targets,feats
-    
-#     def configure_optimizers(self):
-#         self.optimizer = build_optimizer(self.parameters(), self.cfg_train.optimizer)
-#         self.scheduler = build_scheduler(self.optimizer, self.cfg_train.scheduler)
-#         return self.optimizer
-    
-#     def pre_loop(self):
-#         batch_time = AverageMeter()
-#         data_time = AverageMeter()
-#         losses = AverageMeter()
-#         end = time.time()
-#         return batch_time,data_time,losses,end

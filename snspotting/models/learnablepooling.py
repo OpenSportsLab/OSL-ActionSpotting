@@ -9,19 +9,12 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pytorch_lightning as pl
-from SoccerNet.Evaluation.utils import AverageMeter
-import time
 
 from snspotting.models.litebase import LiteBaseModel
 
 from .heads import build_head
 from .backbones import build_backbone
 from .necks import build_neck
-
-from snspotting.core.optimizer import build_optimizer
-from snspotting.core.scheduler import build_scheduler
-from snspotting.core.loss import build_criterion
 
 class LearnablePoolingModel(nn.Module):
     def __init__(self, weights=None, 
