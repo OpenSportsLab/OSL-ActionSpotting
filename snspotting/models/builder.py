@@ -1,5 +1,5 @@
 from .learnablepooling import LearnablePoolingModel,LiteLearnablePoolingModel
-from .contextaware import ContextAwareModel
+from .contextaware import ContextAwareModel, LiteContextAwareModel
 
 import logging
 
@@ -19,7 +19,7 @@ def build_model(cfg, cfg_train=None, verbose=True, default_args=None):
                   backbone=cfg.backbone, head=cfg.head, 
                   neck=cfg.neck, post_proc=cfg.post_proc)
     elif cfg.type == "ContextAware":
-        model = ContextAwareModel(weights=cfg.load_weights,
+        model = LiteContextAwareModel(cfg_train=cfg_train,weights=cfg.load_weights,
                                 input_size=cfg.input_size,
                                 num_classes=cfg.num_classes,
                                 chunk_size=cfg.chunk_size,
