@@ -108,7 +108,7 @@ def main():
 
     print("=> loading checkpoint '{}'".format(cfg.model.load_weights))
     checkpoint = torch.load(cfg.model.load_weights)
-    model.load_state_dict(checkpoint['state_dict'])
+    model.model.load_state_dict(checkpoint['state_dict'])
     print("=> loaded checkpoint '{}' (epoch {})".format(cfg.model.load_weights, checkpoint['epoch']))
     
     # Build Evaluator
