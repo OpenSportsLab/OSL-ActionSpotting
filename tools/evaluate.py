@@ -103,7 +103,7 @@ def main():
     
     # Build Model
     if cfg.training.GPU >=0 :
-        model = build_model(cfg.model,cfg_all=cfg)
+        model = build_model(cfg.model,cfg_all=cfg).cuda()
     else:
         model = build_model(cfg.model,cfg_all=cfg)
     
