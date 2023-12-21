@@ -133,9 +133,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                 filename="results_spotting.json")
     
     def predict_step(self, batch, batch_idx):
-        logging.info("AVANT le stop")
         if not self.stop_predict:
-            logging.info("AVANT")
             game_ID, feat_half1, feat_half2, label_half1, label_half2 = batch
 
             game_ID = game_ID[0]
@@ -144,7 +142,6 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
             # Compute the output for batches of frames
             BS = 256
-            print("BS is ",BS)
             timestamp_long_half_1 = self.timestamp_half(feat_half1,BS)
             timestamp_long_half_2 = self.timestamp_half(feat_half2,BS)
             
@@ -186,7 +183,6 @@ class LiteLearnablePoolingModel(LiteBaseModel):
             end_frame = BS*(b+1) if BS * \
                 (b+1) < len(feat_half) else len(feat_half)
             feat = feat_half[start_frame:end_frame]
-            print("feat is ",feat)
             output = self.model(feat).detach().numpy()
             timestamp_long_half.append(output)
         return np.concatenate(timestamp_long_half)
