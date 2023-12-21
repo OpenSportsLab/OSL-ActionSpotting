@@ -63,7 +63,6 @@ class LearnablePoolingModel(nn.Module):
     
     def forward(self, inputs):
         # input_shape: (batch,frames,dim_features)
-        print(f"Input type: {type(inputs)}")
         features = self.backbone(inputs)
         feature_pooled = self.neck(features)
         output = self.head(feature_pooled)
