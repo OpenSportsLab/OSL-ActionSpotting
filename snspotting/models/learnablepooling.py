@@ -183,6 +183,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
             end_frame = BS*(b+1) if BS * \
                 (b+1) < len(feat_half) else len(feat_half)
             feat = feat_half[start_frame:end_frame]
+            print(feat)
             output = self.model(feat).detach().numpy()
             timestamp_long_half.append(output)
         return np.concatenate(timestamp_long_half)

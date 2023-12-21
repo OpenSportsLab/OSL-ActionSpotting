@@ -79,10 +79,10 @@ class Evaluator():
             test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader,self.cfg.training.GPU)
 
             # Run Inference on Dataset
-            # results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True)
-            evaluator = pl.Trainer(callbacks=[CustomProgressBar()],devices=[0],num_sanity_val_steps=0)
-            evaluator.predict(self.model,test_loader)
-            results = self.model.output_results
+            results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True)
+            # evaluator = pl.Trainer(callbacks=[CustomProgressBar()],devices=[0],num_sanity_val_steps=0)
+            # evaluator.predict(self.model,test_loader)
+            # results = self.model.output_results
             # extract performances from results
             performances = self.evaluate_Spotting(cfg_testset, results)
 
