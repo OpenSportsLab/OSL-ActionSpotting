@@ -132,7 +132,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                 target_dir = os.path.join(self.cfg.work_dir, self.output_folder),
                 filename="results_spotting.json")
     
-    def predict(self, batch, batch_idx):
+    def predict_step(self, batch, batch_idx):
         logging.info("AVANT le stop")
         if not self.stop_predict:
             logging.info("AVANT")
