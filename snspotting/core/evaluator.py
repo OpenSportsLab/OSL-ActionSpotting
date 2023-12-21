@@ -61,7 +61,7 @@ class Evaluator():
                 model):
         self.cfg = cfg
         self.model = model
-        # self.runner = build_runner(cfg.runner, model)
+        self.runner = build_runner(cfg.runner, model)
         self.evaluate_Spotting = evaluate_Spotting
 
     def evaluate(self, cfg_testset):
