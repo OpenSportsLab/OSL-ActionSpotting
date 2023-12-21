@@ -63,6 +63,7 @@ class LearnablePoolingModel(nn.Module):
     
     def forward(self, inputs):
         # input_shape: (batch,frames,dim_features)
+        print(f"Input type: {type(inputs)}")
         features = self.backbone(inputs)
         feature_pooled = self.neck(features)
         output = self.head(feature_pooled)
@@ -93,7 +94,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         self.cfg = cfg
 
         self.stop_predict = False
-        
+
     def _common_step(self, batch, batch_idx):
         feats,labels=batch
         output = self.model(feats)
@@ -163,7 +164,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         # print("spot", int(spot[0]), spot[1], spot)
                         frame_index = int(spot[0])
                         confidence = spot[1]
-                        if confidence < self.add_moduleconfidence_threshold:
+                        if confidence < self.confidence_threshold:
                             continue
                         
                         json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=self.trainer.predict_dataloaders.dataset.version,l=l,confidence=confidence))
