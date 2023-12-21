@@ -92,6 +92,8 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
         self.cfg = cfg
 
+        self.stop_predict = False
+        
     def _common_step(self, batch, batch_idx):
         feats,labels=batch
         output = self.model(feats)
