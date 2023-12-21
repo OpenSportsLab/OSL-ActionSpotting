@@ -103,13 +103,16 @@ def main():
     
     # Build Model
     if cfg.training.GPU >=0 :
-        model = build_model(cfg.model,cfg_all=cfg).cuda()
+        # model = build_model(cfg.model,cfg_all=cfg).cuda()
+        model = build_model(cfg.model,cfg_all=cfg)
     else:
         model = build_model(cfg.model,cfg_all=cfg)
     
     # Build Evaluator
     logging.info('Build Evaluator')
-    evaluator = build_evaluator(cfg=cfg, model=model.model)
+    # evaluator = build_evaluator(cfg=cfg, model=model.model)
+    evaluator = build_evaluator(cfg=cfg, model=model)
+
 
     # Start evaluate`
     logging.info("Start evaluate")
