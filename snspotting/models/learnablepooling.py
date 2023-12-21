@@ -112,7 +112,6 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         return val_loss
 
     def on_predict_start(self) -> None:
-        logging.info("AVANT LE PREDICT")
         # Create folder name and zip file name
         self.output_folder=f"results_spotting_{'_'.join(self.cfg.dataset.test.split)}"
         self.output_results=os.path.join(self.cfg.work_dir, f"{self.output_folder}.zip")
@@ -125,7 +124,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
         if not self.stop_predict:
             self.spotting_predictions = list()
-        logging.info("FIN start")
+
     def on_predict_end(self):
         if not self.stop_predict:
             zipResults(zip_path = self.output_results,
@@ -183,7 +182,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
             end_frame = BS*(b+1) if BS * \
                 (b+1) < len(feat_half) else len(feat_half)
             feat = feat_half[start_frame:end_frame]
-            output = self.model(feat).detach().numpy()
+            output = self.model(feat).cpu().detach().numpy()
             timestamp_long_half.append(output)
         return np.concatenate(timestamp_long_half)
 
