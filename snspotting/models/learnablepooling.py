@@ -125,7 +125,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
         if not self.stop_predict:
             self.spotting_predictions = list()
-
+        logging.info("FIN start")
     def on_predict_end(self):
         if not self.stop_predict:
             zipResults(zip_path = self.output_results,
@@ -133,6 +133,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                 filename="results_spotting.json")
     
     def predict(self, batch, batch_idx):
+        logging.info("AVANT le stop")
         if not self.stop_predict:
             logging.info("AVANT")
             game_ID, feat_half1, feat_half2, label_half1, label_half2 = batch
