@@ -141,6 +141,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
             # Compute the output for batches of frames
             BS = 256
+            print("BS is ",BS)
             timestamp_long_half_1 = self.timestamp_half(feat_half1,BS)
             timestamp_long_half_2 = self.timestamp_half(feat_half2,BS)
             
