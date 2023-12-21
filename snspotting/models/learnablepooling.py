@@ -133,6 +133,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
     
     def predict(self, batch, batch_idx):
         if not self.stop_predict:
+            logging.info("AVANT")
             game_ID, feat_half1, feat_half2, label_half1, label_half2 = batch
 
             game_ID = game_ID[0]
