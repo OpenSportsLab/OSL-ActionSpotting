@@ -103,9 +103,9 @@ def main():
     
     # Build Model
     if cfg.training.GPU >=0 :
-        model = build_model(cfg.model).cuda()
+        model = build_model(cfg.model,cfg_all=cfg)
     else:
-        model = build_model(cfg.model)
+        model = build_model(cfg.model,cfg_all=cfg)
     
     # Build Evaluator
     logging.info('Build Evaluator')
@@ -116,6 +116,7 @@ def main():
 
     performance = evaluator.evaluate(cfg.dataset.test)
 
+    # evaluator.predict(model,)
     logging.info("Done evaluating")
 
     

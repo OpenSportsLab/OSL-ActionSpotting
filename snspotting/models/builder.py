@@ -3,7 +3,7 @@ from .contextaware import ContextAwareModel, LiteContextAwareModel
 
 import logging
 
-def build_model(cfg, cfg_train=None, verbose=True, default_args=None):
+def build_model(cfg, cfg_train=None, cfg_all = None, verbose=True, default_args=None):
     """Build a model from config dict.
 
     Args:
@@ -15,7 +15,7 @@ def build_model(cfg, cfg_train=None, verbose=True, default_args=None):
         Model: The constructed model.
     """
     if cfg.type == "LearnablePooling":
-        model = LiteLearnablePoolingModel(cfg_train=cfg_train,weights=cfg.load_weights, 
+        model = LiteLearnablePoolingModel(cfg_train=cfg_train, cfg=cfg_all, weights=cfg.load_weights, 
                   backbone=cfg.backbone, head=cfg.head, 
                   neck=cfg.neck, post_proc=cfg.post_proc)
     elif cfg.type == "ContextAware":
