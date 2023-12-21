@@ -109,7 +109,7 @@ def main():
     
     # Build Evaluator
     logging.info('Build Evaluator')
-    evaluator = build_evaluator(cfg=cfg, model=model.model)
+    evaluator = build_evaluator(cfg=cfg, model=model)
 
     # Start evaluate`
     logging.info("Start evaluate")
