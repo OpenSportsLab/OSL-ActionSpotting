@@ -14,11 +14,11 @@ def build_model(cfg, verbose=True, default_args=None):
     Returns:
         Model: The constructed model.
     """
-    if cfg.type == "LearnablePooling":
+    if cfg.model.type == "LearnablePooling":
         model = LiteLearnablePoolingModel(cfg = cfg, weights=cfg.model.load_weights, 
                   backbone=cfg.model.backbone, head=cfg.model.head, 
                   neck=cfg.model.neck, post_proc=cfg.model.post_proc)
-    elif cfg.type == "ContextAware":
+    elif cfg.model.type == "ContextAware":
         model = LiteContextAwareModel(cfg = cfg, weights=cfg.load_weights,
                                 input_size=cfg.input_size,
                                 num_classes=cfg.num_classes,
