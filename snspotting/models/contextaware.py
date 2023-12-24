@@ -292,7 +292,7 @@ class LiteContextAwareModel(LiteBaseModel):
             closests_numpy = list()
             detections_numpy = list()
             for target, detection in zip(self.spotting_grountruth_visibility,self.spotting_predictions):
-                target_numpy = target.numpy()
+                target_numpy = target.cpu().numpy()
                 targets_numpy.append(target_numpy)
                 detections_numpy.append(NMS(detection.numpy(), 20*self.model.framerate))
                 closest_numpy = np.zeros(target_numpy.shape)-1
