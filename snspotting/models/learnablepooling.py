@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from snspotting.core.runner import timestamp_half
 
 from snspotting.models.litebase import LiteBaseModel
-from snspotting.models.utils import create_folders, get_json_data, get_spot_from_NMS, zipResults
+from snspotting.models.utils import create_folders, get_json_data, get_prediction_data, get_spot_from_NMS, zipResults
 
 from .heads import build_head
 from .backbones import build_backbone
