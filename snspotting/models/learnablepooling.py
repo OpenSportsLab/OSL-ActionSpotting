@@ -75,7 +75,7 @@ class LearnablePoolingModel(nn.Module):
 
 
 class LiteLearnablePoolingModel(LiteBaseModel):
-    def __init__(self, cfg_train=None, cfg=None, weights=None, 
+    def __init__(self, cfg=None, weights=None, 
                 backbone="PreExtracted", 
                 neck="NetVLAD++", 
                 head="LinearLayer", 
@@ -84,7 +84,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
-        super().__init__(cfg_train)
+        super().__init__(cfg.training)
 
         self.model=LearnablePoolingModel(weights,backbone,neck,head,post_proc)
 

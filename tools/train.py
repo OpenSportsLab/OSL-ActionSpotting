@@ -96,7 +96,7 @@ def main():
     logging.info('Build Model')
 
 
-    model = build_model(cfg.model,cfg.training)
+    model = build_model(cfg)
     
     # Build Datasets    
     logging.info('Build Datasets')
