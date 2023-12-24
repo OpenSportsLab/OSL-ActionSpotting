@@ -19,7 +19,7 @@ def build_model(cfg, cfg_train=None, cfg_all = None, verbose=True, default_args=
                   backbone=cfg.backbone, head=cfg.head, 
                   neck=cfg.neck, post_proc=cfg.post_proc)
     elif cfg.type == "ContextAware":
-        model = LiteContextAwareModel(cfg_train=cfg_train,weights=cfg.load_weights,
+        model = LiteContextAwareModel(cfg_train=cfg_train,cfg = cfg_all, weights=cfg.load_weights,
                                 input_size=cfg.input_size,
                                 num_classes=cfg.num_classes,
                                 chunk_size=cfg.chunk_size,

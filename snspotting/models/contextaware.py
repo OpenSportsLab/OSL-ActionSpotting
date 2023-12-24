@@ -1,6 +1,9 @@
 
 import __future__
+import json
 import time
+from typing import Any
+import zipfile
 
 import numpy as np
 import warnings
@@ -10,6 +13,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from snspotting.models.litebase import LiteBaseModel
+
+import os
+import logging
+
+from SoccerNet.Evaluation.utils import AverageMeter, EVENT_DICTIONARY_V2, INVERSE_EVENT_DICTIONARY_V2
+from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIONARY_V1
+
+from snspotting.datasets.soccernet import timestamps2long, batch2long
+from SoccerNet.Downloader import getListGames
+
 
 class ContextAwareModel(nn.Module):
     def __init__(self, weights=None, 
@@ -246,3 +259,191 @@ class LiteContextAwareModel(LiteBaseModel):
         self.log_dict({"val_loss":val_loss},on_step=False,on_epoch=True,prog_bar=True)
         self.losses.update(val_loss.item(), size)
         return val_loss
+    
+    def on_predict_start(self):
+        # Create folder name and zip file name
+        self.output_folder=f"results_spotting_{'_'.join(self.cfg.dataset.test.split)}"
+        self.output_results=os.path.join(self.cfg.work_dir, f"{self.output_folder}.zip")
+
+        # Prevent overwriting existing results
+        if os.path.exists(self.output_results) and not self.overwrite:
+            logging.warning("Results already exists in zip format. Use [overwrite=True] to overwrite the previous results.The inference will not run over the previous results.")
+            self.stop_predict=True
+            # return output_results
+
+        if not self.stop_predict:
+            self.spotting_predictions = list()
+            self.spotting_grountruth = list()
+            self.spotting_grountruth_visibility = list()
+            self.segmentation_predictions = list()
+            self.chunk_size = self.model.chunk_size
+            self.receptive_field = self.model.receptive_field
+    
+    def on_predict_end(self):
+        if not self.stop_predict:
+            # Transformation to numpy for evaluation
+            targets_numpy = list()
+            closests_numpy = list()
+            detections_numpy = list()
+            for target, detection in zip(self.spotting_grountruth_visibility,self.spotting_predictions):
+                target_numpy = target.numpy()
+                targets_numpy.append(target_numpy)
+                detections_numpy.append(NMS(detection.numpy(), 20*self.model.framerate))
+                closest_numpy = np.zeros(target_numpy.shape)-1
+                #Get the closest action index
+                for c in np.arange(target_numpy.shape[-1]):
+                    indexes = np.where(target_numpy[:,c] != 0)[0].tolist()
+                    if len(indexes) == 0 :
+                        continue
+                    indexes.insert(0,-indexes[0])
+                    indexes.append(2*closest_numpy.shape[0])
+                    for i in np.arange(len(indexes)-2)+1:
+                        start = max(0,(indexes[i-1]+indexes[i])//2)
+                        stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
+                        closest_numpy[start:stop,c] = target_numpy[indexes[i],c]
+                closests_numpy.append(closest_numpy)
+
+            # Save the predictions to the json format
+            # if save_predictions:
+            list_game = getListGames(self.trainer.predict_dataloaders.dataset.split)
+            for index in np.arange(len(list_game)):
+                predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],self.cfg.work_dir+"/"+self.output_folder+"/", list_game[index], self.model.framerate)
+            zipResults(zip_path = self.output_results,
+                       target_dir = os.path.join(self.cfg.work_dir, self.output_folder),
+                       filename="results_spotting.json")
+    
+    def predict_step(self, batch):
+        if not self.stop_predict:
+            feat_half1, feat_half2, label_half1, label_half2 = batch
+
+            label_half1 = label_half1.float().squeeze(0)
+            label_half2 = label_half2.float().squeeze(0)
+
+            feat_half1 = feat_half1.squeeze(0)
+            feat_half2 = feat_half2.squeeze(0)
+
+            feat_half1=feat_half1.unsqueeze(1)
+            feat_half2=feat_half2.unsqueeze(1)
+
+            # Compute the output
+            output_segmentation_half_1, output_spotting_half_1 = self.forward(feat_half1)
+            output_segmentation_half_2, output_spotting_half_2 = self.forward(feat_half2)
+
+            timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], self.chunk_size, self.receptive_field)
+            timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+            segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
+            segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+
+            self.spotting_grountruth.append(torch.abs(label_half1))
+            self.spotting_grountruth.append(torch.abs(label_half2))
+            self.spotting_grountruth_visibility.append(label_half1)
+            self.spotting_grountruth_visibility.append(label_half2)
+            self.spotting_predictions.append(timestamp_long_half_1)
+            self.spotting_predictions.append(timestamp_long_half_2)
+            self.segmentation_predictions.append(segmentation_long_half_1)
+            self.segmentation_predictions.append(segmentation_long_half_2)
+    
+    def timestamp_half(self,feat_half,BS):
+        timestamp_long_half = []
+        for b in range(int(np.ceil(len(feat_half)/BS))):
+            start_frame = BS*b
+            end_frame = BS*(b+1) if BS * \
+                (b+1) < len(feat_half) else len(feat_half)
+            feat = feat_half[start_frame:end_frame]
+            output = self.model(feat).cpu().detach().numpy()
+            timestamp_long_half.append(output)
+        return np.concatenate(timestamp_long_half)
+
+def get_spot_from_NMS(Input, window=60, thresh=0.0):
+    detections_tmp = np.copy(Input)
+    indexes = []
+    MaxValues = []
+    while(np.max(detections_tmp) >= thresh):
+
+        # Get the max remaining index and value
+        max_value = np.max(detections_tmp)
+        max_index = np.argmax(detections_tmp)
+        MaxValues.append(max_value)
+        indexes.append(max_index)
+        # detections_NMS[max_index,i] = max_value
+
+        nms_from = int(np.maximum(-(window/2)+max_index,0))
+        nms_to = int(np.minimum(max_index+int(window/2), len(detections_tmp)))
+        detections_tmp[nms_from:nms_to] = -1
+    
+    return np.transpose([indexes, MaxValues])
+    
+        
+def get_json_data(calf,game_info=None,game_ID=None):
+    json_data = dict()
+    json_data["UrlLocal"] = game_info if calf else game_ID
+    json_data["predictions"] = list()
+    return json_data
+
+def get_prediction_data(calf,frame_index, framerate, class_index=None, confidence=None, half=None, l=None, version=None, half_1=None):
+    seconds = int((frame_index//framerate)%60)
+    minutes = int((frame_index//framerate)//60)
+
+    prediction_data = dict()
+    prediction_data["gameTime"] = (str(1 if half_1 else 2 ) + " - " + str(minutes) + ":" + str(seconds)) if calf else f"{half+1} - {minutes:02.0f}:{seconds:02.0f}"
+    prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index if calf else l] if version == 2 else INVERSE_EVENT_DICTIONARY_V1[l]
+    prediction_data["position"] = str(int((frame_index/framerate)*1000))
+    prediction_data["half"] = str(1 if half_1 else 2) if calf else str(half+1)
+    prediction_data["confidence"] = str(confidence)
+
+    return prediction_data
+
+def zipResults(zip_path, target_dir, filename="results_spotting.json"):            
+    zipobj = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+    rootlen = len(target_dir) + 1
+    for base, dirs, files in os.walk(target_dir):
+        for file in files:
+            if file == filename:
+                fn = os.path.join(base, file)
+                zipobj.write(fn, fn[rootlen:])
+
+def NMS(detections, delta):
+    
+    # Array to put the results of the NMS
+    detections_tmp = np.copy(detections)
+    detections_NMS = np.zeros(detections.shape)-1
+
+    # Loop over all classes
+    for i in np.arange(detections.shape[-1]):
+        # Stopping condition
+        while(np.max(detections_tmp[:,i]) >= 0):
+
+            # Get the max remaining index and value
+            max_value = np.max(detections_tmp[:,i])
+            max_index = np.argmax(detections_tmp[:,i])
+
+            detections_NMS[max_index,i] = max_value
+
+            detections_tmp[int(np.maximum(-(delta/2)+max_index,0)): int(np.minimum(max_index+int(delta/2), detections.shape[0])) ,i] = -1
+
+    return detections_NMS
+
+def predictions2json(predictions_half_1, predictions_half_2, output_path, game_info, framerate=2):
+
+    os.makedirs(output_path + game_info, exist_ok=True)
+    output_file_path = output_path + game_info + "/results_spotting.json"
+
+    frames_half_1, class_half_1 = np.where(predictions_half_1 >= 0)
+    frames_half_2, class_half_2 = np.where(predictions_half_2 >= 0)
+    
+    json_data = get_json_data(True,game_info=game_info)
+    
+    for frame_index, class_index in zip(frames_half_1, class_half_1):
+
+        confidence = predictions_half_1[frame_index, class_index]
+
+        json_data["predictions"].append(get_prediction_data(True,frame_index,framerate,class_index=class_index,confidence=confidence,version=2,half_1=True))
+
+    for frame_index, class_index in zip(frames_half_2, class_half_2):
+
+        confidence = predictions_half_2[frame_index, class_index]
+
+        json_data["predictions"].append(get_prediction_data(True,frame_index,framerate,class_index=class_index,confidence=confidence,version=2,half_1=False))
+    
+    with open(output_file_path, 'w') as output_file:
+        json.dump(json_data, output_file, indent=4)

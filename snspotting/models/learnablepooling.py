@@ -111,7 +111,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         self.losses.update(val_loss.item(), size)
         return val_loss
 
-    def on_predict_start(self) -> None:
+    def on_predict_start(self):
         # Create folder name and zip file name
         self.output_folder=f"results_spotting_{'_'.join(self.cfg.dataset.test.split)}"
         self.output_results=os.path.join(self.cfg.work_dir, f"{self.output_folder}.zip")
