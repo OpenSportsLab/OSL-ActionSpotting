@@ -220,7 +220,7 @@ class ContextAwareModel(nn.Module):
         return output_segmentation, output_spotting
 
 class LiteContextAwareModel(LiteBaseModel):
-    def __init__(self, cfg_train=None, weights=None, 
+    def __init__(self, cfg_train=None, cfg=None, weights=None, 
                  input_size=512, num_classes=3, 
                  chunk_size=240, dim_capsule=16,
                  receptive_field=80, num_detections=5, 
@@ -235,6 +235,12 @@ class LiteContextAwareModel(LiteBaseModel):
                                      num_classes,chunk_size,
                                      dim_capsule,receptive_field,
                                      num_detections,framerate)
+        
+        self.overwrite = True
+
+        self.cfg = cfg
+
+        self.stop_predict = False
     
     def process(self,labels,targets,feats):
         labels=labels.float()
@@ -330,9 +336,9 @@ class LiteContextAwareModel(LiteBaseModel):
             output_segmentation_half_2, output_spotting_half_2 = self.forward(feat_half2)
 
             timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], self.chunk_size, self.receptive_field)
-            timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
-            segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], chunk_size, receptive_field)
-            segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], chunk_size, receptive_field)
+            timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], self.chunk_size, self.receptive_field)
+            segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], self.chunk_size, self.receptive_field)
+            segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], self.chunk_size, self.receptive_field)
 
             self.spotting_grountruth.append(torch.abs(label_half1))
             self.spotting_grountruth.append(torch.abs(label_half2))
