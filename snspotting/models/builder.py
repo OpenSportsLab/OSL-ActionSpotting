@@ -19,14 +19,14 @@ def build_model(cfg, verbose=True, default_args=None):
                   backbone=cfg.model.backbone, head=cfg.model.head, 
                   neck=cfg.model.neck, post_proc=cfg.model.post_proc)
     elif cfg.model.type == "ContextAware":
-        model = LiteContextAwareModel(cfg = cfg, weights=cfg.load_weights,
-                                input_size=cfg.input_size,
-                                num_classes=cfg.num_classes,
-                                chunk_size=cfg.chunk_size,
-                                dim_capsule=cfg.dim_capsule,
-                                receptive_field=cfg.receptive_field,
-                                num_detections=cfg.num_detections,
-                                framerate=cfg.framerate)
+        model = LiteContextAwareModel(cfg = cfg, weights=cfg.model.load_weights,
+                                input_size=cfg.model.input_size,
+                                num_classes=cfg.mode.num_classes,
+                                chunk_size=cfg.model.chunk_size,
+                                dim_capsule=cfg.model.dim_capsule,
+                                receptive_field=cfg.model.receptive_field,
+                                num_detections=cfg.model.num_detections,
+                                framerate=cfg.model.framerate)
     else:
         model = None 
 
