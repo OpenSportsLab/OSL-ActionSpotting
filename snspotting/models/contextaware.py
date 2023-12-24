@@ -213,7 +213,7 @@ class ContextAwareModel(nn.Module):
         return output_segmentation, output_spotting
 
 class LiteContextAwareModel(LiteBaseModel):
-    def __init__(self, cfg_train=None, cfg=None, weights=None, 
+    def __init__(self, cfg=None, weights=None, 
                  input_size=512, num_classes=3, 
                  chunk_size=240, dim_capsule=16,
                  receptive_field=80, num_detections=5, 
@@ -222,7 +222,7 @@ class LiteContextAwareModel(LiteBaseModel):
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
-        super().__init__(cfg_train)
+        super().__init__(cfg.training)
 
         self.model=ContextAwareModel(weights,input_size,
                                      num_classes,chunk_size,
