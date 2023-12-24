@@ -197,7 +197,7 @@ def infer_dataset_JSON(cfg,
     return output_results_json
 
 
-def timestamp_half(feat_half,model,BS):
+def timestamp_half(model,feat_half,BS):
     timestamp_long_half = []
     for b in range(int(np.ceil(len(feat_half)/BS))):
         start_frame = BS*b
