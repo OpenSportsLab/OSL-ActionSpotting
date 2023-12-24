@@ -59,7 +59,6 @@ def main():
         print("\nScript aborted by user.")
         raise SystemExit
 
-
     # Set up the signal handler for KeyboardInterrupt
     signal.signal(signal.SIGINT, signal_handler)
 
