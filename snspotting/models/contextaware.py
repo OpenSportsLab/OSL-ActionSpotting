@@ -241,9 +241,7 @@ class LiteContextAwareModel(LiteBaseModel):
         self.overwrite = True
 
         self.cfg = cfg
-
-        self.stop_predict = False
-    
+            
     def process(self,labels,targets,feats):
         labels=labels.float()
         targets=targets.float()
