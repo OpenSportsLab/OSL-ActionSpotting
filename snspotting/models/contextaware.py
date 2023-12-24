@@ -23,6 +23,8 @@ from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIO
 from snspotting.datasets.soccernet import timestamps2long, batch2long
 from SoccerNet.Downloader import getListGames
 
+from snspotting.models.utils import create_folders
+
 
 class ContextAwareModel(nn.Module):
     def __init__(self, weights=None, 
@@ -267,16 +269,8 @@ class LiteContextAwareModel(LiteBaseModel):
         return val_loss
     
     def on_predict_start(self):
-        # Create folder name and zip file name
-        self.output_folder=f"results_spotting_{'_'.join(self.cfg.dataset.test.split)}"
-        self.output_results=os.path.join(self.cfg.work_dir, f"{self.output_folder}.zip")
-
-        # Prevent overwriting existing results
-        if os.path.exists(self.output_results) and not self.overwrite:
-            logging.warning("Results already exists in zip format. Use [overwrite=True] to overwrite the previous results.The inference will not run over the previous results.")
-            self.stop_predict=True
-            # return output_results
-
+        self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.output_folder, self.overwrite)
+        
         if not self.stop_predict:
             self.spotting_predictions = list()
             self.spotting_grountruth = list()
