@@ -1,6 +1,6 @@
 import os
 import logging
-def create_folders(split, work_dir, output_folder, overwrite):
+def create_folders(split, work_dir, overwrite):
     # Create folder name and zip file name
     output_folder=f"results_spotting_{'_'.join(split)}"
     output_results=os.path.join(work_dir, f"{output_folder}.zip")

@@ -269,7 +269,7 @@ class LiteContextAwareModel(LiteBaseModel):
         return val_loss
     
     def on_predict_start(self):
-        self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.output_folder, self.overwrite)
+        self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.overwrite)
         
         if not self.stop_predict:
             self.spotting_predictions = list()
