@@ -11,6 +11,7 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from snspotting.core.runner import timestamp_half
 
 from snspotting.models.litebase import LiteBaseModel
 from snspotting.models.utils import create_folders
@@ -134,8 +135,8 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
             # Compute the output for batches of frames
             BS = 256
-            timestamp_long_half_1 = self.timestamp_half(feat_half1,BS)
-            timestamp_long_half_2 = self.timestamp_half(feat_half2,BS)
+            timestamp_long_half_1 = timestamp_half(self.model,feat_half1,BS)
+            timestamp_long_half_2 = timestamp_half(feat_half2,BS)
             
             timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
             timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
@@ -167,17 +168,6 @@ class LiteLearnablePoolingModel(LiteBaseModel):
             os.makedirs(os.path.join(self.cfg.work_dir, self.output_folder, game_ID), exist_ok=True)
             with open(os.path.join(self.cfg.work_dir, self.output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
                 json.dump(json_data, output_file, indent=4)
-
-    def timestamp_half(self,feat_half,BS):
-        timestamp_long_half = []
-        for b in range(int(np.ceil(len(feat_half)/BS))):
-            start_frame = BS*b
-            end_frame = BS*(b+1) if BS * \
-                (b+1) < len(feat_half) else len(feat_half)
-            feat = feat_half[start_frame:end_frame]
-            output = self.model(feat).cpu().detach().numpy()
-            timestamp_long_half.append(output)
-        return np.concatenate(timestamp_long_half)
 
 def get_spot_from_NMS(Input, window=60, thresh=0.0):
     detections_tmp = np.copy(Input)
