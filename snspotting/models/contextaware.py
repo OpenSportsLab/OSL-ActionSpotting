@@ -1,12 +1,8 @@
 
 import __future__
-import json
-import time
 from typing import Any
-import zipfile
 
 import numpy as np
-import warnings
 
 import torch
 import torch.nn as nn
@@ -15,16 +11,11 @@ import torch.nn.functional as F
 from snspotting.models.litebase import LiteBaseModel
 
 import os
-import logging
-
-from SoccerNet.Evaluation.utils import AverageMeter, EVENT_DICTIONARY_V2, INVERSE_EVENT_DICTIONARY_V2
-from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIONARY_V1
 
 from snspotting.datasets.soccernet import timestamps2long, batch2long
 from SoccerNet.Downloader import getListGames
 
 from snspotting.models.utils import NMS, create_folders, predictions2json, zipResults
-
 
 class ContextAwareModel(nn.Module):
     def __init__(self, weights=None, 

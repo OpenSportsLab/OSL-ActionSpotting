@@ -1,29 +1,17 @@
-import torch
-import os
-
 from snspotting.core.utils import CustomProgressBar
 
-from .runner import build_runner
 from snspotting.datasets import build_dataset, build_dataloader
 
 import logging
 from SoccerNet.Evaluation.ActionSpotting import evaluate
 
-
-import os
 import numpy as np
-
-from SoccerNet.utils import getListGames
-
 
 import json
 
 import json
 import zipfile
 from tqdm import tqdm
-
-
-import glob
 
 import pytorch_lightning as pl
 
@@ -61,7 +49,6 @@ class Evaluator():
                 model):
         self.cfg = cfg
         self.model = model
-        self.runner = build_runner(cfg.runner, model)
         self.evaluate_Spotting = evaluate_Spotting
 
     def evaluate(self, cfg_testset):
@@ -79,7 +66,6 @@ class Evaluator():
             test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader,self.cfg.training.GPU)
 
             # Run Inference on Dataset
-            # results = self.runner.infer_dataset(self.cfg, test_loader, self.model, overwrite=True)
             evaluator = pl.Trainer(callbacks=[CustomProgressBar()],devices=[self.cfg.training.GPU],num_sanity_val_steps=0)
             evaluator.predict(self.model,test_loader)
             results = self.model.output_results

@@ -4,8 +4,7 @@ import logging
 import zipfile
 import numpy as np
 
-from SoccerNet.Evaluation.utils import AverageMeter, EVENT_DICTIONARY_V2, INVERSE_EVENT_DICTIONARY_V2
-from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIONARY_V1
+from SoccerNet.Evaluation.utils import INVERSE_EVENT_DICTIONARY_V2, INVERSE_EVENT_DICTIONARY_V1
 
 def create_folders(split, work_dir, overwrite):
     # Create folder name and zip file name

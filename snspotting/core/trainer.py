@@ -1,11 +1,5 @@
-import torch
-import os
-
 from snspotting.core.utils import CustomProgressBar, MyCallback
 import pytorch_lightning as pl
-
-# from .training import * 
-# from .evaluation import *
 
 def build_trainer(cfg, default_args=None):
     call=MyCallback()

@@ -1,5 +1,5 @@
-from .learnablepooling import LearnablePoolingModel,LiteLearnablePoolingModel
-from .contextaware import ContextAwareModel, LiteContextAwareModel
+from .learnablepooling import LiteLearnablePoolingModel
+from .contextaware import  LiteContextAwareModel
 
 import logging
 

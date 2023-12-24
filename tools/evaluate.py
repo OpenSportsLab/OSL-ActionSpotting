@@ -102,22 +102,18 @@ def main():
         cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
     
     # Build Model
-    if cfg.training.GPU >=0 :
-        # model = build_model(cfg.model,cfg_all=cfg).cuda()
-        model = build_model(cfg)
-    else:
-        model = build_model(cfg)
+    model = build_model(cfg)
     
     # Build Evaluator
     logging.info('Build Evaluator')
-    # evaluator = build_evaluator(cfg=cfg, model=model.model)
+
     evaluator = build_evaluator(cfg=cfg, model=model)
 
 
     # Start evaluate`
     logging.info("Start evaluate")
 
-    performance = evaluator.evaluate(cfg.dataset.test)
+    evaluator.evaluate(cfg.dataset.test)
 
     # evaluator.predict(model,)
     logging.info("Done evaluating")

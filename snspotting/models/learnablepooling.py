@@ -2,11 +2,6 @@
 import __future__
 import json
 from typing import Any
-import zipfile
-
-import numpy as np
-import warnings
-from pytorch_lightning.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 
 import torch
 import torch.nn as nn
@@ -14,18 +9,13 @@ import torch.nn.functional as F
 from snspotting.core.runner import timestamp_half
 
 from snspotting.models.litebase import LiteBaseModel
-from snspotting.models.utils import create_folders, get_json_data, get_prediction_data, get_spot_from_NMS, zipResults
+from snspotting.models.utils import create_folders, get_json_data, get_spot_from_NMS, zipResults
 
 from .heads import build_head
 from .backbones import build_backbone
 from .necks import build_neck
 
 import os
-import logging
-
-from SoccerNet.Evaluation.utils import AverageMeter, EVENT_DICTIONARY_V2, INVERSE_EVENT_DICTIONARY_V2
-from SoccerNet.Evaluation.utils import EVENT_DICTIONARY_V1, INVERSE_EVENT_DICTIONARY_V1
-
 
 class LearnablePoolingModel(nn.Module):
     def __init__(self, weights=None, 
