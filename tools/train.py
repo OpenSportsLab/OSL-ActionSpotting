@@ -1,6 +1,7 @@
 import os
 import logging
 from datetime import datetime
+import signal
 import time
 import numpy as np
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -53,6 +54,14 @@ def main():
     # for reproducibility
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+
+    def signal_handler(signal, frame):
+        print("\nScript aborted by user.")
+        raise SystemExit
+
+
+    # Set up the signal handler for KeyboardInterrupt
+    signal.signal(signal.SIGINT, signal_handler)
 
     # Create Work directory
     os.makedirs(cfg.work_dir, exist_ok=True)
