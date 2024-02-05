@@ -25,7 +25,7 @@ done
 ## FFWC19
 
 ```bash
-for i in {40..52}
+for i in {01..52}
 do
     echo "Welcome $i times"
     python tools/features/extract_features.py --path_video /media/giancos/Football/SoccerNet_2019_FWWC/2019\ FWWC/M${i}*/*.mp4 --path_features /media/giancos/LaCie/FWWC19/M${i}_TF2_ResNET_PCA512.npy --PCA tools/features/pca_512_TF2.pkl --PCA_scaler tools/features/average_512_TF2.pkl
