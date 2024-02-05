@@ -36,6 +36,7 @@ setup(
         'mmengine',
         'torch',
         'torchvision',
+        'pytorch-lightning'
         # 'scikit-video',
         # 'matplotlib',
         # 'google-measurement-protocol',
