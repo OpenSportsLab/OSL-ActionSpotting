@@ -1,0 +1,17 @@
+Ball out of play
+Clearance
+Corner
+Direct free-kick
+Foul
+Goal
+Indirect free-kick
+Kick-off
+Offside
+Penalty
+Red card
+Shots off target
+Shots on target
+Substitution
+Throw-in
+Yellow card
+Yellow->red card

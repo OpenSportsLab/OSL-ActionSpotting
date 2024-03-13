@@ -162,6 +162,7 @@ cython_debug/
 path/*
 outputs/*
 local_test/
+rny002_gsm
 
 log/*
 dgcm/*
