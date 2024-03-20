@@ -1,11 +1,11 @@
 
-from snspotting.datasets.frame import DaliDataSet, DaliDataSetVideo
+from snspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
 from .soccernet import SoccerNet,SoccerNetClips,SoccerNetClipsChunks
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipsfromJSON, FeatureVideosfromJSON
 import torch
 from mmengine.config import Config, DictAction
-
+import random
 def build_dataset(cfg, gpu=None,  default_args=None):
     """Build a dataset from config dict.
 
@@ -42,29 +42,53 @@ def build_dataset(cfg, gpu=None,  default_args=None):
         dataset = FeatureVideosfromJSON(path=cfg.path, 
             framerate=cfg.framerate,
             window_size=cfg.window_size)
-    elif cfg.type == 'VideoGameWithDali':
-        cfg = default_args['cfg']
-        loader_batch_size = cfg.dataset.batch_size // cfg.acc_grad_iter
-        dataset_len = cfg.dataset.epoch_num_frames // cfg.clip_len
+    elif cfg.type == "VideoGameWithOpencv":
+        dataset_len = cfg.epoch_num_frames // cfg.clip_len
         dataset_kwargs = {
-        'crop_dim': cfg.dataset.crop_dim, 'dilate_len': cfg.dataset.dilate_len,
-        'mixup': cfg.dataset.mixup
+        'crop_dim': cfg.crop_dim, 'dilate_len': cfg.dilate_len,
+        'mixup': cfg.mixup
+        }
+        dataset = ActionSpotDataset(
+            default_args['classes'], 
+            cfg.label_file,
+            cfg.data_root, cfg.modality, 
+            cfg.clip_len, dataset_len if default_args['train'] else dataset_len // 4,
+            is_eval= not default_args['train'], **dataset_kwargs)
+    elif cfg.type == "VideoGameWithOpencvVideo":
+        dataset = ActionSpotVideoDataset(
+                default_args['classes'], 
+                cfg.label_file,
+                cfg.data_root, cfg.modality, cfg.clip_len,
+                crop_dim=cfg.crop_dim, overlap_len=0)
+    elif cfg.type == 'VideoGameWithDali':
+        loader_batch_size = cfg.dataloader.batch_size // default_args["acc_grad_iter"]
+        dataset_len = cfg.epoch_num_frames // cfg.clip_len
+        dataset_kwargs = {
+        'crop_dim': cfg.crop_dim, 'dilate_len': cfg.dilate_len,
+        'mixup': cfg.mixup, 'stride': cfg.stride
         }
         dataset = DaliDataSet(
-            cfg.num_epochs,loader_batch_size,cfg.dataset.train.output_map,
-            cfg.repartitions[0] if default_args['train'] else cfg.repartitions[1],
+            default_args["num_epochs"],
+            loader_batch_size,
+            cfg.output_map,
+            default_args["repartitions"][0] if default_args['train'] else default_args["repartitions"][1],
             default_args['classes'],
-            cfg.dataset.train.label_file if default_args['train'] else cfg.dataset.val.label_file,
+            cfg.label_file,
             cfg.modality, cfg.clip_len, 
             dataset_len if default_args['train'] else dataset_len // 4,
+            cfg.data_root,
             is_eval=False if default_args['train'] else True,
             **dataset_kwargs)
     elif cfg.type == 'VideoGameWithDaliVideo':
-        cfg = default_args['cfg']
         dataset = DaliDataSetVideo(
-            cfg.inference_batch_size, cfg.dataset.val_data_frames.output_map, cfg.repartitions[1],
-            default_args['classes'], cfg.dataset.val_data_frames.label_file, cfg.modality, cfg.clip_len,
-            crop_dim=cfg.dataset.crop_dim, overlap_len=0)
+            cfg.dataloader.batch_size, 
+            cfg.output_map, 
+            default_args["repartitions"][1],
+            default_args['classes'], 
+            cfg.label_file, 
+            cfg.modality, cfg.clip_len, cfg.stride,
+            cfg.data_root,
+            crop_dim=cfg.crop_dim, overlap_len=0)
     else:
         dataset=None
     return dataset
@@ -82,8 +106,13 @@ def build_dataloader(dataset, cfg, gpu):
     Returns:
         Dataloader: The constructed dataloader.
     """
+    def worker_init_fn(id):
+        random.seed(id + 100 * 100)
     dataloader = torch.utils.data.DataLoader(dataset,
             batch_size=cfg.batch_size, shuffle=cfg.shuffle,
             num_workers=cfg.num_workers if gpu >=0 else 0, 
-            pin_memory=cfg.pin_memory if gpu >=0 else False)
+            pin_memory=cfg.pin_memory if gpu >=0 else False,
+            prefetch_factor = cfg.prefetch_factor if gpu >=0 else None,
+            worker_init_fn=worker_init_fn
+            )
     return dataloader

@@ -3,6 +3,7 @@
 import os
 import copy
 import random
+import cv2
 import numpy as np
 import torch
 import torch.nn as nn
@@ -18,82 +19,101 @@ from .transform import RandomGaussianNoise, RandomHorizontalFlipFLow, \
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
+TARGET_HEIGHT = 224
+TARGET_WIDTH = 398
 
 class FrameReader:
 
     IMG_NAME = '{:06d}.jpg'
 
-    def __init__(self, frame_dir, modality, crop_transform, img_transform,
-                 same_transform):
-        self._frame_dir = frame_dir
+    def __init__(self, video_dir, modality, crop_transform, img_transform,
+                 same_transform, sample_fps = 2):
+        self._video_dir = video_dir
         self._is_flow = modality == 'flow'
         self._crop_transform = crop_transform
         self._img_transform = img_transform
         self._same_transform = same_transform
+        self._sample_fps = sample_fps
 
-    def read_frame(self, frame_path):
-        img = torchvision.io.read_image(frame_path).float() / 255
+    def read_frame_ocv(self, frame_path):
+        frame_path = cv2.cvtColor(frame_path, cv2.COLOR_BGR2RGB)
+        img = torch.from_numpy(frame_path).float() / 255
+        img = img.permute(2, 0, 1)
         if self._is_flow:
             img = img[1:, :, :]     # GB channels contain data
         return img
 
-    def load_frames(self, video_name, start, end, pad=False, stride=1,
-                    randomize=False):
+    def load_frames_ocv(self, video_name, start, end, pad=False):
+        
+        def get_stride(src_fps):
+            if self.sample_fps <= 0:
+                stride_extract = 1
+            else:
+                stride_extract = int(src_fps / self.sample_fps)
+            return stride_extract
+        
+        parts = video_name.split('/')
+        parts[2] = parts[2].replace(' ', '_')
+        video_name = '/'.join(parts)
+
+        video_path = os.path.join(self._video_dir, video_name+".mkv")
+        vc = cv2.VideoCapture(video_path)
+        fps = vc.get(cv2.CAP_PROP_FPS)
+
+        oh = TARGET_HEIGHT
+        ow = TARGET_WIDTH
+
+        frames=[]
         rand_crop_state = None
         rand_state_backup = None
         ret = []
         n_pad_start = 0
         n_pad_end = 0
-        for frame_num in range(start, end, stride):
-            if randomize and stride > 1:
-                frame_num += random.randint(0, stride - 1)
+        stride_extract = get_stride(fps)
+        vc.set(cv2.CAP_PROP_POS_FRAMES, start*stride_extract)
+        out_frame_num = 0
+        i = 0
+        while True:
+            ret, frame = vc.read()
+            if ret:
+                if i % stride_extract == 0:
+                    if frame.shape[0] != oh or frame.shape[1] != ow:
+                        frame = cv2.resize(frame, (ow, oh))
+                    img = self.read_frame_ocv(frame)
+                    if self._crop_transform:
+                        if self._same_transform:
+                            if rand_crop_state is None:
+                                rand_crop_state = random.getstate()
+                            else:
+                                rand_state_backup = random.getstate()
+                                random.setstate(rand_crop_state)
 
-            if frame_num < 0:
-                n_pad_start += 1
-                continue
+                        img = self._crop_transform(img)
 
-            parts = video_name.split('/')
-            parts[2] = parts[2].replace('_', ' ')
-            video_name = '/'.join(parts)
-
-            frame_path = os.path.join(
-                self._frame_dir, video_name,
-                FrameReader.IMG_NAME.format(frame_num))
-            try:
-                img = self.read_frame(frame_path)
-                if self._crop_transform:
-                    if self._same_transform:
-                        if rand_crop_state is None:
-                            rand_crop_state = random.getstate()
-                        else:
-                            rand_state_backup = random.getstate()
-                            random.setstate(rand_crop_state)
-
-                    img = self._crop_transform(img)
-
-                    if rand_state_backup is not None:
-                        # Make sure that rand state still advances
-                        random.setstate(rand_state_backup)
-                        rand_state_backup = None
-
-                if not self._same_transform:
-                    img = self._img_transform(img)
-                ret.append(img)
-                len(ret)
-            except RuntimeError:
-                # print('Missing file!', frame_path)
-                n_pad_end += 1
+                        if rand_state_backup is not None:
+                            # Make sure that rand state still advances
+                            random.setstate(rand_state_backup)
+                            rand_state_backup = None
+                    if not self._same_transform:
+                        img = self._img_transform(img)
+                    frames.append(img)
+                    out_frame_num += 1
+                i += 1
+                if(out_frame_num==(end-start)):break
+            else:
+                n_pad_end = (end-start) - out_frame_num
+                break
+        vc.release()
         # In the multicrop case, the shape is (B, T, C, H, W)
-        ret = torch.stack(ret, dim=int(len(ret[0].shape) == 4))
-        
+        frames = torch.stack(frames, dim=int(len(frames[0].shape) == 4))
         if self._same_transform:
-            ret = self._img_transform(ret)
+            frames = self._img_transform(frames)
         
         # Always pad start, but only pad end if requested
         if n_pad_start > 0 or (pad and n_pad_end > 0):
-            ret = nn.functional.pad(
-                ret, (0, 0, 0, 0, 0, 0, n_pad_start, n_pad_end if pad else 0))
-        return ret
+            frames = nn.functional.pad(
+                frames, (0, 0, 0, 0, 0, 0, n_pad_start, n_pad_end if pad else 0))
+        return frames
 
 
 # Pad the start/end of videos with empty frames
@@ -131,21 +151,6 @@ def _get_deferred_rgb_transform():
         transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
     ]
     return torch.jit.script(nn.Sequential(*img_transforms))
-
-
-def _get_deferred_bw_transform():
-    img_transforms = [
-        transforms.RandomApply(
-            nn.ModuleList([transforms.ColorJitter(brightness=0.3)]), p=0.25),
-        transforms.RandomApply(
-            nn.ModuleList([transforms.ColorJitter(contrast=0.3)]), p=0.25),
-        transforms.RandomApply(
-            nn.ModuleList([transforms.GaussianBlur(5)]), p=0.25),
-        transforms.Normalize(mean=[0.5], std=[0.5]),
-        RandomGaussianNoise()
-    ]
-    return torch.jit.script(nn.Sequential(*img_transforms))
-
 
 def _load_frame_deferred(gpu_transform, batch, device):
     frame = batch['frame'].to(device)
@@ -225,44 +230,6 @@ def _get_img_transforms(
         if not defer_transform:
             img_transforms.append(transforms.Normalize(
                 mean=IMAGENET_MEAN, std=IMAGENET_STD))
-    elif modality == 'bw':
-        if not is_eval:
-            img_transforms.extend([
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomApply(
-                    nn.ModuleList([transforms.ColorJitter(hue=0.2)]), p=0.25)])
-        img_transforms.append(transforms.Grayscale())
-
-        if not defer_transform:
-            if not is_eval:
-                img_transforms.extend([
-                    transforms.RandomApply(
-                        nn.ModuleList([transforms.ColorJitter(brightness=0.3)]),
-                        p=0.25),
-                    transforms.RandomApply(
-                        nn.ModuleList([transforms.ColorJitter(contrast=0.3)]),
-                        p=0.25),
-                    transforms.RandomApply(
-                        nn.ModuleList([transforms.GaussianBlur(5)]), p=0.25),
-                ])
-
-            img_transforms.append(transforms.Normalize(
-                mean=[0.5], std=[0.5]))
-
-            if not is_eval:
-                img_transforms.append(RandomGaussianNoise())
-    elif modality == 'flow':
-        assert not defer_transform
-
-        img_transforms.append(transforms.Normalize(
-            mean=[0.5, 0.5], std=[0.5, 0.5]))
-
-        if not is_eval:
-            img_transforms.extend([
-                RandomHorizontalFlipFLow(),
-                RandomOffsetFlow(),
-                RandomGaussianNoise()
-            ])
     else:
         raise NotImplementedError(modality)
 
@@ -287,7 +254,7 @@ class ActionSpotDataset(Dataset):
             self,
             classes,                    # dict of class names to idx
             label_file,                 # path to label json
-            frame_dir,                  # path to frames
+            video_dir,                  # path to videos
             modality,                   # [rgb, bw, flow]
             clip_len,
             dataset_len,                # Number of clips
@@ -301,15 +268,14 @@ class ActionSpotDataset(Dataset):
             pad_len=DEFAULT_PAD_LEN,    # Number of frames to pad the start
                                         # and end of videos
             fg_upsample=-1,             # Sample foreground explicitly
+            sample_fps = 2,
     ):
         self._src_file = label_file
         self._labels = load_json(label_file)
-        print("ls",len(self._labels))
         self._class_dict = classes
         self._video_idxs = {x['video']: i for i, x in enumerate(self._labels)}
-
         # Sample videos weighted by their length
-        num_frames = [v['num_frames_2fps'] for v in self._labels]
+        num_frames = [v['num_frames'] for v in self._labels]
         self._weights_by_length = np.array(num_frames) / np.sum(num_frames)
 
         self._clip_len = clip_len
@@ -331,7 +297,7 @@ class ActionSpotDataset(Dataset):
             self._flat_labels = []
             for i, x in enumerate(self._labels):
                 for event in x['events']:
-                    if event['frame'] < x['num_frames_2fps']:
+                    if event['frame'] < x['num_frames']:
                         self._flat_labels.append((i, event['frame']))
 
         self._mixup = mixup
@@ -342,23 +308,14 @@ class ActionSpotDataset(Dataset):
             if modality == 'rgb':
                 print('=> Deferring some RGB transforms to the GPU!')
                 self._gpu_transform = _get_deferred_rgb_transform()
-            elif modality == 'bw':
-                print('=> Deferring some BW transforms to the GPU!')
-                self._gpu_transform = _get_deferred_bw_transform()
 
         crop_transform, img_transform = _get_img_transforms(
             is_eval, crop_dim, modality, same_transform,
             defer_transform=self._gpu_transform is not None)
-        
-        print(self._gpu_transform)
-        print(crop_transform)
-        print(img_transform)
 
         self._frame_reader = FrameReader(
-            frame_dir, modality, crop_transform, img_transform, same_transform)
-        
-        self.list_index=[(1, 101), (101, 201), (201, 301), (301, 401), (401, 501), (501, 601), (601, 701), (701, 801), (801, 901), (901, 1001), (1001, 1101), (1101, 1201), (1201, 1301), (1301, 1401), (1401, 1501), (1501, 1601), (1601, 1701), (1701, 1801), (1801, 1901), (1901, 2001), (2001, 2101), (2101, 2201), (2201, 2301), (2301, 2401), (2401, 2501), (2501, 2601), (2601, 2701), (2701, 2801), (2801, 2901), (2901, 3001), (3001, 3101), (3101, 3201), (3201, 3301), (3301, 3401), (3401, 3501), (3501, 3601), (3601, 3701), (3701, 3801), (3801, 3901), (3901, 4001), (4001, 4101), (4101, 4201), (4201, 4301), (4301, 4401), (4401, 4501), (4501, 4601), (4601, 4701), (4701, 4801), (4801, 4901), (4901, 5001), (5001, 5101), (5101, 5201), (5201, 5301), (5301, 5401), (5401, 5501), (5501, 5601)]
-        self.list_index_mixup = [(101, 201), (201, 301), (301, 401), (401, 501), (501, 601), (601, 701), (701, 801), (801, 901), (901, 1001), (1001, 1101), (1101, 1201), (1201, 1301), (1301, 1401), (1401, 1501), (1501, 1601), (1601, 1701), (1701, 1801), (1801, 1901), (1901, 2001), (2001, 2101), (2101, 2201), (2201, 2301), (2301, 2401), (2401, 2501), (2501, 2601), (2601, 2701), (2701, 2801), (2801, 2901), (2901, 3001), (3001, 3101), (3101, 3201), (3201, 3301), (3301, 3401), (3401, 3501), (3501, 3601), (3601, 3701), (3701, 3801), (3801, 3901), (3901, 4001), (4001, 4101), (4101, 4201), (4201, 4301), (4301, 4401), (4401, 4501), (4501, 4601), (4601, 4701), (4701, 4801), (4801, 4901), (4901, 5001), (5001, 5101), (5101, 5201), (5201, 5301), (5301, 5401), (5401, 5501), (5501, 5601), (1, 101)]
+            video_dir, modality, crop_transform, img_transform, same_transform, sample_fps)
+
     def load_frame_gpu(self, batch, device):
         if self._gpu_transform is None:
             frame = batch['frame'].to(device)
@@ -370,7 +327,7 @@ class ActionSpotDataset(Dataset):
         video_meta = random.choices(
             self._labels, weights=self._weights_by_length)[0]
 
-        video_len = video_meta['num_frames_2fps']
+        video_len = video_meta['num_frames']
         base_idx = -self._pad_len * self._stride + random.randint(
             0, max(0, video_len - 1
                        + (2 * self._pad_len - self._clip_len) * self._stride))
@@ -379,7 +336,7 @@ class ActionSpotDataset(Dataset):
     def _sample_foreground(self):
         video_idx, frame_idx = random.choices(self._flat_labels)[0]
         video_meta = self._labels[video_idx]
-        video_len = video_meta['num_frames_2fps']
+        video_len = video_meta['num_frames']
 
         lower_bound = max(
             -self._pad_len * self._stride,
@@ -395,17 +352,12 @@ class ActionSpotDataset(Dataset):
         assert base_idx + self._clip_len > frame_idx
         return video_meta, base_idx
 
-    def _get_one(self,index,mixup):
+    def _get_one(self):
         if self._fg_upsample > 0 and random.random() >= self._fg_upsample:
             video_meta, base_idx = self._sample_foreground()
         else:
             video_meta, base_idx = self._sample_uniform()
 
-        video_meta=self._labels[0]
-        if mixup:
-            base_idx=self.list_index_mixup[index][0]
-        else:
-            base_idx=self.list_index[index][0]
         labels = np.zeros(self._clip_len, np.int64)
         for event in video_meta['events']:
             event_frame = event['frame']
@@ -421,33 +373,23 @@ class ActionSpotDataset(Dataset):
                     min(self._clip_len, label_idx + self._dilate_len + 1)
                 ):
                     labels[i] = label
-
-        
-        start_time = time.time()
-        # print(video_meta['video'],start_time)
-        frames = self._frame_reader.load_frames(
-            video_meta['video'], base_idx,
-            base_idx + self._clip_len * self._stride, pad=True,
-            stride=self._stride, randomize=not self._is_eval)
-        # print(video_meta['video'],time.time() - start_time)
-        # print("getone",mixup,index,len(frames),frames[0].shape,video_meta['video'],base_idx)
+        frames = self._frame_reader.load_frames_ocv(
+        video_meta['video'], base_idx,
+        base_idx + self._clip_len * self._stride, pad=True,
+        stride=self._stride, randomize=not self._is_eval)
+    
         return {'frame': frames, 'contains_event': int(np.sum(labels) > 0),
-                'label': labels,'indexes':(index,base_idx)}
+                'label': labels}
 
     def __getitem__(self, unused):
-        ret = self._get_one(unused,False)
+        ret = self._get_one()
 
         if self._mixup:
-            mix = self._get_one(unused,True)    # Sample another clip
-
+            mix = self._get_one()    # Sample another clip
             l = random.betavariate(0.2, 0.2)
-
-            l=0.9
             label_dist = np.zeros((self._clip_len, len(self._class_dict) + 1))
-
             label_dist[range(self._clip_len), ret['label']] = l
             label_dist[range(self._clip_len), mix['label']] += 1. - l
-            non_zero_indexes = np.nonzero(label_dist)
 
             if self._gpu_transform is None:
                 ret['frame'] = l * ret['frame'] + (1. - l) * mix['frame']
@@ -474,7 +416,7 @@ class ActionSpotVideoDataset(Dataset):
             self,
             classes,
             label_file,
-            frame_dir,
+            video_dir,
             modality,
             clip_len,
             overlap_len=0,
@@ -483,7 +425,8 @@ class ActionSpotVideoDataset(Dataset):
             pad_len=DEFAULT_PAD_LEN,
             flip=False,
             multi_crop=False,
-            skip_partial_end=True
+            skip_partial_end=True,
+            sample_fps = 2,
     ):
         self._src_file = label_file
         self._labels = load_json(label_file)
@@ -491,14 +434,13 @@ class ActionSpotVideoDataset(Dataset):
         self._video_idxs = {x['video']: i for i, x in enumerate(self._labels)}
         self._clip_len = clip_len
         self._stride = stride
-
         crop_transform, img_transform = _get_img_transforms(
             is_eval=True, crop_dim=crop_dim, modality=modality, same_transform=True, multi_crop=multi_crop)
 
         # No need to enforce same_transform since the transforms are
         # deterministic
         self._frame_reader = FrameReader(
-            frame_dir, modality, crop_transform, img_transform, False)
+            video_dir, modality, crop_transform, img_transform, False, sample_fps)
 
         self._flip = flip
         self._multi_crop = multi_crop
@@ -508,7 +450,7 @@ class ActionSpotVideoDataset(Dataset):
             has_clip = False
             for i in range(
                 -pad_len * self._stride,
-                max(0, l['num_frames_2fps'] - (overlap_len * stride)
+                max(0, l['num_frames'] - (overlap_len * stride)
                         * int(skip_partial_end)), \
                 # Need to ensure that all clips have at least one frame
                 (clip_len - overlap_len) * self._stride
@@ -522,10 +464,10 @@ class ActionSpotVideoDataset(Dataset):
 
     def __getitem__(self, idx):
         video_name, start = self._clips[idx]
-        frames = self._frame_reader.load_frames(
-            video_name, start, start + self._clip_len * self._stride, pad=True,
-            stride=self._stride)
-
+        frames = self._frame_reader.load_frames_ocv(
+        video_name, start, start + self._clip_len * self._stride, pad=True,
+        stride=self._stride)
+        
         if self._flip:
             frames = torch.stack((frames, frames.flip(-1)), dim=0)
 
@@ -534,7 +476,7 @@ class ActionSpotVideoDataset(Dataset):
 
     def get_labels(self, video):
         meta = self._labels[self._video_idxs[video]]
-        num_frames = meta['num_frames_2fps']
+        num_frames = meta['num_frames']
         num_labels = num_frames // self._stride
         if num_frames % self._stride != 0:
             num_labels += 1
@@ -554,11 +496,8 @@ class ActionSpotVideoDataset(Dataset):
 
     @property
     def videos(self):
-        # return [
-        #     (v['video'], v['num_frames_2fps'] // self._stride,
-        #      v['fps'] / self._stride) for v in self._labels[:1]]
         return sorted([
-            (v['video'], v['num_frames_2fps'] // self._stride,
+            (v['video'], v['num_frames'] // self._stride,
              v['fps'] / self._stride) for v in self._labels])
 
     @property
@@ -571,14 +510,14 @@ class ActionSpotVideoDataset(Dataset):
             for x in self._labels:
                 x_copy = copy.deepcopy(x)
                 x_copy['fps'] /= self._stride
-                x_copy['num_frames_2fps'] //= self._stride
+                x_copy['num_frames'] //= self._stride
                 for e in x_copy['events']:
                     e['frame'] //= self._stride
                 labels.append(x_copy)
             return labels
 
     def print_info(self):
-        num_frames = sum([x['num_frames_2fps'] for x in self._labels])
+        num_frames = sum([x['num_frames'] for x in self._labels])
         num_events = sum([len(x['events']) for x in self._labels])
         print('{} : {} videos, {} frames ({} stride), {:0.5f}% non-bg'.format(
             self._src_file, len(self._labels), num_frames, self._stride,
@@ -616,22 +555,17 @@ class DaliDataSet(DALIGenericIterator):
             modality,                   # [rgb, bw, flow]
             clip_len,
             dataset_len,                # Number of clips
+            video_dir,
             is_eval=True,               # Disable random augmentation
             crop_dim=None,
-            stride=1,                   # Downsample frame rate
-            same_transform=True,        # Apply the same random augmentation to
-                                        # each frame in a clip
+            stride=12,                   # Downsample frame rate
             dilate_len=0,               # Dilate ground truth labels
             mixup=False,
-            pad_len=DEFAULT_PAD_LEN,    # Number of frames to pad the start
-                                        # and end of videos
-            fg_upsample=-1              # Sample foreground explicitly
         ):
         self._src_file = label_file
         self._labels = load_json(label_file)
         self._class_dict = classes
 
-        #nouveau
         self.original_batch_size = batch_size
 
         if mixup:
@@ -640,7 +574,6 @@ class DaliDataSet(DALIGenericIterator):
             self.batch_size = batch_size
 
         self.batch_size_per_pipe = distribute_elements(self.batch_size,len(devices))
-        #fin
 
         self.batch_size = batch_size
         self.nb_videos = dataset_len*2 if mixup else dataset_len
@@ -648,10 +581,11 @@ class DaliDataSet(DALIGenericIterator):
         self.output_map = output_map
         self.devices=devices
         self.is_eval = is_eval
+        self.crop_dim = crop_dim
+        self.dilate_len = dilate_len
+        self.clip_len = clip_len
+        self.stride = stride
         
-        epochs=50
-        import math
-
         if is_eval:
             nb_clips_per_video = math.ceil(dataset_len/len(self._labels))*epochs
         else:
@@ -661,11 +595,10 @@ class DaliDataSet(DALIGenericIterator):
         
         file_list_txt = ""
         for index,video in enumerate(self._labels):
-            video_path = os.path.join("/home/ybenzakour/datasets/SoccerNet", video['video'] + ".mkv")
+            video_path = os.path.join(video_dir, video['video'] + ".mkv")
             for i in range(nb_clips_per_video):
-                random_start = random.randint(1, video['num_frames_dali']-101)
-                random_end= random_start+100
-                file_list_txt += f"{video_path} {index} {random_start * 12} {(random_start+100) * 12}\n"
+                random_start = random.randint(1, video['num_frames_dali']-(clip_len+1))
+                file_list_txt += f"{video_path} {index} {random_start * stride} {(random_start+clip_len) * stride}\n"
         
         tf = tempfile.NamedTemporaryFile()
         tf.write(str.encode(file_list_txt))
@@ -673,21 +606,18 @@ class DaliDataSet(DALIGenericIterator):
 
         self.pipes = [
             self.video_pipe(
-                batch_size=self.batch_size_per_pipe[index], sequence_length = 100, stride_dali = 12, 
+                batch_size=self.batch_size_per_pipe[index], sequence_length = clip_len, stride_dali = stride, 
                 step = -1, num_threads=8, device_id=i, file_list=tf.name,shard_id = index, 
                 num_shards = len(devices)) for index,i in enumerate(devices)]
-        # self.pipes = [
-        #     self.video_pipe(
-        #         batch_size=self.batch_size, sequence_length = 100, stride_dali = 12, 
-        #                 step = -1, num_threads=8, device_id=i, file_list=tf.name) for i in devices
-        #                 ]
 
         for pipe in self.pipes:
             pipe.build()
+
         super().__init__(self.pipes,output_map,size=self.nb_videos)
-        # ,last_batch_policy=LastBatchPolicy.PARTIAL)
-        self.gpu_transform = None
+
         self.device = torch.device('cuda:{}'.format(self.devices[1]))
+
+        self.gpu_transform = None
         if not self.is_eval:
             self.gpu_transform = self.get_deferred_rgb_transform()
 
@@ -714,7 +644,6 @@ class DaliDataSet(DALIGenericIterator):
         contains_event = (sum_labels > 0).int()
         return {'frame': batch_images, 'contains_event': contains_event,
                     'label': batch_labels}
-        # , 'start_frame_num' : batch['start_frame_num']}
     
     def move_to_device(self,batch):
         for key, tensor in batch.items():
@@ -733,30 +662,20 @@ class DaliDataSet(DALIGenericIterator):
             mix2 = self.get_attr(data[3])
             self.move_to_device(ret2)
             self.move_to_device(mix2)
-        # ret=self.get_attr(data[0])
-        # for key, tensor in ret.items():
-        #         ret[key] = tensor.to(torch.device('cuda:{}'.format(self.devices[1])))
-                # ret[key] = tensor.to(torch.device('cuda:0'))
+
         if self.mixup:
             if nb_devices == 4:
                 for key, tensor in ret.items():
                     ret[key] = torch.cat((tensor,ret2[key]))
                 for key, tensor in mix.items():
                     mix[key] = torch.cat((tensor,mix2[key]))
-            # mix=self.get_attr(data[1])
-            # for key, tensor in mix.items():
-            #     mix[key] = tensor.to(torch.device('cuda:{}'.format(self.devices[1])))
 
             l = [random.betavariate(0.2, 0.2) for i in range(ret['frame'].shape[0])]
-
-            # l=[0.9 for i in range(self.batch_size)]
             l = torch.tensor(l)
-        #     print(l,l.device)
-            label_dist = torch.zeros((ret['frame'].shape[0],100,len(self._class_dict) + 1),device=self.device)
-            # label_dist = torch.zeros((self.batch_size,100,len(self._class_dict) + 1),device=torch.device('cuda:0'))
+            label_dist = torch.zeros((ret['frame'].shape[0],self.clip_len,len(self._class_dict) + 1),device=self.device)
             for i in range(ret['frame'].shape[0]):
-                label_dist[i,range(100), ret['label'][i]] = l[i].item()
-                label_dist[i,range(100), mix['label'][i]] += 1. - l[i].item()
+                label_dist[i,range(self.clip_len), ret['label'][i]] = l[i].item()
+                label_dist[i,range(self.clip_len), mix['label'][i]] += 1. - l[i].item()
 
             if self.gpu_transform is None:
                 for i in range(ret['frame'].shape[0]):
@@ -826,9 +745,7 @@ class DaliDataSet(DALIGenericIterator):
             device="gpu",
             file_list=file_list,
             sequence_length=sequence_length,
-            #code de test
             random_shuffle=True,
-            # random_shuffle=True,
             shard_id=shard_id,
             num_shards=num_shards,
             image_type=types.RGB,
@@ -840,50 +757,44 @@ class DaliDataSet(DALIGenericIterator):
             pad_sequences=True,
             skip_vfr_check=True)
         if self.is_eval:
-            video = fn.crop_mirror_normalize(video,
-                                          dtype=types.FLOAT,
-    #                                       output_layout="FHWC",
-                                         output_layout = "FCHW",
-                                        #  std=[255,255,255]
-                                         mean = [IMAGENET_MEAN[i] * 255. for i in range(len(IMAGENET_MEAN))],
-                                          std=[IMAGENET_STD[i] * 255. for i in range(len(IMAGENET_STD))]
-                                         )
+            video = fn.crop_mirror_normalize(
+                video, dtype=types.FLOAT, crop=self.crop_dim, output_layout = "FCHW",
+                mean = [IMAGENET_MEAN[i] * 255. for i in range(len(IMAGENET_MEAN))],
+                std=[IMAGENET_STD[i] * 255. for i in range(len(IMAGENET_STD))]
+                )
         else:
-            video = fn.crop_mirror_normalize(video,
-                                              dtype=types.FLOAT,
-        #                                       output_layout="FHWC",
-                                             output_layout = "FCHW",
-                                             std=[255, 255, 255],
-                                             mirror=fn.random.coin_flip(),
-                                             )
+            video = fn.crop_mirror_normalize(
+                video, dtype=types.FLOAT, crop=self.crop_dim, output_layout = "FCHW",
+                std=[255, 255, 255], mirror=fn.random.coin_flip()
+                )
         label = fn.python_function(label,frame_num,function=self.edit_labels,device="gpu")
         return video,label
 
     def edit_labels(self,label,frame_num):
-        dilate_len=0
-        clip_len=100
         video_meta = self._labels[label.item()]
-    #     print(video_meta["video"])
-        base_idx = frame_num.item()//12
-        
-        labels = cupy.zeros(100, np.int64)
+        base_idx = frame_num.item()// self.stride
+        labels = cupy.zeros(self.clip_len, np.int64)
+
         for event in video_meta['events']:
             event_frame = event['frame']
             # Index of event in label array
             label_idx = (event_frame - base_idx) // 1
-            if (label_idx >= dilate_len
-                and label_idx < clip_len + dilate_len
+            if (label_idx >= self.dilate_len
+                and label_idx < self.clip_len + self.dilate_len
                ):
                 label = self._class_dict[event['label']]
                 for i in range(
-                    max(0, label_idx - dilate_len),
-                    min(clip_len, label_idx + dilate_len + 1)
+                    max(0, label_idx - self.dilate_len),
+                    min(self.clip_len, label_idx + self.dilate_len + 1)
                     ):
                     labels[i] = label
         return labels
     
     def print_info(self):
         _print_info_helper(self._src_file, self._labels)
+
+def get_remaining(data_len,batch_size):
+    return (math.ceil(data_len / batch_size) * batch_size) - data_len
 
 class DaliDataSetVideo(DALIGenericIterator):
 
@@ -896,13 +807,13 @@ class DaliDataSetVideo(DALIGenericIterator):
             label_file,
             modality,
             clip_len,
+            stride_dali ,
+            video_dir,
             overlap_len=0,
             crop_dim=None,
             stride=1,
-            pad_len=DEFAULT_PAD_LEN,
             flip=False,
             multi_crop=False,
-            skip_partial_end=True
     ):
         self._src_file = label_file
         self._labels = load_json(label_file)
@@ -915,7 +826,7 @@ class DaliDataSetVideo(DALIGenericIterator):
         self._multi_crop = multi_crop
 
         self.batch_size = batch_size // len(devices)
-
+        self.devices = devices
         self._clips = []
         file_list_txt = ""
         cmp=0
@@ -926,49 +837,54 @@ class DaliDataSetVideo(DALIGenericIterator):
                 # Need to ensure that all clips have at least one frame
                 (clip_len - overlap_len) * self._stride
             ):
-                if i+100>l['num_frames_dali']:
+                if i + clip_len > l['num_frames_dali']:
                     end = l['num_frames_base']
                 else:
-                    end = (i+100)*12
+                    end = (i + clip_len) * stride_dali
                 has_clip = True
                 self._clips.append((l['video'], i))
-                video_path = os.path.join("/home/ybenzakour/datasets/SoccerNet", l['video'] + ".mkv")
-                file_list_txt += f"{video_path} {cmp} {i * 12} {end}\n"
+                video_path = os.path.join(video_dir, l['video'] + ".mkv")
+                file_list_txt += f"{video_path} {cmp} {i * stride_dali} {end}\n"
                 cmp+=1
+            last_video = l["video"]
             assert has_clip, l
         
+        x = get_remaining(len(self._clips),batch_size)
+        for _ in range(x):
+            self._clips.append((last_video, i))
+            video_path = os.path.join(video_dir, last_video + ".mkv")
+            file_list_txt += f"{video_path} {cmp} {i * stride_dali} {end}\n"
+            cmp+=1
+
         tf = tempfile.NamedTemporaryFile()
         tf.write(str.encode(file_list_txt))
         tf.flush()
 
         self.pipes = [
-            self.video_pipe(batch_size=self.batch_size, sequence_length = 100, stride_dali = 12, 
-                        step = -1, num_threads=8, device_id=i, file_list=tf.name, shard_id = index, num_shards=len(devices)) for index,i in enumerate(devices)
+            self.video_pipe(batch_size=self.batch_size, sequence_length = clip_len, stride_dali = stride_dali, 
+                        step = -1, num_threads=8, device_id=i, file_list=tf.name, shard_id = index, 
+                        num_shards=len(devices)) for index,i in enumerate(devices)
                 ]
         
         for pipe in self.pipes:
             pipe.build()
+            
         size=len(self._clips)
-        # size=57
-        super().__init__(self.pipes,output_map,size=size)
-
-        self.gpu_transform = None
-        
+        super().__init__(self.pipes,output_map,size=size)        
 
     def __next__(self):
         out = super().__next__()
         video_names=[]
-        starts=cupy.zeros(2*self.batch_size,np.int64)
-        for i in range(out[0]["label"].shape[0]):
-            video_name, start = self._clips[out[0]["label"][i]]
-            video_names.append(video_name)
-            starts[i]=start
-        for i in range(out[1]["label"].shape[0]):
-            video_name, start = self._clips[out[1]["label"][i]]
-            video_names.append(video_name)
-            starts[i+out[0]["label"].shape[0]]=start
+        starts=cupy.zeros(len(self.devices)*self.batch_size,np.int64)
+        cmp=0
+        for j in range(len(out)):
+            for i in range(out[j]["label"].shape[0]):
+                video_name, start = self._clips[out[j]["label"][i]]
+                video_names.append(video_name)
+                starts[cmp]=start
+                cmp+=1
         return {'video': video_names, 'start': torch.as_tensor(starts) ,
-            'frame': torch.cat((out[0]["data"], out[1]["data"].to(torch.device('cuda'))), dim=0)}
+            'frame': torch.cat(([data["data"].to(torch.device('cuda')) for data in out]))}
 
     def delete(self):
         for pipe in self.pipes:
@@ -993,13 +909,11 @@ class DaliDataSetVideo(DALIGenericIterator):
             pad_sequences=True,
             skip_vfr_check=True)
         
-        video = fn.crop_mirror_normalize(video,
-                                          dtype=types.FLOAT,
-    #                                       output_layout="FHWC",
-                                         output_layout = "FCHW",
-                                         mean = [IMAGENET_MEAN[i] * 255. for i in range(len(IMAGENET_MEAN))],
-                                          std=[IMAGENET_STD[i] * 255. for i in range(len(IMAGENET_STD))]
-                                         )
+        video = fn.crop_mirror_normalize(
+            video, dtype=types.FLOAT, output_layout = "FCHW",
+            mean = [IMAGENET_MEAN[i] * 255. for i in range(len(IMAGENET_MEAN))],
+            std=[IMAGENET_STD[i] * 255. for i in range(len(IMAGENET_STD))]
+            )
         return video,label
     
     def get_labels(self, video):
