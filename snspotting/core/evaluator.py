@@ -1,4 +1,4 @@
-from snspotting.core.utils import CustomProgressBar
+from snspotting.core.utils.lightning import CustomProgressBar
 
 from snspotting.datasets import build_dataset, build_dataloader
 

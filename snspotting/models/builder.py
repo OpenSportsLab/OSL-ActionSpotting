@@ -1,3 +1,4 @@
+from snspotting.models.e2espot import E2EModel
 from .learnablepooling import LiteLearnablePoolingModel
 from .contextaware import  LiteContextAwareModel
 
@@ -27,6 +28,11 @@ def build_model(cfg, verbose=True, default_args=None):
                                 receptive_field=cfg.model.receptive_field,
                                 num_detections=cfg.model.num_detections,
                                 framerate=cfg.model.framerate)
+    if cfg.model.type == "E2E":
+        model = E2EModel(
+            len(default_args["classes"]) + 1, cfg.model.feature_arch, cfg.model.temporal_arch,
+            clip_len=cfg.dataset.clip_len, modality=cfg.dataset.modality,
+            multi_gpu=cfg.model.multi_gpu)
     else:
         model = None 
 
