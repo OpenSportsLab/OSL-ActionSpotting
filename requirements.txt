@@ -1,3 +1,4 @@
+typer[All]
 tqdm
 SoccerNet
 matplotlib
