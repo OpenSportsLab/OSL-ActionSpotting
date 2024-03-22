@@ -29,7 +29,7 @@ def build_trainer(cfg, model = None, default_args=None):
         print(scaler)
         print(num_steps_per_epoch)
         print(num_epochs, lr_scheduler)
-        trainer = Trainer(cfg,model,optimizer,scaler,lr_scheduler, default_args['work_dir'], default_args['dali'], default_args['modality'], default_args['clip_len'], default_args['crop_dim'], default_args['label_dir'])
+        trainer = Trainer(cfg,model,optimizer,scaler,lr_scheduler, default_args['work_dir'], default_args['dali'], default_args['modality'], default_args['clip_len'], default_args['crop_dim'], default_args['labels_dir'])
     else:
         call=MyCallback()
         trainer = pl.Trainer(max_epochs=cfg.max_epochs,devices=[cfg.GPU],callbacks=[call,CustomProgressBar(refresh_rate=1)],num_sanity_val_steps=0)

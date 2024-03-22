@@ -4,6 +4,6 @@ _base_ = [
     "../_base_/schedules/e2e_100_map.py", #trainer config
 ]
 
-work_dir = "outputs/e2e/rny002_gsm_bis"
+work_dir = "outputs/e2e/rny002_gsm_trois"
 
 dali = True
