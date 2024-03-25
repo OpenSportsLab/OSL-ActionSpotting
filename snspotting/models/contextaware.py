@@ -12,7 +12,7 @@ from snspotting.models.litebase import LiteBaseModel
 
 import os
 
-from snspotting.datasets.soccernet import timestamps2long, batch2long
+from snspotting.datasets.utils import timestamps2long, batch2long
 from SoccerNet.Downloader import getListGames
 
 from snspotting.models.utils import NMS, create_folders, predictions2json, zipResults

@@ -29,7 +29,7 @@ def build_trainer(cfg, model = None, default_args=None):
         print(scaler)
         print(num_steps_per_epoch)
         print(num_epochs, lr_scheduler)
-        trainer = Trainer(cfg,model,optimizer,scaler,lr_scheduler, default_args['work_dir'], default_args['dali'], default_args['modality'], default_args['clip_len'], default_args['crop_dim'], default_args['labels_dir'])
+        trainer = Trainer(cfg,model,optimizer,scaler,lr_scheduler, default_args['work_dir'], default_args['dali'], default_args['repartitions'], default_args['cfg_test'], default_args['cfg_challenge'])
     else:
         call=MyCallback()
         trainer = pl.Trainer(max_epochs=cfg.max_epochs,devices=[cfg.GPU],callbacks=[call,CustomProgressBar(refresh_rate=1)],num_sanity_val_steps=0)
@@ -46,9 +46,9 @@ def get_lr_scheduler(args, optimizer, num_steps_per_epoch):
             num_steps_per_epoch * cosine_epochs)])
 
 class Trainer():
-    def __init__(self,args,model,optimizer,scaler,lr_scheduler, work_dir, dali, modality, clip_len, crop_dim, labels_dir):
+    def __init__(self,args,model,optimizer,scaler,lr_scheduler, work_dir, dali, repartitions, cfg_test, cfg_challenge):
         self.losses = []
-        self.best_epoch = None
+        self.best_epoch = 0
         self.best_criterion = 0 if args.criterion == 'map' else float('inf')
 
         self.num_epochs = args.num_epochs
@@ -68,15 +68,9 @@ class Trainer():
         self.inference_batch_size = args.inference_batch_size
         # self.base_num_workers = args.base_num_workers
 
-        self.losses = []
-        self.best_epoch = None
-        self.best_criterion = 0 if args.criterion == 'map' else float('inf')
-
-        self.modality = modality 
-        self.clip_len = clip_len
-        self.crop_dim = crop_dim
-
-        self.labels_dir = labels_dir
+        self.repartitions = repartitions 
+        self.cfg_test = cfg_test
+        self.cfg_challenge = cfg_challenge
 
     def train(self,train_loader,val_loader,val_data_frames,classes):
         for epoch in range(self.epoch, self.num_epochs):
@@ -128,7 +122,7 @@ class Trainer():
                         'lr_state_dict': self.lr_scheduler.state_dict()},
                     os.path.join(self.save_dir,
                                     'optim_{:03d}.pt'.format(epoch)))
-                
+         
         print('Best epoch: {}\n'.format(self.best_epoch))
 
         train_loader.delete()
@@ -145,15 +139,20 @@ class Trainer():
             # Evaluate on hold out splits
             eval_splits += ['test', 'challenge']
             for split in eval_splits:
-                split_path = os.path.join(self.labels_dir,
-                    '{}.json'.format(split))
+                if split == 'test':
+                    cfg_tmp = self.cfg_test
+                elif split == 'challenge':
+                    cfg_tmp = self.cfg_challenge
+                split_path = os.path.join(cfg_tmp.label_file)
+                # split_path = os.path.join(self.labels_dir,
+                #     '{}.json'.format(split))
                 if os.path.exists(split_path):
                     if self.dali:
                         split_data = DaliDataSetVideo(
-                            4,["data","label"],[0,1,2,3],
-                            classes, split_path,
-                            self.modality, self.clip_len,
-                            crop_dim=self.crop_dim, overlap_len=self.clip_len // 2)
+                            cfg_tmp.dataloader.batch_size,cfg_tmp.output_map,self.repartitions[0],
+                            classes, cfg_tmp.label_file,
+                            cfg_tmp.modality, cfg_tmp.clip_len, cfg_tmp.stride, cfg_tmp.data_root, 
+                            crop_dim=cfg_tmp.crop_dim, overlap_len=cfg_tmp.clip_len // 2)
                     # else:
                     #     split_data = ActionSpotVideoDataset(
                     #     classes, split_path, args.frame_dir, args.modality,

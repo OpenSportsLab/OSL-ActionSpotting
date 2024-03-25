@@ -69,7 +69,8 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                 backbone="PreExtracted", 
                 neck="NetVLAD++", 
                 head="LinearLayer", 
-                post_proc="NMS"):
+                post_proc="NMS",
+                runner="runner_pooling"):
         """
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
@@ -83,6 +84,8 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         self.overwrite = True
 
         self.cfg = cfg
+
+        self.runner = runner
 
     def _common_step(self, batch, batch_idx):
         feats,labels=batch
@@ -103,7 +106,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
     def on_predict_start(self):
         self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.overwrite)
-    
+        print(self.output_folder,self.output_results)
         if not self.stop_predict:
             self.spotting_predictions = list()
 
@@ -115,32 +118,72 @@ class LiteLearnablePoolingModel(LiteBaseModel):
     
     def predict_step(self, batch, batch_idx):
         if not self.stop_predict:
-            game_ID, feat_half1, feat_half2, label_half1, label_half2 = batch
+            if self.runner == "runner_pooling":
+                game_ID, feat_half1, feat_half2, label_half1, label_half2 = batch
 
-            game_ID = game_ID[0]
-            feat_half1 = feat_half1.squeeze(0)
-            feat_half2 = feat_half2.squeeze(0)
+                game_ID = game_ID[0]
+                feat_half1 = feat_half1.squeeze(0)
+                feat_half2 = feat_half2.squeeze(0)
 
-            # Compute the output for batches of frames
-            BS = 256
-            timestamp_long_half_1 = timestamp_half(self.model,feat_half1,BS)
-            timestamp_long_half_2 = timestamp_half(self.model,feat_half2,BS)
-            
-            timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
-            timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
+                # Compute the output for batches of frames
+                BS = 256
+                timestamp_long_half_1 = timestamp_half(self.model,feat_half1,BS)
+                timestamp_long_half_2 = timestamp_half(self.model,feat_half2,BS)
+                
+                timestamp_long_half_1 = timestamp_long_half_1[:, 1:]
+                timestamp_long_half_2 = timestamp_long_half_2[:, 1:]
 
-            self.spotting_predictions.append(timestamp_long_half_1)
-            self.spotting_predictions.append(timestamp_long_half_2)
+                self.spotting_predictions.append(timestamp_long_half_1)
+                self.spotting_predictions.append(timestamp_long_half_2)
 
-            framerate = self.trainer.predict_dataloaders.dataset.framerate
-            get_spot = get_spot_from_NMS
+                framerate = self.trainer.predict_dataloaders.dataset.framerate
+                get_spot = get_spot_from_NMS
 
-            json_data = get_json_data(False,game_ID=game_ID)
+                json_data = get_json_data(False,game_ID=game_ID)
 
-            for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
+                for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
+                    for l in range(self.trainer.predict_dataloaders.dataset.num_classes):
+                        spots = get_spot(
+                            timestamp[:, l], window=self.cfg.model.post_proc.NMS_window*self.cfg.model.backbone.framerate, thresh=self.cfg.model.post_proc.NMS_threshold)
+                        for spot in spots:
+                            # print("spot", int(spot[0]), spot[1], spot)
+                            frame_index = int(spot[0])
+                            confidence = spot[1]
+                            if confidence < self.confidence_threshold:
+                                continue
+                            
+                            json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=self.trainer.predict_dataloaders.dataset.version,l=l,confidence=confidence))
+                
+                    json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
+                    json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
+
+                os.makedirs(os.path.join(self.cfg.work_dir, self.output_folder, game_ID), exist_ok=True)
+                with open(os.path.join(self.cfg.work_dir, self.output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
+                    json.dump(json_data, output_file, indent=4)
+            elif self.runner == "runner_JSON":
+                video, features, labels = batch
+
+                video = video[0]
+                video, _ = os.path.splitext(video)
+                features = features.squeeze(0)
+
+                # Compute the output for batches of frames
+                BS = 256
+                timestamp_long = timestamp_half(self.model,features,BS)
+                
+                timestamp_long = timestamp_long[:, 1:]
+
+                self.spotting_predictions.append(timestamp_long)
+
+                framerate = self.trainer.predict_dataloaders.dataset.framerate
+                get_spot = get_spot_from_NMS
+
+                json_data = get_json_data(False,game_ID=video)
+
+                # for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
                 for l in range(self.trainer.predict_dataloaders.dataset.num_classes):
                     spots = get_spot(
-                        timestamp[:, l], window=self.cfg.model.post_proc.NMS_window*self.cfg.model.backbone.framerate, thresh=self.cfg.model.post_proc.NMS_threshold)
+                        timestamp_long[:, l], window=self.cfg.model.post_proc.NMS_window*self.cfg.model.backbone.framerate, thresh=self.cfg.model.post_proc.NMS_threshold)
                     for spot in spots:
                         # print("spot", int(spot[0]), spot[1], spot)
                         frame_index = int(spot[0])
@@ -148,11 +191,12 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         if confidence < self.confidence_threshold:
                             continue
                         
-                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=self.trainer.predict_dataloaders.dataset.version,l=l,confidence=confidence))
+                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=int(video[-1]),version=2,l=l,confidence=confidence))
             
                 json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
                 json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
 
-            os.makedirs(os.path.join(self.cfg.work_dir, self.output_folder, game_ID), exist_ok=True)
-            with open(os.path.join(self.cfg.work_dir, self.output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
-                json.dump(json_data, output_file, indent=4)
+                os.makedirs(os.path.join(self.cfg.work_dir, self.output_folder, video), exist_ok=True)
+                with open(os.path.join(self.cfg.work_dir, self.output_folder, video, "results_spotting.json"), 'w') as output_file:
+                    json.dump(json_data, output_file, indent=4)
+

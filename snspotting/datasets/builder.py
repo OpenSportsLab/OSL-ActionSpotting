@@ -2,7 +2,7 @@
 from snspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
 from .soccernet import SoccerNet,SoccerNetClips,SoccerNetClipsChunks
 # from .folder import FolderClips, FolderGames
-from .json import FeatureClipsfromJSON, FeatureVideosfromJSON
+from .json import FeatureClipChunksfromJson, FeatureClipsfromJSON, FeatureVideosfromJSON
 import torch
 from mmengine.config import Config, DictAction
 import random
@@ -39,9 +39,19 @@ def build_dataset(cfg, gpu=None,  default_args=None):
             framerate=cfg.framerate,
             window_size=cfg.window_size)
     elif cfg.type == "FeatureVideosfromJSON":
-        dataset = FeatureVideosfromJSON(path=cfg.path, 
+        dataset = FeatureClipsfromJSON(path=cfg.path, 
             framerate=cfg.framerate,
-            window_size=cfg.window_size)
+            window_size=cfg.window_size, train = False)
+        # dataset = FeatureVideosfromJSON(path=cfg.path, 
+        #     framerate=cfg.framerate,
+        #     window_size=cfg.window_size)
+    elif cfg.type == "FeatureClipChunksfromJson":
+        dataset = FeatureClipChunksfromJson(path=cfg.path, 
+            framerate=cfg.framerate,
+                chunk_size=cfg.chunk_size,
+                receptive_field=cfg.receptive_field,
+                chunks_per_epoch=cfg.chunks_per_epoch,
+                gpu = gpu)
     elif cfg.type == "VideoGameWithOpencv":
         dataset_len = cfg.epoch_num_frames // cfg.clip_len
         dataset_kwargs = {
@@ -112,7 +122,7 @@ def build_dataloader(dataset, cfg, gpu):
             batch_size=cfg.batch_size, shuffle=cfg.shuffle,
             num_workers=cfg.num_workers if gpu >=0 else 0, 
             pin_memory=cfg.pin_memory if gpu >=0 else False,
-            prefetch_factor = cfg.prefetch_factor if gpu >=0 else None,
+            prefetch_factor = cfg.prefetch_factor if 'prefetch_factor' in cfg.keys() else None,
             worker_init_fn=worker_init_fn
             )
     return dataloader

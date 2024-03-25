@@ -1,5 +1,4 @@
 classes = 'soccernetv2/2_fps/dali/class.txt'
-labels_dir = 'soccernetv2/2_fps/dali/'
             
 dataset = dict(
     batch_size = 8,
@@ -46,6 +45,26 @@ dataset = dict(
             shuffle=False,
         ),
     ),
+    test = dict(
+        stride = 12,
+        output_map = ["data", "label"],
+        label_file = "soccernetv2/2_fps/dali/test.json",  # path to label json
+        data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        dataloader=dict(
+            batch_size=4,
+            shuffle=False,
+        ),
+    ),
+    challenge = dict(
+        stride = 12,
+        output_map = ["data", "label"],
+        label_file = "soccernetv2/2_fps/dali/challenge.json",  # path to label json
+        data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        dataloader=dict(
+            batch_size=4,
+            shuffle=False,
+        ),
+    )
 )
 
 
