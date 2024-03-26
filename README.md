@@ -5,7 +5,7 @@ conda create -y -n snspotting python=3.9
 conda activate snspotting
 conda install -y pytorch torchvision -c pytorch -c nvidia
 conda install -y cudatoolkit=11.8 -c pytorch
-pip install SoccerNet matplotlib scikit-learn sklearn cupy pytorch-lightning opencv-python moviepy tqdm
+pip install SoccerNet matplotlib scikit-learn cupy-cuda11x pytorch-lightning opencv-python moviepy tqdm tabulate nvidia-dali-cuda110 timm
 pip install mmengine
 pip install -e .
 ```
