@@ -30,7 +30,7 @@ dataset = dict(
             pin_memory=True,
         )),
     test=dict(
-        type="FeatureClipChunksfromJson",
+        type="FeatureVideosChunksfromJson",
         path="test.json",
         framerate=2,
         chunk_size=120,

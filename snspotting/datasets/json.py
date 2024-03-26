@@ -341,43 +341,44 @@ class FeatureClipChunksfromJson(FeaturefromJson):
         self.K_parameters = K_V2*framerate 
         self.num_detections =15
 
-        self.features_clips = list()
-        self.labels_clips = list()
-        self.anchors_clips = list()
-        for i in np.arange(self.num_classes+1):
-            self.anchors_clips.append(list())
+        if self.train:
+            self.features_clips = list()
+            self.labels_clips = list()
+            self.anchors_clips = list()
+            for i in np.arange(self.num_classes+1):
+                self.anchors_clips.append(list())
 
-        game_counter = 0
-        # loop over videos
-        for video in tqdm(self.data_json["videos"]):
-            # Load features
-            features = np.load(os.path.join(os.path.dirname(path), video["path_features"].replace(' ','_')))
-            
-            # Load labels
-            labels = np.zeros((features.shape[0], self.num_classes))
-
-            # loop annotation for that video
-            for annotation in video["annotations"]:
+            game_counter = 0
+            # loop over videos
+            for video in tqdm(self.data_json["videos"]):
+                # Load features
+                features = np.load(os.path.join(os.path.dirname(path), video["path_features"].replace(' ','_')))
                 
-                label,frame,cont = self.annotation(annotation)
+                # Load labels
+                labels = np.zeros((features.shape[0], self.num_classes))
+
+                # loop annotation for that video
+                for annotation in video["annotations"]:
+                    
+                    label,frame,cont = self.annotation(annotation)
+                    
+                    if cont:
+                        continue
+                    
+                    frame = min(frame, features.shape[0]-1)
+                    labels[frame][label] = 1
                 
-                if cont:
-                    continue
-                
-                frame = min(frame, features.shape[0]-1)
-                labels[frame][label] = 1
-            
-            shift_half = oneHotToShifts(labels, self.K_parameters.cpu().numpy())
+                shift_half = oneHotToShifts(labels, self.K_parameters.cpu().numpy())
 
-            anchors_half = getChunks_anchors(shift_half, game_counter, self.K_parameters.cpu().numpy(), self.chunk_size, self.receptive_field)
+                anchors_half = getChunks_anchors(shift_half, game_counter, self.K_parameters.cpu().numpy(), self.chunk_size, self.receptive_field)
 
-            game_counter = game_counter+1
+                game_counter = game_counter+1
 
-            self.features_clips.append(features)
-            self.labels_clips.append(shift_half)
+                self.features_clips.append(features)
+                self.labels_clips.append(shift_half)
 
-            for anchor in anchors_half:
-                self.anchors_clips[anchor[2]].append(anchor)
+                for anchor in anchors_half:
+                    self.anchors_clips[anchor[2]].append(anchor)
     
     def __getitem__(self, index):
         if self.train:

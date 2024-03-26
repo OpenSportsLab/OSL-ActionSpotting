@@ -27,7 +27,7 @@ def build_model(cfg, verbose=True, default_args=None):
                                 dim_capsule=cfg.model.dim_capsule,
                                 receptive_field=cfg.model.receptive_field,
                                 num_detections=cfg.model.num_detections,
-                                framerate=cfg.model.framerate)
+                                framerate=cfg.model.framerate, runner = cfg.runner.type)
     elif cfg.model.type == "E2E":
         model = E2EModel(
             len(default_args["classes"]) + 1, cfg.model.feature_arch, cfg.model.temporal_arch,

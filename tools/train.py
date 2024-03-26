@@ -227,15 +227,17 @@ def main():
         trainer.train(train_loader,val_loader,dataset_Val_Frames,cfg.classes)
     else:
         trainer.fit(model,train_loader,val_loader)
-    # best_model = model.best_state
+    
+    if cfg.runner.type != "runner_e2e":
+        best_model = model.best_state
 
-    # logging.info("Done training")
-    # print(best_model.get("epoch"))
-    # torch.save(best_model, 
-    #            os.path.join(cfg.work_dir, "model.pth.tar"))
+        logging.info("Done training")
+        print(best_model.get("epoch"))
+        torch.save(best_model, 
+                   os.path.join(cfg.work_dir, "model.pth.tar"))
 
-    # logging.info('Model saved')
-    # logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
+        logging.info('Model saved')
+        logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
 
     # return 
 

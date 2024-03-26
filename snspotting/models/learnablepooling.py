@@ -152,7 +152,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                             if confidence < self.confidence_threshold:
                                 continue
                             
-                            json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=self.trainer.predict_dataloaders.dataset.version,l=l,confidence=confidence))
+                            json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=half,version=self.trainer.predict_dataloaders.dataset.version,l=l,confidence=confidence, runner=self.runner))
                 
                     json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
                     json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
@@ -191,10 +191,10 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         if confidence < self.confidence_threshold:
                             continue
                         
-                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,half=int(video[-1]),version=2,l=l,confidence=confidence))
+                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,version=2,l=l,confidence=confidence, runner = self.runner))
             
                 json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
-                json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
+                # json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
 
                 os.makedirs(os.path.join(self.cfg.work_dir, self.output_folder, video), exist_ok=True)
                 with open(os.path.join(self.cfg.work_dir, self.output_folder, video, "results_spotting.json"), 'w') as output_file:

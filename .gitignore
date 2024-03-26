@@ -163,7 +163,7 @@ path/*
 outputs/*
 local_test/
 rny002_gsm
-
+lightning_logs
 run.sbatch
 *.out
 

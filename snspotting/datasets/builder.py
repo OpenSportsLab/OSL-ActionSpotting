@@ -52,6 +52,13 @@ def build_dataset(cfg, gpu=None,  default_args=None):
                 receptive_field=cfg.receptive_field,
                 chunks_per_epoch=cfg.chunks_per_epoch,
                 gpu = gpu)
+    elif cfg.type == "FeatureVideosChunksfromJson":
+        dataset = FeatureClipChunksfromJson(path=cfg.path, 
+            framerate=cfg.framerate,
+                chunk_size=cfg.chunk_size,
+                receptive_field=cfg.receptive_field,
+                chunks_per_epoch=cfg.chunks_per_epoch,
+                gpu = gpu, train= False)
     elif cfg.type == "VideoGameWithOpencv":
         dataset_len = cfg.epoch_num_frames // cfg.clip_len
         dataset_kwargs = {
