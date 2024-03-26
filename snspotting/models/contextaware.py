@@ -12,10 +12,10 @@ from snspotting.models.litebase import LiteBaseModel
 
 import os
 
-from snspotting.datasets.soccernet import timestamps2long, batch2long
+from snspotting.datasets.utils import timestamps2long, batch2long
 from SoccerNet.Downloader import getListGames
 
-from snspotting.models.utils import NMS, create_folders, predictions2json, zipResults
+from snspotting.models.utils import NMS, create_folders, predictions2json, predictions2json_runnerjson, zipResults
 
 class ContextAwareModel(nn.Module):
     def __init__(self, weights=None, 
@@ -217,7 +217,7 @@ class LiteContextAwareModel(LiteBaseModel):
                  input_size=512, num_classes=3, 
                  chunk_size=240, dim_capsule=16,
                  receptive_field=80, num_detections=5, 
-                 framerate=2):
+                 framerate=2, runner="runner_CALF"):
         """
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
@@ -232,6 +232,8 @@ class LiteContextAwareModel(LiteBaseModel):
         self.overwrite = True
 
         self.cfg = cfg
+
+        self.runner = runner
 
     def process(self,labels,targets,feats):
         labels=labels.float()
@@ -259,7 +261,7 @@ class LiteContextAwareModel(LiteBaseModel):
     
     def on_predict_start(self):
         self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.overwrite)
-        
+        self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
         if not self.stop_predict:
             self.spotting_predictions = list()
             self.spotting_grountruth = list()
@@ -294,40 +296,65 @@ class LiteContextAwareModel(LiteBaseModel):
 
             # Save the predictions to the json format
             # if save_predictions:
-            list_game = getListGames(self.trainer.predict_dataloaders.dataset.split)
-            for index in np.arange(len(list_game)):
-                predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],self.cfg.work_dir+"/"+self.output_folder+"/", list_game[index], self.model.framerate)
+            if self.runner == "runner_CALF":
+                list_game = getListGames(self.trainer.predict_dataloaders.dataset.split)
+                for index in np.arange(len(list_game)):
+                    predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],self.cfg.work_dir+"/"+self.output_folder+"/", list_game[index], self.model.framerate)
+            elif self.runner == "runner_JSON":
+                list_videos = self.trainer.predict_dataloaders.dataset.data_json["videos"]
+                for index in np.arange(len(list_videos)):
+                    predictions2json_runnerjson(detections_numpy[index], self.cfg.work_dir+"/"+self.output_folder+"/", os.path.splitext(list_videos[index]["path_video"])[0], self.model.framerate)
             zipResults(zip_path = self.output_results,
                        target_dir = os.path.join(self.cfg.work_dir, self.output_folder),
                        filename="results_spotting.json")
     
     def predict_step(self, batch):
         if not self.stop_predict:
-            feat_half1, feat_half2, label_half1, label_half2 = batch
+            if self.runner == "runner_CALF":
+                feat_half1, feat_half2, label_half1, label_half2 = batch
 
-            label_half1 = label_half1.float().squeeze(0)
-            label_half2 = label_half2.float().squeeze(0)
+                label_half1 = label_half1.float().squeeze(0)
+                label_half2 = label_half2.float().squeeze(0)
 
-            feat_half1 = feat_half1.squeeze(0)
-            feat_half2 = feat_half2.squeeze(0)
+                feat_half1 = feat_half1.squeeze(0)
+                feat_half2 = feat_half2.squeeze(0)
 
-            feat_half1=feat_half1.unsqueeze(1)
-            feat_half2=feat_half2.unsqueeze(1)
+                feat_half1=feat_half1.unsqueeze(1)
+                feat_half2=feat_half2.unsqueeze(1)
 
-            # Compute the output
-            output_segmentation_half_1, output_spotting_half_1 = self.forward(feat_half1)
-            output_segmentation_half_2, output_spotting_half_2 = self.forward(feat_half2)
+                # Compute the output
+                output_segmentation_half_1, output_spotting_half_1 = self.forward(feat_half1)
+                output_segmentation_half_2, output_spotting_half_2 = self.forward(feat_half2)
 
-            timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], self.chunk_size, self.receptive_field)
-            timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], self.chunk_size, self.receptive_field)
-            segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], self.chunk_size, self.receptive_field)
-            segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], self.chunk_size, self.receptive_field)
+                timestamp_long_half_1 = timestamps2long(output_spotting_half_1.cpu().detach(), label_half1.size()[0], self.chunk_size, self.receptive_field)
+                timestamp_long_half_2 = timestamps2long(output_spotting_half_2.cpu().detach(), label_half2.size()[0], self.chunk_size, self.receptive_field)
+                segmentation_long_half_1 = batch2long(output_segmentation_half_1.cpu().detach(), label_half1.size()[0], self.chunk_size, self.receptive_field)
+                segmentation_long_half_2 = batch2long(output_segmentation_half_2.cpu().detach(), label_half2.size()[0], self.chunk_size, self.receptive_field)
 
-            self.spotting_grountruth.append(torch.abs(label_half1))
-            self.spotting_grountruth.append(torch.abs(label_half2))
-            self.spotting_grountruth_visibility.append(label_half1)
-            self.spotting_grountruth_visibility.append(label_half2)
-            self.spotting_predictions.append(timestamp_long_half_1)
-            self.spotting_predictions.append(timestamp_long_half_2)
-            self.segmentation_predictions.append(segmentation_long_half_1)
-            self.segmentation_predictions.append(segmentation_long_half_2)
+                self.spotting_grountruth.append(torch.abs(label_half1))
+                self.spotting_grountruth.append(torch.abs(label_half2))
+                self.spotting_grountruth_visibility.append(label_half1)
+                self.spotting_grountruth_visibility.append(label_half2)
+                self.spotting_predictions.append(timestamp_long_half_1)
+                self.spotting_predictions.append(timestamp_long_half_2)
+                self.segmentation_predictions.append(segmentation_long_half_1)
+                self.segmentation_predictions.append(segmentation_long_half_2)
+            elif self.runner == "runner_JSON":
+                features, labels = batch
+
+                labels = labels.float().squeeze(0)
+
+                features = features.squeeze(0)
+
+                features = features.unsqueeze(1)
+
+                # Compute the output
+                output_segmentation, output_spotting = self.forward(features)
+
+                timestamp_long = timestamps2long(output_spotting.cpu().detach(), labels.size()[0], self.chunk_size, self.receptive_field)
+                segmentation_long = batch2long(output_segmentation.cpu().detach(), labels.size()[0], self.chunk_size, self.receptive_field)
+
+                self.spotting_grountruth.append(torch.abs(labels))
+                self.spotting_grountruth_visibility.append(labels)
+                self.spotting_predictions.append(timestamp_long)
+                self.segmentation_predictions.append(segmentation_long)

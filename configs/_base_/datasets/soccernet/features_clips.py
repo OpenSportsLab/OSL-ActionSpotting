@@ -1,4 +1,4 @@
-data_root = 'path/to/SoccerNet/'
+data_root = '/home/ybenzakour/datasets/SoccerNet/'
 classes = ("Penalty", "Kick-off", "Goal", "Substitution", "Offside", 
     "Shots on target", "Shots off target", "Clearance", "Ball out of play", 
     "Throw-in", "Foul", "Indirect free-kick", "Direct free-kick", "Corner", 

@@ -523,7 +523,6 @@ class ActionSpotVideoDataset(Dataset):
             self._src_file, len(self._labels), num_frames, self._stride,
             num_events / num_frames * 100))
 
-
 from nvidia.dali import pipeline_def,backend
 import nvidia.dali.fn as fn
 import nvidia.dali.types as types

@@ -18,7 +18,7 @@ def build_model(cfg, verbose=True, default_args=None):
     if cfg.model.type == "LearnablePooling":
         model = LiteLearnablePoolingModel(cfg = cfg, weights=cfg.model.load_weights, 
                   backbone=cfg.model.backbone, head=cfg.model.head, 
-                  neck=cfg.model.neck, post_proc=cfg.model.post_proc)
+                  neck=cfg.model.neck, post_proc=cfg.model.post_proc, runner=cfg.runner.type)
     elif cfg.model.type == "ContextAware":
         model = LiteContextAwareModel(cfg = cfg, weights=cfg.model.load_weights,
                                 input_size=cfg.model.input_size,
@@ -27,8 +27,8 @@ def build_model(cfg, verbose=True, default_args=None):
                                 dim_capsule=cfg.model.dim_capsule,
                                 receptive_field=cfg.model.receptive_field,
                                 num_detections=cfg.model.num_detections,
-                                framerate=cfg.model.framerate)
-    if cfg.model.type == "E2E":
+                                framerate=cfg.model.framerate, runner = cfg.runner.type)
+    elif cfg.model.type == "E2E":
         model = E2EModel(
             len(default_args["classes"]) + 1, cfg.model.feature_arch, cfg.model.temporal_arch,
             clip_len=cfg.dataset.clip_len, modality=cfg.dataset.modality,

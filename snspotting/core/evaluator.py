@@ -12,7 +12,7 @@ import json
 import json
 import zipfile
 from tqdm import tqdm
-
+import os
 import pytorch_lightning as pl
 
 
@@ -68,8 +68,8 @@ class Evaluator():
             # Run Inference on Dataset
             evaluator = pl.Trainer(callbacks=[CustomProgressBar()],devices=[self.cfg.training.GPU],num_sanity_val_steps=0)
             evaluator.predict(self.model,test_loader)
-            results = self.model.output_results
-            
+            results = self.model.target_dir
+            print(results)
             # extract performances from results
             performances = self.evaluate_Spotting(cfg_testset, results)
 
@@ -94,9 +94,11 @@ def evaluate_JSON(cfg, pred_path, metric="loose"):
     
     
     with open(cfg.path) as f :
+        print(cfg.path)
         GT_data = json.load(f)
-    with open(pred_path) as f :
-        pred_data = json.load(f)
+    # with open(pred_path) as f :
+    #     print(pred_path)
+    #     pred_data = json.load(f)
 
     targets_numpy = list()
     detections_numpy = list()
@@ -114,12 +116,13 @@ def evaluate_JSON(cfg, pred_path, metric="loose"):
             num_classes=len(GT_data["labels"]), 
             EVENT_DICTIONARY=EVENT_DICTIONARY)
         
-
-        for video in pred_data["videos"]:
-            if video["path_features"] == game["path_features"]:
-                predictions = video["predictions"]
-                break
-
+        with open(os.path.join(pred_path,os.path.splitext(game["path_video"])[0],'results_spotting.json')) as f :
+            pred_data = json.load(f)
+            predictions = pred_data['predictions']
+        # for video in pred_data["videos"]:
+        #     if video["path_features"] == game["path_features"]:
+        #         predictions = video["predictions"]
+        #         break
 
         # convert predictions to vector
         dense_predictions = predictions2vector(predictions,
@@ -219,7 +222,7 @@ def label2vector(labels, num_classes=17, framerate=2, version=2, EVENT_DICTIONAR
         time = annotation["gameTime"]
         event = annotation["label"]
 
-        half = int(time[0])
+        # half = int(time[0])
 
         minutes = int(time[-5:-3])
         seconds = int(time[-2::])
@@ -249,7 +252,7 @@ def predictions2vector(predictions, num_classes=17, version=2, framerate=2, EVEN
         time = int(annotation["position"])
         event = annotation["label"]
 
-        half = int(annotation["half"])
+        # half = int(annotation["half"])
 
         frame = int(framerate * ( time/1000 ))
 

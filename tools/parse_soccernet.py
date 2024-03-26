@@ -112,6 +112,7 @@ def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
                                 adj_frame = float(label['position']) / 1000 * (fps/get_stride(input_fps,wanted_sample_fps))
                             else:
                                 adj_frame = float(label['position']) / 1000 * sample_fps
+                            if adj_frame == 0: adj_frame=1
                         else:
                             adj_frame = float(label['position']) / 1000 * sample_fps
                         half_events.append({

@@ -54,12 +54,14 @@ def check_config(cfg):
         if os.path.isfile(cfg.classes):
             cfg.classes = load_classes(cfg.classes)
         for key,value in cfg.dataset.items():
-            if key in ['train','val','val_data_frames']:
+            if key in ['train','val','val_data_frames','test','challenge']:
                 pass
             else:
                 cfg.dataset['train'][key] = value
                 cfg.dataset['val'][key] = value
                 cfg.dataset['val_data_frames'][key] = value
+                cfg.dataset['test'][key] = value
+                cfg.dataset['challenge'][key] = value
         
 def parse_args():
 
@@ -160,6 +162,7 @@ def main():
         if cfg.training.GPU >= 0:
             if not has_gpu:
                 cfg.training.GPU = -1
+        cfg_training_gpu = True
     else :
         cfg_training_gpu = None
 
@@ -177,9 +180,11 @@ def main():
     
     check_config(cfg)
 
+    dali=False
     if 'dali' in cfg.keys():
         dali = True
         cfg.repartitions = get_repartition_gpu()
+    
 
     # Dump configuration file
     cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
@@ -213,7 +218,7 @@ def main():
 
     # Build Trainer
     logging.info('Build Trainer')
-    trainer = build_trainer(cfg.training, model if cfg.runner.type == "runner_e2e" else None, {"len_train_loader":len(train_loader), 'work_dir' : cfg.work_dir, 'dali' : cfg.dali, 'modality' : cfg.dataset.modality, 'clip_len' : cfg.dataset.clip_len , 'crop_dim' : cfg.dataset.crop_dim, 'labels_dir' : cfg.labels_dir} if cfg.runner.type == "runner_e2e" else None)
+    trainer = build_trainer(cfg.training, model if cfg.runner.type == "runner_e2e" else None, {"len_train_loader":len(train_loader), 'work_dir' : cfg.work_dir, 'dali' : cfg.dali, 'repartitions' : cfg.repartitions, 'cfg_test' : cfg.dataset.test, 'cfg_challenge' : cfg.dataset.challenge} if cfg.runner.type == "runner_e2e" else None)
 
     # Start training`
     logging.info("Start training")
@@ -222,15 +227,17 @@ def main():
         trainer.train(train_loader,val_loader,dataset_Val_Frames,cfg.classes)
     else:
         trainer.fit(model,train_loader,val_loader)
-    # best_model = model.best_state
+    
+    if cfg.runner.type != "runner_e2e":
+        best_model = model.best_state
 
-    # logging.info("Done training")
-    # print(best_model.get("epoch"))
-    # torch.save(best_model, 
-    #            os.path.join(cfg.work_dir, "model.pth.tar"))
+        logging.info("Done training")
+        print(best_model.get("epoch"))
+        torch.save(best_model, 
+                   os.path.join(cfg.work_dir, "model.pth.tar"))
 
-    # logging.info('Model saved')
-    # logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
+        logging.info('Model saved')
+        logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
 
     # return 
 
