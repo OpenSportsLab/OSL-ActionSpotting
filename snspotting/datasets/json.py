@@ -123,69 +123,70 @@ def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0, mo
 
 
 
-class FeatureVideosfromJSON(Dataset):
-    def __init__(self, path,
-                framerate=2,
-                window_size=15):
-        self.path = path
-        self.window_size_frame = window_size*framerate
-        self.framerate = framerate
+# class FeatureVideosfromJSON(Dataset):
+#     def __init__(self, path,
+#                 framerate=2,
+#                 window_size=15):
+#         self.path = path
+#         self.window_size_frame = window_size*framerate
+#         self.framerate = framerate
 
-        with open(path) as f :
-            self.data_json = json.load(f)
-
-
-        self.classes = self.data_json["labels"]
-        self.num_classes = len(self.classes)
-
-    def __getitem__(self, index):
-        """
-        Args:
-            index (int): Index
-        Returns:
-            features (np.array): features for the 1st half.
-            labels (np.array): labels (one-hot) for the 1st half.
-        """
-
-        video = self.data_json["videos"][index]
-
-        # Load features
-        features = np.load(os.path.join(os.path.dirname(self.path), video["path_features"].replace(' ','_')))
-        features = features.reshape(-1, features.shape[-1])
-
-        # Load labels
-        labels = np.zeros((features.shape[0], self.num_classes))
+#         with open(path) as f :
+#             self.data_json = json.load(f)
 
 
-        for annotation in video["annotations"]:
+#         self.classes = self.data_json["labels"]
+        
+#         self.num_classes = len(self.classes)
 
-            time = annotation["gameTime"]
-            event = annotation["label"]
+#     def __getitem__(self, index):
+#         """
+#         Args:
+#             index (int): Index
+#         Returns:
+#             features (np.array): features for the 1st half.
+#             labels (np.array): labels (one-hot) for the 1st half.
+#         """
 
-            half = int(time[0])
+#         video = self.data_json["videos"][index]
 
-            minutes = int(time[-5:-3])
-            seconds = int(time[-2::])
-            frame = self.framerate * ( seconds + 60 * minutes ) 
+#         # Load features
+#         features = np.load(os.path.join(os.path.dirname(self.path), video["path_features"].replace(' ','_')))
+#         features = features.reshape(-1, features.shape[-1])
 
-            if event not in self.classes:
-                continue
-            label = self.classes.index(event)
+#         # Load labels
+#         labels = np.zeros((features.shape[0], self.num_classes))
 
-            # if half == 1:
-            frame = min(frame, features.shape[0]-1)
-            labels[frame][label] = 1
+
+#         for annotation in video["annotations"]:
+
+#             time = annotation["gameTime"]
+#             event = annotation["label"]
+
+#             half = int(time[0])
+
+#             minutes = int(time[-5:-3])
+#             seconds = int(time[-2::])
+#             frame = self.framerate * ( seconds + 60 * minutes ) 
+
+#             if event not in self.classes:
+#                 continue
+#             label = self.classes.index(event)
+
+#             # if half == 1:
+#             frame = min(frame, features.shape[0]-1)
+#             labels[frame][label] = 1
                
 
-        features = feats2clip(torch.from_numpy(features), 
-                        stride=1, off=int(self.window_size_frame/2), 
-                        clip_length=self.window_size_frame)
+#         features = feats2clip(torch.from_numpy(features), 
+#                         stride=1, off=int(self.window_size_frame/2), 
+#                         clip_length=self.window_size_frame)
 
         
-        return video["path_video"], features, labels
+#         return video["path_video"], features, labels
 
-    def __len__(self):
-        return len(self.data_json["videos"])
+#     def __len__(self):
+#         return len(self.data_json["videos"])
 
 class FeaturefromJson(Dataset):
     def __init__(self, path, framerate=2):
@@ -197,7 +198,8 @@ class FeaturefromJson(Dataset):
 
         self.classes = self.data_json["labels"]
         self.num_classes = len(self.classes)
-
+        self.event_dictionary = {cls: i_cls for i_cls, cls in enumerate(self.classes)}
+        self.inverse_event_dictionary = {i_cls: cls for i_cls, cls in enumerate(self.classes)}
         logging.info("Pre-compute clips")
 
     def __getitem__(self, index):

@@ -197,7 +197,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         if confidence < self.confidence_threshold:
                             continue
                         
-                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,version=2,l=l,confidence=confidence, runner = self.runner))
+                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,version=2,l=l,confidence=confidence, runner = self.runner, inverse_event_dictionary= self.trainer.predict_dataloaders.dataset.inverse_event_dictionary))
             
                 json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
                 # json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))

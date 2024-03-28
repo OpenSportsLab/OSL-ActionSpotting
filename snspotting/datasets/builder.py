@@ -2,7 +2,7 @@
 from snspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
 from .soccernet import SoccerNet,SoccerNetClips,SoccerNetClipsChunks
 # from .folder import FolderClips, FolderGames
-from .json import FeatureClipChunksfromJson, FeatureClipsfromJSON, FeatureVideosfromJSON
+from .json import FeatureClipChunksfromJson, FeatureClipsfromJSON
 import torch
 from mmengine.config import Config, DictAction
 import random
