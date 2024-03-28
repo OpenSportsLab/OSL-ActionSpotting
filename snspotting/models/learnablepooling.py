@@ -112,7 +112,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         else:
             self.target_dir = self.output_results
             
-        print(self.output_folder,self.output_results)
+        print(self.output_folder,self.output_results,self.target_dir)
         if not self.stop_predict:
             self.spotting_predictions = list()
 
