@@ -54,17 +54,20 @@ def get_json_data(calf,game_info=None,game_ID=None):
     json_data["predictions"] = list()
     return json_data
 
-def get_prediction_data(calf,frame_index, framerate, class_index=None, confidence=None, half=None, l=None, version=None, half_1=None, runner="runner_json"):
+def get_prediction_data(calf,frame_index, framerate, class_index=None, confidence=None, half=None, l=None, version=None, half_1=None, runner="runner_JSON", inverse_event_dictionary = None):
     seconds = int((frame_index//framerate)%60)
     minutes = int((frame_index//framerate)//60)
 
     prediction_data = dict()
-    if runner == "runner_json":
+    if runner == "runner_JSON":
         prediction_data["gameTime"] = (str(minutes) + ":" + str(seconds)) if calf else f"{minutes:02.0f}:{seconds:02.0f}"
     else:
         prediction_data["half"] = str(1 if half_1 else 2) if calf else str(half+1)
         prediction_data["gameTime"] = (str(1 if half_1 else 2 ) + " - " + str(minutes) + ":" + str(seconds)) if calf else f"{half+1} - {minutes:02.0f}:{seconds:02.0f}"
-    prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index if calf else l] if version == 2 else INVERSE_EVENT_DICTIONARY_V1[l]
+    if runner == "runner_JSON":
+        prediction_data["label"] = inverse_event_dictionary[class_index if calf else l]
+    else:
+        prediction_data["label"] = INVERSE_EVENT_DICTIONARY_V2[class_index if calf else l] if version == 2 else INVERSE_EVENT_DICTIONARY_V1[l]
     prediction_data["position"] = str(int((frame_index/framerate)*1000))
     prediction_data["confidence"] = str(confidence)
 
@@ -124,7 +127,7 @@ def predictions2json(predictions_half_1, predictions_half_2, output_path, game_i
     with open(output_file_path, 'w') as output_file:
         json.dump(json_data, output_file, indent=4)
     
-def predictions2json_runnerjson(predictions_video, output_path, video_info, framerate=2):
+def predictions2json_runnerjson(predictions_video, output_path, video_info, framerate=2, inverse_event_dictionary = None ):
 
     os.makedirs(output_path + video_info, exist_ok=True)
     output_file_path = output_path + video_info + "/results_spotting.json"
@@ -137,7 +140,7 @@ def predictions2json_runnerjson(predictions_video, output_path, video_info, fram
 
         confidence = predictions_video[frame_index, class_index]
 
-        json_data["predictions"].append(get_prediction_data(True,frame_index,framerate,class_index=class_index,confidence=confidence,version=2,half_1=True,runner= "runner_JSON"))
+        json_data["predictions"].append(get_prediction_data(True,frame_index,framerate,class_index=class_index,confidence=confidence,version=2,half_1=True,runner= "runner_JSON", inverse_event_dictionary = inverse_event_dictionary))
     
     with open(output_file_path, 'w') as output_file:
         json.dump(json_data, output_file, indent=4)

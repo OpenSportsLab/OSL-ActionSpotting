@@ -106,6 +106,12 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
     def on_predict_start(self):
         self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.overwrite)
+        
+        if self.runner == "runner_JSON":
+            self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
+        else:
+            self.target_dir = self.output_results
+            
         print(self.output_folder,self.output_results)
         if not self.stop_predict:
             self.spotting_predictions = list()
@@ -191,7 +197,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         if confidence < self.confidence_threshold:
                             continue
                         
-                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,version=2,l=l,confidence=confidence, runner = self.runner))
+                        json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,version=2,l=l,confidence=confidence, runner = self.runner, inverse_event_dictionary= self.trainer.predict_dataloaders.dataset.inverse_event_dictionary))
             
                 json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
                 # json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))

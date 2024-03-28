@@ -261,7 +261,10 @@ class LiteContextAwareModel(LiteBaseModel):
     
     def on_predict_start(self):
         self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.overwrite)
-        self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
+        if self.runner == "runner_JSON":
+            self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
+        else:
+            self.target_dir = self.output_results
         if not self.stop_predict:
             self.spotting_predictions = list()
             self.spotting_grountruth = list()
@@ -303,7 +306,7 @@ class LiteContextAwareModel(LiteBaseModel):
             elif self.runner == "runner_JSON":
                 list_videos = self.trainer.predict_dataloaders.dataset.data_json["videos"]
                 for index in np.arange(len(list_videos)):
-                    predictions2json_runnerjson(detections_numpy[index], self.cfg.work_dir+"/"+self.output_folder+"/", os.path.splitext(list_videos[index]["path_video"])[0], self.model.framerate)
+                    predictions2json_runnerjson(detections_numpy[index], self.cfg.work_dir+"/"+self.output_folder+"/", os.path.splitext(list_videos[index]["path_video"])[0], self.model.framerate, inverse_event_dictionary= self.trainer.predict_dataloaders.dataset.inverse_event_dictionary)
             zipResults(zip_path = self.output_results,
                        target_dir = os.path.join(self.cfg.work_dir, self.output_folder),
                        filename="results_spotting.json")

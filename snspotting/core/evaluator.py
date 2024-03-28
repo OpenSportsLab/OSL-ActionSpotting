@@ -71,7 +71,7 @@ class Evaluator():
             results = self.model.target_dir
             print(results)
             # extract performances from results
-            performances = self.evaluate_Spotting(cfg_testset, results)
+            performances = self.evaluate_Spotting(cfg_testset, results, cfg_testset.metric)
 
             return performances
 
@@ -193,7 +193,8 @@ def evaluate_SN(cfg, pred_path, metric="loose"):
                     Predictions_path=pred_path,
                     split=cfg.split,
                     prediction_file="results_spotting.json", 
-                    version=cfg.version)
+                    version=cfg.version,
+                    metric=metric)
     # results = {
     #     "a_mAP": a_mAP,
     #     "a_mAP_per_class": a_mAP_per_class,
