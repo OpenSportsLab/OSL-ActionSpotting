@@ -218,7 +218,7 @@ def main():
 
     # Build Trainer
     logging.info('Build Trainer')
-    trainer = build_trainer(cfg.training, model if cfg.runner.type == "runner_e2e" else None, {"len_train_loader":len(train_loader), 'work_dir' : cfg.work_dir, 'dali' : cfg.dali, 'repartitions' : cfg.repartitions, 'cfg_test' : cfg.dataset.test, 'cfg_challenge' : cfg.dataset.challenge} if cfg.runner.type == "runner_e2e" else None)
+    trainer = build_trainer(cfg.training, model, {"len_train_loader":len(train_loader), 'work_dir' : cfg.work_dir, 'dali' : cfg.dali, 'repartitions' : cfg.repartitions, 'cfg_test' : cfg.dataset.test, 'cfg_challenge' : cfg.dataset.challenge} if cfg.runner.type == "runner_e2e" else None)
 
     # Start training`
     logging.info("Start training")
@@ -239,6 +239,7 @@ def main():
         logging.info('Model saved')
         logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
 
+    logging.info(f'Total Execution Time is {time.time()-start} seconds')
     # return 
 
 

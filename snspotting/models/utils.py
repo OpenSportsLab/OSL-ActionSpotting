@@ -54,12 +54,12 @@ def get_json_data(calf,game_info=None,game_ID=None):
     json_data["predictions"] = list()
     return json_data
 
-def get_prediction_data(calf,frame_index, framerate, class_index=None, confidence=None, half=None, l=None, version=None, half_1=None, runner="runner_json"):
+def get_prediction_data(calf,frame_index, framerate, class_index=None, confidence=None, half=None, l=None, version=None, half_1=None, runner="runner_JSON"):
     seconds = int((frame_index//framerate)%60)
     minutes = int((frame_index//framerate)//60)
 
     prediction_data = dict()
-    if runner == "runner_json":
+    if runner == "runner_JSON":
         prediction_data["gameTime"] = (str(minutes) + ":" + str(seconds)) if calf else f"{minutes:02.0f}:{seconds:02.0f}"
     else:
         prediction_data["half"] = str(1 if half_1 else 2) if calf else str(half+1)

@@ -56,6 +56,7 @@ dataset = dict(
             dict(type='LoadAnnotations', with_bbox=True),
         ],
         classes=classes,
+        metric = "loose",
         dataloader=dict(
             num_workers=1,
             batch_size=1,

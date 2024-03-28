@@ -32,6 +32,7 @@ dataset = dict(
         window_size=20,
         split=["test"],
         classes=classes,
+        metric = "loose",
         dataloader=dict(
             num_workers=1,
             batch_size=1,

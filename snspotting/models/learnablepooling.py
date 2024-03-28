@@ -106,6 +106,12 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
     def on_predict_start(self):
         self.output_folder, self.output_results, self.stop_predict = create_folders(self.cfg.dataset.test.split, self.cfg.work_dir, self.overwrite)
+        
+        if self.runner == "runner_JSON":
+            self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
+        else:
+            self.target_dir = self.output_results
+            
         print(self.output_folder,self.output_results)
         if not self.stop_predict:
             self.spotting_predictions = list()

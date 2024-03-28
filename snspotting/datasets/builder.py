@@ -123,13 +123,13 @@ def build_dataloader(dataset, cfg, gpu):
     Returns:
         Dataloader: The constructed dataloader.
     """
-    def worker_init_fn(id):
-        random.seed(id + 100 * 100)
+    # def worker_init_fn(id):
+    #     random.seed(id + 100 * 100)
     dataloader = torch.utils.data.DataLoader(dataset,
             batch_size=cfg.batch_size, shuffle=cfg.shuffle,
             num_workers=cfg.num_workers if gpu >=0 else 0, 
             pin_memory=cfg.pin_memory if gpu >=0 else False,
             prefetch_factor = cfg.prefetch_factor if 'prefetch_factor' in cfg.keys() else None,
-            worker_init_fn=worker_init_fn
+            # worker_init_fn=worker_init_fn
             )
     return dataloader
