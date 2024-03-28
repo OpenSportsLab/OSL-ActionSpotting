@@ -265,6 +265,9 @@ class LiteContextAwareModel(LiteBaseModel):
             self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
         else:
             self.target_dir = self.output_results
+        print(self.output_folder)
+        print(self.output_results)
+        print(self.target_dir)
         if not self.stop_predict:
             self.spotting_predictions = list()
             self.spotting_grountruth = list()

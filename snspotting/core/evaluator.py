@@ -1,3 +1,4 @@
+from tabulate import tabulate
 from snspotting.core.utils.lightning import CustomProgressBar
 
 from snspotting.datasets import build_dataset, build_dataloader
@@ -14,6 +15,9 @@ import zipfile
 from tqdm import tqdm
 import os
 import pytorch_lightning as pl
+
+from SoccerNet.Evaluation.utils import INVERSE_EVENT_DICTIONARY_V2
+
 
 
 def build_evaluator(cfg, model, default_args=None):
@@ -39,6 +43,10 @@ def build_evaluator(cfg, model, default_args=None):
         evaluator = Evaluator(cfg=cfg,
                         evaluate_Spotting=evaluate_SN,
                         model=model)
+    elif cfg.runner.type == "runner_e2e":
+        evaluator = Evaluator(cfg=cfg,
+                        evaluate_Spotting=evaluate_SN,
+                        model=model)
     
     return evaluator
 
@@ -55,6 +63,7 @@ class Evaluator():
 
         # Loop over dataset to evaluate
         splits_to_evaluate = cfg_testset.split
+        print(splits_to_evaluate)
         for split in splits_to_evaluate:
             logging.info('split is %s',split)    
             cfg_testset.split = [split]
@@ -105,7 +114,7 @@ def evaluate_JSON(cfg, pred_path, metric="loose"):
     closests_numpy = list()
 
     EVENT_DICTIONARY = {cls: i_cls for i_cls, cls in enumerate(GT_data["labels"])}
-
+    INVERSE_EVENT_DICTIONARY = {i_cls: cls for i_cls, cls in enumerate(GT_data["labels"])}
     for game in tqdm(GT_data["videos"]):
 
         # fetch labels
@@ -159,15 +168,28 @@ def evaluate_JSON(cfg, pred_path, metric="loose"):
     a_mAP, a_mAP_per_class = average_mAP(targets_numpy, 
     detections_numpy, closests_numpy,
     framerate=2, deltas=deltas)
-    
     results = {
         "a_mAP": a_mAP,
         "a_mAP_per_class": a_mAP_per_class,
     }
+    rows = []
+    for i in range(len(results['a_mAP_per_class'])):
+        label = INVERSE_EVENT_DICTIONARY[i]
+        rows.append((
+            label,
+            '{:0.2f}'.format(results['a_mAP_per_class'][i] * 100),
+        ))
+    rows.append((
+        'Average mAP',
+        '{:0.2f}'.format(results['a_mAP'] * 100),
+    ))
 
     logging.info("Best Performance at end of training ")
-    logging.info("a_mAP visibility all: " +  str(a_mAP))
-    logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
+    logging.info('Metric: ' +  metric)
+    print(tabulate(rows, headers=['', 'Any']))
+    # logging.info("Best Performance at end of training ")
+    # logging.info("a_mAP visibility all: " +  str(a_mAP))
+    # logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
     
     return results
 
@@ -199,10 +221,27 @@ def evaluate_SN(cfg, pred_path, metric="loose"):
     #     "a_mAP": a_mAP,
     #     "a_mAP_per_class": a_mAP_per_class,
     # }
+    rows = []
+    for i in range(len(results['a_mAP_per_class'])):
+        label = INVERSE_EVENT_DICTIONARY_V2[i]
+        rows.append((
+            label,
+            '{:0.2f}'.format(results['a_mAP_per_class'][i] * 100),
+            '{:0.2f}'.format(results['a_mAP_per_class_visible'][i] * 100),
+            '{:0.2f}'.format(results['a_mAP_per_class_unshown'][i] * 100)
+        ))
+    rows.append((
+        'Average mAP',
+        '{:0.2f}'.format(results['a_mAP'] * 100),
+        '{:0.2f}'.format(results['a_mAP_visible'] * 100),
+        '{:0.2f}'.format(results['a_mAP_unshown'] * 100)
+    ))
 
     logging.info("Best Performance at end of training ")
-    logging.info("a_mAP visibility all: " +  str(results["a_mAP"]))
-    logging.info("a_mAP visibility all per class: " +  str( results["a_mAP_per_class"]))
+    logging.info('Metric: ' +  metric)
+    print(tabulate(rows, headers=['', 'Any', 'Visible', 'Unseen']))
+    # logging.info("a_mAP visibility all: " +  str(results["a_mAP"]))
+    # logging.info("a_mAP visibility all per class: " +  str( results["a_mAP_per_class"]))
     
     return results
 
@@ -489,7 +528,7 @@ def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*
 
 
     mAP, mAP_per_class = delta_curve(targets, closests, detections, framerate, deltas)
-    
+
     if len(mAP) == 1:
         return mAP[0], mAP_per_class[0], mAP_visible[0], mAP_per_class_visible[0], mAP_unshown[0], mAP_per_class_unshown[0]
     
