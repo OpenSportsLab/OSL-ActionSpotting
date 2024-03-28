@@ -3,6 +3,7 @@ model = dict(
     feature_arch = 'rny002_gsm',
     temporal_arch = 'gru',
     multi_gpu = False,
+    load_weights = None,
 )
 
 runner = dict(

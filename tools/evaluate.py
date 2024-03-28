@@ -11,11 +11,64 @@ import mmengine
 from mmengine.config import Config, DictAction
 
 
+from snspotting.core.utils.dataset import load_classes
+from snspotting.core.utils.io import load_json
 from snspotting.models import build_model
 
 from snspotting.core import build_runner, build_evaluator
 
+def search_best_epoch(work_dir):
+    loss = load_json(os.path.join(work_dir,'loss.json'))
+    val_mAP = 0
+    for epoch_loss in loss:
+        if epoch_loss["val_mAP"] > val_mAP :
+            val_mAP = epoch_loss["val_mAP"]
+            epoch = epoch_loss["epoch"]
+    return epoch
+def check_config(cfg):
+    if cfg.runner.type == "runner_e2e":
+        assert cfg.dataset.modality in ['rgb']
+        assert cfg.model.feature_arch in [
+                # From torchvision
+                'rn18',
+                'rn18_tsm',
+                'rn18_gsm',
+                'rn50',
+                'rn50_tsm',
+                'rn50_gsm',
 
+                # From timm (following its naming conventions)
+                'rny002',
+                'rny002_tsm',
+                'rny002_gsm',
+                'rny008',
+                'rny008_tsm',
+                'rny008_gsm',
+
+                # From timm
+                'convnextt',
+                'convnextt_tsm',
+                'convnextt_gsm'
+            ]
+        assert cfg.model.temporal_arch in ['', 'gru', 'deeper_gru', 'mstcn', 'asformer']
+        assert cfg.dataset.batch_size % cfg.training.acc_grad_iter == 0
+        assert cfg.training.criterion in ['map', 'loss']
+        if cfg.training.start_val_epoch is None:
+            cfg.training.start_val_epoch = cfg.training.num_epochs - cfg.training.base_num_val_epochs
+        if cfg.dataset.crop_dim <= 0:
+            cfg.dataset.crop_dim = None
+        if os.path.isfile(cfg.classes):
+            cfg.classes = load_classes(cfg.classes)
+        for key,value in cfg.dataset.items():
+            if key in ['train','val','val_data_frames','test','challenge']:
+                pass
+            else:
+                cfg.dataset['train'][key] = value
+                cfg.dataset['val'][key] = value
+                cfg.dataset['val_data_frames'][key] = value
+                cfg.dataset['test'][key] = value
+                cfg.dataset['challenge'][key] = value
+                
 def parse_args():
 
     parser = ArgumentParser(description='context aware loss function', formatter_class=ArgumentDefaultsHelpFormatter)
@@ -83,19 +136,32 @@ def main():
 
     # check if cuda available
     has_gpu=torch.cuda.is_available()
-    if cfg.training.GPU >= 0:
-        if not has_gpu:
-            cfg.training.GPU = -1
+    if 'GPU' in cfg.training.keys():
+        if cfg.training.GPU >= 0:
+            if not has_gpu:
+                cfg.training.GPU = -1
+        cfg_training_gpu = True
+    else :
+        cfg_training_gpu = None
 
-    if(cfg.training.GPU >=0):
-        logging.info('On GPU')
-    else:
-        logging.info('On CPU')
+    # if(cfg_training_gpu):
+    #     logging.info('On GPU')
+    # else:
+    #     logging.info('On CPU')
         
-    # define GPUs
-    # if cfg.training.GPU >= 0:
-    #     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    #     os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.training.GPU)
+    def get_repartition_gpu():
+        x = torch.cuda.device_count()
+        print("Number of gpus:",x)
+        if x==2: return [0,1],[0,1]
+        elif x==3: return [0,1],[1,2]
+        elif x>3: return [0,1,2,3],[0,2,1,3]
+    
+    check_config(cfg)
+
+    dali=False
+    if 'dali' in cfg.keys():
+        dali = True
+        cfg.repartitions = get_repartition_gpu()
 
     # Display configuration file
     # cfg.dump(os.path.join(cfg.work_dir, 'config.py'))
@@ -107,10 +173,16 @@ def main():
 
     # Ensure weights are not None
     if cfg.model.load_weights is None:
-        cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
+        if cfg.runner.type == "runner_e2e":
+            cfg.model.load_weights = os.path.join(cfg.work_dir, 'checkpoint_{:03d}.pt'.format(search_best_epoch(cfg.work_dir)))
+        else:
+            cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
     
     # Build Model
-    model = build_model(cfg)
+    model = build_model(cfg, 
+                        verbose = False if cfg.runner.type == "runner_e2e" else True, 
+                        default_args={"classes":cfg.classes} if cfg.runner.type == "runner_e2e" else None)
+    # model = build_model(cfg)
     
     # Build Evaluator
     logging.info('Build Evaluator')

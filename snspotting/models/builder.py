@@ -1,3 +1,4 @@
+import torch
 from snspotting.models.e2espot import E2EModel
 from .learnablepooling import LiteLearnablePoolingModel
 from .contextaware import  LiteContextAwareModel
@@ -33,6 +34,8 @@ def build_model(cfg, verbose=True, default_args=None):
             len(default_args["classes"]) + 1, cfg.model.feature_arch, cfg.model.temporal_arch,
             clip_len=cfg.dataset.clip_len, modality=cfg.dataset.modality,
             multi_gpu=cfg.model.multi_gpu)
+        if cfg.model.load_weights != None:
+            model.load(torch.load(cfg.model.load_weights))
     else:
         model = None 
 
