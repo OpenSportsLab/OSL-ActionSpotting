@@ -1,0 +1,49 @@
+repos:
+
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.5.0
+      hooks:
+        - id: trailing-whitespace
+          args: [--markdown-linebreak-ext=md]
+        - id: check-yaml
+        - id: end-of-file-fixer
+        - id: check-merge-conflict
+        - id: fix-encoding-pragma
+          args: ["--remove"]
+        - id: mixed-line-ending
+          args: ["--fix=lf"]
+
+    - repo: https://github.com/timothycrosley/isort
+      rev: 5.13.2
+      hooks:
+        - id: isort
+          additional_dependencies: 
+            - toml
+
+    - repo: https://github.com/psf/black
+      rev: 24.3.0
+      hooks:
+        - id: black
+          language_version: python3.8
+
+    - repo: https://github.com/pycqa/flake8
+      rev: 7.0.0
+      hooks:
+        - id: flake8
+          args: 
+            - --config=.flake8
+          additional_dependencies:
+            - flake8-docstrings
+          exclude: tests
+    
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v1.9.0
+      hooks:
+        - id: mypy
+
+    - repo: https://github.com/igorshubovych/markdownlint-cli
+      rev: v0.39.0
+      hooks:
+        - id: markdownlint-fix
+
+exclude: ^(?!.*\.(py|md)($|\?)).*
