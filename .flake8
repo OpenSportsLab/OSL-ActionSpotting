@@ -14,5 +14,8 @@ ignore =
     # Exclude some missing docstrings errors
     D100, D101, D104, D105, D106, D107, D202
     # Exclude errors conflicting with black
-    W503, E501
-per-file-ignores = tests/*: D1
+    W503, E203, E501
+per-file-ignores = 
+    tests/*: D1
+    # imported but unused
+    __init__.py:F401
