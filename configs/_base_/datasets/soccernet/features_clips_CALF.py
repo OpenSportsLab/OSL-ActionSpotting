@@ -55,7 +55,7 @@ dataset = dict(
         chunk_size=120,
         receptive_field=40,
         chunks_per_epoch=6000,
-        split=["test","challenge"],
+        split=["test"],
         data_root=data_root,
         pipeline=[
             dict(type='LoadFeatureFromFile'),
@@ -63,6 +63,7 @@ dataset = dict(
         ],
         classes=classes,
         metric = "loose",
+        results = "results_spotting_test.zip",
         dataloader=dict(
             num_workers=1,
             batch_size=1,

@@ -1,136 +1,46 @@
+from snspotting.models.backbones import build_backbone
 from snspotting.models.common import step, BaseRGBModel
-from snspotting.models.shift import make_temporal_shift
-from snspotting.models.modules import *
+from snspotting.models.heads import build_head
 from contextlib import nullcontext
 import torch
 from tqdm import tqdm
-import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-
-import timm
-
-
-# Prevent the GRU params from going too big (cap it at a RegNet-Y 800MF)
-MAX_GRU_HIDDEN_DIM = 768
 
 class E2EModel(BaseRGBModel):
 
     class Impl(nn.Module):
 
-        def __init__(self, num_classes, feature_arch, temporal_arch, clip_len,
-                     modality):
+        def __init__(self, num_classes, backbone, head, clip_len, modality):
             super().__init__()
             is_rgb = modality == 'rgb'
             in_channels = {'flow': 2, 'bw': 1, 'rgb': 3}[modality]
+            
+            backbone.clip_len = clip_len
+            backbone.is_rgb = is_rgb
+            backbone.in_channels = in_channels
 
-            if feature_arch.startswith(('rn18', 'rn50')):
-                resnet_name = feature_arch.split('_')[0].replace('rn', 'resnet')
-                features = getattr(
-                    torchvision.models, resnet_name)(pretrained=is_rgb)
-                feat_dim = features.fc.in_features
-                features.fc = nn.Identity()
-                # import torchsummary
-                # print(torchsummary.summary(features.to('cuda'), (3, 224, 224)))
+            self.backbone = build_backbone(backbone)
 
-                # Flow has only two input channels
-                if not is_rgb:
-                    #FIXME: args maybe wrong for larger resnet
-                    features.conv1 = nn.Conv2d(
-                        in_channels, 64, kernel_size=(7, 7), stride=(2, 2),
-                        padding=(3, 3), bias=False)
+            head.num_classes = num_classes
+            head.feat_dim = self.backbone._feat_dim
 
-            elif feature_arch.startswith(('rny002', 'rny008')):
-                features = timm.create_model({
-                    'rny002': 'regnety_002',
-                    'rny008': 'regnety_008',
-                }[feature_arch.rsplit('_', 1)[0]], pretrained=is_rgb)
-                feat_dim = features.head.fc.in_features
-                features.head.fc = nn.Identity()
-
-                if not is_rgb:
-                    features.stem.conv = nn.Conv2d(
-                        in_channels, 32, kernel_size=(3, 3), stride=(2, 2),
-                        padding=(1, 1), bias=False)
-
-            elif 'convnextt' in feature_arch:
-                features = timm.create_model('convnext_tiny', pretrained=is_rgb)
-                feat_dim = features.head.fc.in_features
-                features.head.fc = nn.Identity()
-
-                if not is_rgb:
-                    features.stem[0] = nn.Conv2d(
-                        in_channels, 96, kernel_size=4, stride=4)
-
-            else:
-                raise NotImplementedError(feature_arch)
-
-            # Add Temporal Shift Modules
-            self._require_clip_len = -1
-            if feature_arch.endswith('_tsm'):
-                make_temporal_shift(features, clip_len, is_gsm=False)
-                self._require_clip_len = clip_len
-            elif feature_arch.endswith('_gsm'):
-                make_temporal_shift(features, clip_len, is_gsm=True)
-                self._require_clip_len = clip_len
-
-            self._features = features
-            self._feat_dim = feat_dim
-
-            if 'gru' in temporal_arch:
-                hidden_dim = feat_dim
-                if hidden_dim > MAX_GRU_HIDDEN_DIM:
-                    hidden_dim = MAX_GRU_HIDDEN_DIM
-                    print('Clamped GRU hidden dim: {} -> {}'.format(
-                        feat_dim, hidden_dim))
-                if temporal_arch in ('gru', 'deeper_gru'):
-                    self._pred_fine = GRUPrediction(
-                        feat_dim, num_classes, hidden_dim,
-                        num_layers=3 if temporal_arch[0] == 'd' else 1)
-                else:
-                    raise NotImplementedError(temporal_arch)
-            elif temporal_arch == 'mstcn':
-                self._pred_fine = TCNPrediction(feat_dim, num_classes, 3)
-            elif temporal_arch == 'asformer':
-                self._pred_fine = ASFormerPrediction(feat_dim, num_classes, 3)
-            elif temporal_arch == '':
-                self._pred_fine = FCPrediction(feat_dim, num_classes)
-            else:
-                raise NotImplementedError(temporal_arch)
+            self.head = build_head(head)
+            
 
         def forward(self, x):
-            batch_size, true_clip_len, channels, height, width = x.shape
-
-            clip_len = true_clip_len
-            if self._require_clip_len > 0:
-                # TSM module requires clip len to be known
-                assert true_clip_len <= self._require_clip_len, \
-                    'Expected {}, got {}'.format(
-                        self._require_clip_len, true_clip_len)
-                if true_clip_len < self._require_clip_len:
-                    x = F.pad(
-                        x, (0,) * 7 + (self._require_clip_len - true_clip_len,))
-                    clip_len = self._require_clip_len
-
-            im_feat = self._features(
-                x.view(-1, channels, height, width)
-            ).reshape(batch_size, clip_len, self._feat_dim)
-
-            if true_clip_len != clip_len:
-                # Undo padding
-                im_feat = im_feat[:, :true_clip_len, :]
-
-            return self._pred_fine(im_feat)
+            im_feat = self.backbone(x)
+            return self.head(im_feat)
 
         def print_stats(self):
             print('Model params:',
                 sum(p.numel() for p in self.parameters()))
             print('  CNN features:',
-                sum(p.numel() for p in self._features.parameters()))
+                sum(p.numel() for p in self.backbone._features.parameters()))
             print('  Temporal:',
-                sum(p.numel() for p in self._pred_fine.parameters()))
+                sum(p.numel() for p in self.head._pred_fine.parameters()))
 
-    def __init__(self, num_classes, feature_arch, temporal_arch, clip_len,
+    def __init__(self, num_classes, backbone, head, clip_len,
                  modality, device='cuda', multi_gpu=False):
         
         last_gpu_index = torch.cuda.device_count() - 1
@@ -139,7 +49,7 @@ class E2EModel(BaseRGBModel):
         self.device = device
         self._multi_gpu = multi_gpu
         self._model = E2EModel.Impl(
-            num_classes, feature_arch, temporal_arch, clip_len, modality)
+            num_classes, backbone, head, clip_len, modality)
         self._model.print_stats()
 
         if multi_gpu:
@@ -176,24 +86,12 @@ class E2EModel(BaseRGBModel):
         import timeit
         with torch.no_grad() if optimizer is None else nullcontext():
             for batch_idx, batch in enumerate(tqdm(loader)):
-
-                times=[]
                 if dali:
-                    # print(mem_report())
                     frame=batch["frame"].to(self.device)
-                    label=batch["label"].to(self.device if self._multi_gpu else torch.device('cuda:{}'.format(1)))
-                    # .to(self.device)
-                    # print(mem_report(),frame.device,label.device)
-                    
+                    label=batch["label"].to(self.device if self._multi_gpu else torch.device('cuda:{}'.format(1)))                    
                 else:
                     frame = loader.dataset.load_frame_gpu(batch, self.device)
                     label = batch['label'].to(self.device)
-                # print(label.shape)
-                # non_zero_indexes = torch.nonzero(label[:,:,1:])
-
-                # print(non_zero_indexes)
-                # print(len(non_zero_indexes))
-                
 
                 label = label.flatten() if len(label.shape) == 2 \
                     else label.view(-1, label.shape[-1])

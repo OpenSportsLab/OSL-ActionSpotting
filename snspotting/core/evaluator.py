@@ -1,8 +1,9 @@
 from tabulate import tabulate
+from snspotting.core.utils.eval import average_mAP, compute_performances_mAP, evaluate_e2e, get_closest_action_index, label2vector, non_maximum_supression, predictions2vector, store_eval_files_json
+from snspotting.core.utils.io import load_gz_json, load_text
 from snspotting.core.utils.lightning import CustomProgressBar
 
 from snspotting.datasets import build_dataset, build_dataloader
-
 import logging
 from SoccerNet.Evaluation.ActionSpotting import evaluate
 
@@ -11,12 +12,13 @@ import numpy as np
 import json
 
 import json
-import zipfile
 from tqdm import tqdm
 import os
 import pytorch_lightning as pl
 
 from SoccerNet.Evaluation.utils import INVERSE_EVENT_DICTIONARY_V2
+
+from tools.parse_soccernet import load_json
 
 
 
@@ -45,7 +47,7 @@ def build_evaluator(cfg, model, default_args=None):
                         model=model)
     elif cfg.runner.type == "runner_e2e":
         evaluator = Evaluator(cfg=cfg,
-                        evaluate_Spotting=evaluate_SN,
+                        evaluate_Spotting=evaluate_E2E,
                         model=model)
     
     return evaluator
@@ -56,10 +58,13 @@ class Evaluator():
                 evaluate_Spotting,
                 model):
         self.cfg = cfg
+
+        self.dali = False
+        if 'dali' in self.cfg.keys():self.dali = True
         self.model = model
         self.evaluate_Spotting = evaluate_Spotting
 
-    def evaluate(self, cfg_testset):
+    def infer(self, cfg_testset):
 
         # Loop over dataset to evaluate
         splits_to_evaluate = cfg_testset.split
@@ -69,22 +74,242 @@ class Evaluator():
             cfg_testset.split = [split]
 
             # Build Dataset
-            dataset_Test = build_dataset(cfg_testset,self.cfg.training.GPU)
+            dataset_test = build_dataset(cfg_testset,self.cfg.training.GPU if 'GPU' in self.cfg.training.keys() else None, 
+                                         {"classes": self.cfg.classes, 'repartitions' : self.cfg.repartitions}  if self.dali else None)
 
             # Build Dataloader
-            test_loader = build_dataloader(dataset_Test, cfg_testset.dataloader,self.cfg.training.GPU)
+            if self.dali:
+                test_loader = dataset_test
+                test_loader.print_info()
+            else:
+                test_loader = build_dataloader(dataset_test, cfg_testset.dataloader,self.cfg.training.GPU)
 
-            # Run Inference on Dataset
-            evaluator = pl.Trainer(callbacks=[CustomProgressBar()],devices=[self.cfg.training.GPU],num_sanity_val_steps=0)
-            evaluator.predict(self.model,test_loader)
-            results = self.model.target_dir
-            print(results)
-            # extract performances from results
-            performances = self.evaluate_Spotting(cfg_testset, results, cfg_testset.metric)
+            if self.cfg.model.type == 'E2E':
+                pred_file = None
+                if self.cfg.work_dir is not None:
+                    pred_file = os.path.join(
+                        self.cfg.work_dir, 'evaluate-{}'.format('test'))
 
-            return performances
+                results = self.infer_e2e(self.model, self.dali, test_loader, split.upper(), self.cfg.classes, pred_file,
+                            calc_stats=False)
+            else:
+                # Run Inference on Dataset
+                evaluator = pl.Trainer(callbacks=[CustomProgressBar()],devices=[self.cfg.training.GPU],num_sanity_val_steps=0)
+                evaluator.predict(self.model,test_loader)
+                results = self.model.target_dir
+                print(results)
+            return results
+    def infer_e2e(self, model, dali, dataset, split, classes, save_pred, calc_stats=True,
+             save_scores=True):
+        # pred_dict = {}
+        # for video, video_len, _ in dataset.videos:
+        #     pred_dict[video] = (
+        #         np.zeros((video_len, len(classes) + 1), np.float32),
+        #         np.zeros(video_len, np.int32))
+
+        # # Do not up the batch size if the dataset augments
+        # batch_size = 1 if dataset.augment else 4
+
+        # for clip in tqdm(dataset if dali else DataLoader(
+        #         dataset, num_workers=8, pin_memory=True,
+        #         batch_size=batch_size
+        # )):
+        #     if batch_size > 1:
+        #         # Batched by dataloader
+        #         _, batch_pred_scores = model.predict(clip['frame'])
+        #         for i in range(clip['frame'].shape[0]):
+        #             video = clip['video'][i]
+        #             scores, support = pred_dict[video]
+        #             pred_scores = batch_pred_scores[i]
+        #             start = clip['start'][i].item()
+        #             if start < 0:
+        #                 pred_scores = pred_scores[-start:, :]
+        #                 start = 0
+        #             end = start + pred_scores.shape[0]
+        #             if end >= scores.shape[0]:
+        #                 end = scores.shape[0]
+        #                 pred_scores = pred_scores[:end - start, :]
+        #             scores[start:end, :] += pred_scores
+        #             support[start:end] += 1
+
+        #     else:
+        #         # Batched by dataset
+        #         scores, support = pred_dict[clip['video'][0]]
+
+        #         start = clip['start'][0].item()
+        #         start=start-1
+        #         _, pred_scores = model.predict(clip['frame'][0])
+        #         if start < 0:
+        #             pred_scores = pred_scores[:, -start:, :]
+        #             start = 0
+        #         end = start + pred_scores.shape[1]
+        #         if end >= scores.shape[0]:
+        #             end = scores.shape[0]
+        #             pred_scores = pred_scores[:,:end - start, :]
+
+        #         print(pred_scores.shape)
+        #         scores[start:end, :] += np.sum(pred_scores, axis=0)
+        #         support[start:end] += pred_scores.shape[0]
+
+        # err, f1, pred_events, pred_events_high_recall, pred_scores = \
+        #     process_frame_predictions(dataset, classes, pred_dict)
+        
+        # avg_mAP = None
+        # if calc_stats:
+        #     print('=== Results on {} (w/o NMS) ==='.format(split))
+        #     print('Error (frame-level): {:0.2f}\n'.format(err.get() * 100))
+
+        #     def get_f1_tab_row(str_k):
+        #         k = classes[str_k] if str_k != 'any' else None
+        #         return [str_k, f1.get(k) * 100, *f1.tp_fp_fn(k)]
+        #     rows = [get_f1_tab_row('any')]
+        #     for c in sorted(classes):
+        #         rows.append(get_f1_tab_row(c))
+        #     print(tabulate(rows, headers=['Exact frame', 'F1', 'TP', 'FP', 'FN'],
+        #                 floatfmt='0.2f'))
+        #     print()
+
+        #     mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall)
+        #     avg_mAP = np.mean(mAPs[1:])
+
+        # if save_pred is not None:
+        #     store_json(save_pred + '.json', pred_events)
+        #     store_gz_json(save_pred + '.recall.json.gz', pred_events_high_recall)
+        #     if save_scores:
+        #         store_gz_json(save_pred + '.score.json.gz', pred_scores)
+
+        evaluate_e2e(model, dali, dataset, split, classes, save_pred, calc_stats, save_scores)
+        pred_file = save_pred + '.recall.json.gz'
+        return pred_file
+        pred = (load_gz_json if pred_file.endswith('.gz') else load_json)(
+                pred_file)
+        nms_window = 2
+        if nms_window > 0:
+            logging.info('Applying NMS: ' +  str(nms_window))
+            pred = non_maximum_supression(pred, nms_window)
+
+        store_eval_files_json(pred,os.path.join(self.cfg.work_dir,'results_spotting_test'))
+        logging.info('Done processing prediction files!')
+
+        return os.path.join(self.cfg.work_dir,'results_spotting_test')
+    def evaluate(self, cfg_testset, results):
+        if results.endswith('.gz') or results.endswith('.json'):
+            pred = (load_gz_json if results.endswith('.gz') else load_json)(
+                results)
+            nms_window = 2
+            if nms_window > 0:
+                logging.info('Applying NMS: ' +  str(nms_window))
+                pred = non_maximum_supression(pred, nms_window)
+
+            store_eval_files_json(pred,os.path.join(self.cfg.work_dir,'results_spotting_test'))
+            logging.info('Done processing prediction files!')
+            results = os.path.join(self.cfg.work_dir,'results_spotting_test')
+        performances = self.evaluate_Spotting(cfg_testset, results, cfg_testset.metric)
+        return performances
 
 
+def evaluate_E2E(cfg, pred_path,metric="loose"):
+    # Params:
+    #   - SoccerNet_path: path for labels (folder or zipped file)
+    #   - Predictions_path: path for predictions (folder or zipped file)
+    #   - prediction_file: name of the predicted files - if set to None, try to infer it
+    #   - split: split to evaluate from ["test", "challenge"]
+    #   - frame_rate: frame rate to evalaute from [2]
+    # Return:
+    #   - details mAP
+
+    
+    with open(cfg.label_file) as f :
+        print(cfg.label_file)
+        GT_data = json.load(f)
+    
+
+    targets_numpy = list()
+    detections_numpy = list()
+    closests_numpy = list()
+    classes = load_text(cfg.classes)
+    EVENT_DICTIONARY = {x: i  for i, x in enumerate(classes)}
+    INVERSE_EVENT_DICTIONARY = {i: x  for i, x in enumerate(classes)}
+    for game in tqdm(GT_data):
+
+        # fetch labels
+        labels = game["events"]
+
+        # convert labels to dense vector
+        dense_labels = label2vector(labels, vector_size=game["num_frames_dali"],
+            num_classes=len(classes), 
+            EVENT_DICTIONARY=EVENT_DICTIONARY)
+        # # convert labels to dense vector
+        # dense_labels = label2vector_e2e(labels, game["num_frames_dali"],
+        #     num_classes=len(classes), 
+        #     EVENT_DICTIONARY=EVENT_DICTIONARY)
+        
+        with open(os.path.join(pred_path,game["video"].rsplit('_', 1)[0],'results_spotting.json')) as f :
+            pred_data = json.load(f)
+            predictions = pred_data['predictions']
+
+        # convert predictions to vector
+        dense_predictions = predictions2vector(predictions, vector_size=game["num_frames_dali"]
+,            num_classes=len(classes),
+            EVENT_DICTIONARY=EVENT_DICTIONARY)
+#         # convert predictions to vector
+#         dense_predictions = predictions2vector_e2e(predictions, game["num_frames_dali"]
+# ,            num_classes=len(classes),
+#             EVENT_DICTIONARY=EVENT_DICTIONARY)
+
+        targets_numpy.append(dense_labels)
+        detections_numpy.append(dense_predictions)
+
+        closest_numpy = np.zeros(dense_labels.shape)-1
+        #Get the closest action index
+        closests_numpy.append(get_closest_action_index(dense_labels, closest_numpy))
+        # for c in np.arange(dense_labels.shape[-1]):
+        #     indexes = np.where(dense_labels[:,c] != 0)[0].tolist()
+        #     if len(indexes) == 0 :
+        #         continue
+        #     indexes.insert(0,-indexes[0])
+        #     indexes.append(2*closest_numpy.shape[0])
+        #     for i in np.arange(len(indexes)-2)+1:
+        #         start = max(0,(indexes[i-1]+indexes[i])//2)
+        #         stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
+        #         closest_numpy[start:stop,c] = dense_labels[indexes[i],c]
+        # closests_numpy.append(closest_numpy)
+
+    return compute_performances_mAP(metric, targets_numpy, detections_numpy, closests_numpy, INVERSE_EVENT_DICTIONARY)
+    # if metric == "loose": deltas=np.arange(12)*5 + 5
+    # elif metric == "tight": deltas=np.arange(5)*1 + 1
+    # elif metric == "at1": deltas=np.array([1])
+    # elif metric == "at2": deltas=np.array([2]) 
+    # elif metric == "at3": deltas=np.array([3]) 
+    # elif metric == "at4": deltas=np.array([4]) 
+    # elif metric == "at5": deltas=np.array([5]) 
+
+    # # Compute the performances
+    # a_mAP, a_mAP_per_class = average_mAP(targets_numpy, 
+    # detections_numpy, closests_numpy,
+    # framerate=2, deltas=deltas)
+    
+    # results = {
+    #     "a_mAP": a_mAP,
+    #     "a_mAP_per_class": a_mAP_per_class,
+    # }
+
+    # rows = []
+    # for i in range(len(results['a_mAP_per_class'])):
+    #     label = INVERSE_EVENT_DICTIONARY[i]
+    #     rows.append((
+    #         label,
+    #         '{:0.2f}'.format(results['a_mAP_per_class'][i] * 100),
+    #     ))
+    # rows.append((
+    #     'Average mAP',
+    #     '{:0.2f}'.format(results['a_mAP'] * 100),
+    # ))
+
+    # logging.info("Best Performance at end of training ")
+    # logging.info('Metric: ' +  metric)
+    # print(tabulate(rows, headers=['', 'Any']))
+    # return results
 
 def evaluate_JSON(cfg, pred_path, metric="loose"):
     # Params:
@@ -244,343 +469,3 @@ def evaluate_SN(cfg, pred_path, metric="loose"):
     # logging.info("a_mAP visibility all per class: " +  str( results["a_mAP_per_class"]))
     
     return results
-
-
-
-
-
-
-
-def label2vector(labels, num_classes=17, framerate=2, version=2, EVENT_DICTIONARY={}):
-
-    vector_size = 90*60*framerate
-
-    dense_labels = np.zeros((vector_size, num_classes))
-
-    for annotation in labels:
-
-        time = annotation["gameTime"]
-        event = annotation["label"]
-
-        # half = int(time[0])
-
-        minutes = int(time[-5:-3])
-        seconds = int(time[-2::])
-        # annotation at millisecond precision
-        if "position" in annotation:
-            frame = int(framerate * ( int(annotation["position"])/1000 )) 
-        # annotation at second precision
-        else:
-            frame = framerate * ( seconds + 60 * minutes ) 
-
-        label = EVENT_DICTIONARY[event]
-
-        frame = min(frame, vector_size-1)
-        dense_labels[frame][label] = 1
-
-
-    return dense_labels
-
-def predictions2vector(predictions, num_classes=17, version=2, framerate=2, EVENT_DICTIONARY={}):
-
-    vector_size = 90*60*framerate
-
-    dense_predictions = np.zeros((vector_size, num_classes))-1
-
-    for annotation in predictions:
-
-        time = int(annotation["position"])
-        event = annotation["label"]
-
-        # half = int(annotation["half"])
-
-        frame = int(framerate * ( time/1000 ))
-
-        label = EVENT_DICTIONARY[event]
-
-        frame = min(frame, vector_size-1)
-        dense_predictions[frame][label] = annotation["confidence"]
-
-    return dense_predictions 
-
-
-import numpy as np
-from tqdm import tqdm
-import time
-np.seterr(divide='ignore', invalid='ignore')
-
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-def compute_class_scores(target, closest, detection, delta):
-
-    # Retrieving the important variables
-    gt_indexes = np.where(target != 0)[0]
-    gt_indexes_visible = np.where(target > 0)[0]
-    gt_indexes_unshown = np.where(target < 0)[0]
-    pred_indexes = np.where(detection >= 0)[0]
-    pred_scores = detection[pred_indexes]
-
-    # Array to save the results, each is [pred_scor,{1 or 0}]
-    game_detections = np.zeros((len(pred_indexes),3))
-    game_detections[:,0] = np.copy(pred_scores)
-    game_detections[:,2] = np.copy(closest[pred_indexes])
-
-
-    remove_indexes = list()
-
-    for gt_index in gt_indexes:
-
-        max_score = -1
-        max_index = None
-        game_index = 0
-        selected_game_index = 0
-
-        for pred_index, pred_score in zip(pred_indexes, pred_scores):
-
-            if pred_index < gt_index - delta:
-                game_index += 1
-                continue
-            if pred_index > gt_index + delta:
-                break
-
-            if abs(pred_index-gt_index) <= delta/2 and pred_score > max_score and pred_index not in remove_indexes:
-                max_score = pred_score
-                max_index = pred_index
-                selected_game_index = game_index
-            game_index += 1
-
-        if max_index is not None:
-            game_detections[selected_game_index,1]=1
-            remove_indexes.append(max_index)
-
-    return game_detections, len(gt_indexes_visible), len(gt_indexes_unshown)
-
-
-
-def compute_precision_recall_curve(targets, closests, detections, delta):
-    
-    # Store the number of classes
-    num_classes = targets[0].shape[-1]
-
-    # 200 confidence thresholds between [0,1]
-    thresholds = np.linspace(0,1,200)
-
-    # Store the precision and recall points
-    precision = list()
-    recall = list()
-    precision_visible = list()
-    recall_visible = list()
-    precision_unshown = list()
-    recall_unshown = list()
-
-    # Apply Non-Maxima Suppression if required
-    start = time.time()
-
-    # Precompute the predictions scores and their correspondence {TP, FP} for each class
-    for c in np.arange(num_classes):
-        total_detections =  np.zeros((1, 3))
-        total_detections[0,0] = -1
-        n_gt_labels_visible = 0
-        n_gt_labels_unshown = 0
-        
-        # Get the confidence scores and their corresponding TP or FP characteristics for each game
-        for target, closest, detection in zip(targets, closests, detections):
-            tmp_detections, tmp_n_gt_labels_visible, tmp_n_gt_labels_unshown = compute_class_scores(target[:,c], closest[:,c], detection[:,c], delta)
-            total_detections = np.append(total_detections,tmp_detections,axis=0)
-            n_gt_labels_visible = n_gt_labels_visible + tmp_n_gt_labels_visible
-            n_gt_labels_unshown = n_gt_labels_unshown + tmp_n_gt_labels_unshown
-
-        precision.append(list())
-        recall.append(list())
-        precision_visible.append(list())
-        recall_visible.append(list())
-        precision_unshown.append(list())
-        recall_unshown.append(list())
-
-        # Get only the visible or unshown actions
-        total_detections_visible = np.copy(total_detections)
-        total_detections_unshown = np.copy(total_detections)
-        total_detections_visible[np.where(total_detections_visible[:,2] <= 0.5)[0],0] = -1
-        total_detections_unshown[np.where(total_detections_unshown[:,2] >= -0.5)[0],0] = -1
-
-        # Get the precision and recall for each confidence threshold
-        for threshold in thresholds:
-            pred_indexes = np.where(total_detections[:,0]>=threshold)[0]
-            pred_indexes_visible = np.where(total_detections_visible[:,0]>=threshold)[0]
-            pred_indexes_unshown = np.where(total_detections_unshown[:,0]>=threshold)[0]
-            TP = np.sum(total_detections[pred_indexes,1])
-            TP_visible = np.sum(total_detections[pred_indexes_visible,1])
-            TP_unshown = np.sum(total_detections[pred_indexes_unshown,1])
-            p = np.nan_to_num(TP/len(pred_indexes))
-            r = np.nan_to_num(TP/(n_gt_labels_visible + n_gt_labels_unshown))
-            p_visible = np.nan_to_num(TP_visible/len(pred_indexes_visible))
-            r_visible = np.nan_to_num(TP_visible/n_gt_labels_visible)
-            p_unshown = np.nan_to_num(TP_unshown/len(pred_indexes_unshown))
-            r_unshown = np.nan_to_num(TP_unshown/n_gt_labels_unshown)
-            precision[-1].append(p)
-            recall[-1].append(r)
-            precision_visible[-1].append(p_visible)
-            recall_visible[-1].append(r_visible)
-            precision_unshown[-1].append(p_unshown)
-            recall_unshown[-1].append(r_unshown)
-
-    precision = np.array(precision).transpose()
-    recall = np.array(recall).transpose()
-    precision_visible = np.array(precision_visible).transpose()
-    recall_visible = np.array(recall_visible).transpose()
-    precision_unshown = np.array(precision_unshown).transpose()
-    recall_unshown = np.array(recall_unshown).transpose()
-
-
-
-    # Sort the points based on the recall, class per class
-    for i in np.arange(num_classes):
-        index_sort = np.argsort(recall[:,i])
-        precision[:,i] = precision[index_sort,i]
-        recall[:,i] = recall[index_sort,i]
-
-    # Sort the points based on the recall, class per class
-    for i in np.arange(num_classes):
-        index_sort = np.argsort(recall_visible[:,i])
-        precision_visible[:,i] = precision_visible[index_sort,i]
-        recall_visible[:,i] = recall_visible[index_sort,i]
-
-    # Sort the points based on the recall, class per class
-    for i in np.arange(num_classes):
-        index_sort = np.argsort(recall_unshown[:,i])
-        precision_unshown[:,i] = precision_unshown[index_sort,i]
-        recall_unshown[:,i] = recall_unshown[index_sort,i]
-
-    return precision, recall, precision_visible, recall_visible, precision_unshown, recall_unshown
-
-def compute_mAP(precision, recall):
-
-    # Array for storing the AP per class
-    AP = np.array([0.0]*precision.shape[-1])
-
-    # Loop for all classes
-    for i in np.arange(precision.shape[-1]):
-
-        # 11 point interpolation
-        for j in np.arange(11)/10:
-
-            index_recall = np.where(recall[:,i] >= j)[0]
-
-            possible_value_precision = precision[index_recall,i]
-            max_value_precision = 0
-
-            if possible_value_precision.shape[0] != 0:
-                max_value_precision = np.max(possible_value_precision)
-
-            AP[i] += max_value_precision
-
-    mAP_per_class = AP/11
-
-    return np.mean(mAP_per_class), mAP_per_class
-
-# Tight: (SNv3): np.arange(5)*1 + 1
-# Loose: (SNv1/v2): np.arange(12)*5 + 5
-def delta_curve(targets, closests, detections,  framerate, deltas=np.arange(5)*1 + 1):
-
-    mAP = list()
-    mAP_per_class = list()
-    mAP_visible = list()
-    mAP_per_class_visible = list()
-    mAP_unshown = list()
-    mAP_per_class_unshown = list()
-
-    for delta in tqdm(deltas*framerate):
-
-        precision, recall, precision_visible, recall_visible, precision_unshown, recall_unshown = compute_precision_recall_curve(targets, closests, detections, delta)
-
-
-        tmp_mAP, tmp_mAP_per_class = compute_mAP(precision, recall)
-        mAP.append(tmp_mAP)
-        mAP_per_class.append(tmp_mAP_per_class)
-        # TODO: compute visible/undshown from another JSON file containing only the visible/unshown annotations
-        # tmp_mAP_visible, tmp_mAP_per_class_visible = compute_mAP(precision_visible, recall_visible)
-        # mAP_visible.append(tmp_mAP_visible)
-        # mAP_per_class_visible.append(tmp_mAP_per_class_visible)
-        # tmp_mAP_unshown, tmp_mAP_per_class_unshown = compute_mAP(precision_unshown, recall_unshown)
-        # mAP_unshown.append(tmp_mAP_unshown)
-        # mAP_per_class_unshown.append(tmp_mAP_per_class_unshown)
-
-    return mAP, mAP_per_class
-
-
-def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*1 + 1):
-
-
-    mAP, mAP_per_class = delta_curve(targets, closests, detections, framerate, deltas)
-
-    if len(mAP) == 1:
-        return mAP[0], mAP_per_class[0], mAP_visible[0], mAP_per_class_visible[0], mAP_unshown[0], mAP_per_class_unshown[0]
-    
-    # Compute the average mAP
-    integral = 0.0
-    for i in np.arange(len(mAP)-1):
-        integral += (mAP[i]+mAP[i+1])/2
-    a_mAP = integral/((len(mAP)-1))
-
-    # integral_visible = 0.0
-    # for i in np.arange(len(mAP_visible)-1):
-    #     integral_visible += (mAP_visible[i]+mAP_visible[i+1])/2
-    # a_mAP_visible = integral_visible/((len(mAP_visible)-1))
-
-    # integral_unshown = 0.0
-    # for i in np.arange(len(mAP_unshown)-1):
-    #     integral_unshown += (mAP_unshown[i]+mAP_unshown[i+1])/2
-    # a_mAP_unshown = integral_unshown/((len(mAP_unshown)-1))
-    # a_mAP_unshown = a_mAP_unshown*17/13
-
-    a_mAP_per_class = list()
-    for c in np.arange(len(mAP_per_class[0])):
-        integral_per_class = 0.0
-        for i in np.arange(len(mAP_per_class)-1):
-            integral_per_class += (mAP_per_class[i][c]+mAP_per_class[i+1][c])/2
-        a_mAP_per_class.append(integral_per_class/((len(mAP_per_class)-1)))
-
-    # a_mAP_per_class_visible = list()
-    # for c in np.arange(len(mAP_per_class_visible[0])):
-    #     integral_per_class_visible = 0.0
-    #     for i in np.arange(len(mAP_per_class_visible)-1):
-    #         integral_per_class_visible += (mAP_per_class_visible[i][c]+mAP_per_class_visible[i+1][c])/2
-    #     a_mAP_per_class_visible.append(integral_per_class_visible/((len(mAP_per_class_visible)-1)))
-
-    # a_mAP_per_class_unshown = list()
-    # for c in np.arange(len(mAP_per_class_unshown[0])):
-    #     integral_per_class_unshown = 0.0
-    #     for i in np.arange(len(mAP_per_class_unshown)-1):
-    #         integral_per_class_unshown += (mAP_per_class_unshown[i][c]+mAP_per_class_unshown[i+1][c])/2
-    #     a_mAP_per_class_unshown.append(integral_per_class_unshown/((len(mAP_per_class_unshown)-1)))
-
-    return a_mAP, a_mAP_per_class #, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown
-
-
-
-def LoadJsonFromZip(zippedFile, JsonPath):
-    with zipfile.ZipFile(zippedFile, "r") as z:
-        # print(filename)
-        with z.open(JsonPath) as f:
-            data = f.read()
-            d = json.loads(data.decode("utf-8"))
-
-    return d
-
-

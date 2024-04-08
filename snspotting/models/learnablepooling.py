@@ -112,7 +112,6 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         else:
             self.target_dir = self.output_results
             
-        print(self.output_folder,self.output_results,self.target_dir)
         if not self.stop_predict:
             self.spotting_predictions = list()
 
@@ -152,7 +151,6 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         spots = get_spot(
                             timestamp[:, l], window=self.cfg.model.post_proc.NMS_window*self.cfg.model.backbone.framerate, thresh=self.cfg.model.post_proc.NMS_threshold)
                         for spot in spots:
-                            # print("spot", int(spot[0]), spot[1], spot)
                             frame_index = int(spot[0])
                             confidence = spot[1]
                             if confidence < self.confidence_threshold:
@@ -186,12 +184,10 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
                 json_data = get_json_data(False,game_ID=video)
 
-                # for half, timestamp in enumerate([timestamp_long_half_1, timestamp_long_half_2]):
                 for l in range(self.trainer.predict_dataloaders.dataset.num_classes):
                     spots = get_spot(
                         timestamp_long[:, l], window=self.cfg.model.post_proc.NMS_window*self.cfg.model.backbone.framerate, thresh=self.cfg.model.post_proc.NMS_threshold)
                     for spot in spots:
-                        # print("spot", int(spot[0]), spot[1], spot)
                         frame_index = int(spot[0])
                         confidence = spot[1]
                         if confidence < self.confidence_threshold:
@@ -200,7 +196,6 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         json_data["predictions"].append(get_prediction_data(False,frame_index,framerate,version=2,l=l,confidence=confidence, runner = self.runner, inverse_event_dictionary= self.trainer.predict_dataloaders.dataset.inverse_event_dictionary))
             
                 json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['position']))
-                # json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: int(x['half']))
 
                 os.makedirs(os.path.join(self.cfg.work_dir, self.output_folder, video), exist_ok=True)
                 with open(os.path.join(self.cfg.work_dir, self.output_folder, video, "results_spotting.json"), 'w') as output_file:

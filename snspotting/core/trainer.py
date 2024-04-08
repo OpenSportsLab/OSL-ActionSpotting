@@ -1,5 +1,5 @@
 from tabulate import tabulate
-from snspotting.core.utils.eval import process_frame_predictions
+from snspotting.core.utils.eval import evaluate_e2e
 from snspotting.core.utils.io import  store_json, store_gz_json, clear_files
 from snspotting.core.utils.score import compute_mAPs
 
@@ -15,7 +15,10 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 import torch
 
+from snspotting.datasets.builder import build_dataset
 from snspotting.datasets.frame import DaliDataSetVideo
+from abc import ABC, abstractmethod
+
 
 def build_trainer(cfg, model = None, default_args=None):
     if cfg.type == "trainer_e2e":
@@ -25,11 +28,7 @@ def build_trainer(cfg, model = None, default_args=None):
         num_steps_per_epoch = default_args["len_train_loader"] // cfg.acc_grad_iter
         num_epochs, lr_scheduler = get_lr_scheduler(
             cfg, optimizer, num_steps_per_epoch)
-        print(optimizer)
-        print(scaler)
-        print(num_steps_per_epoch)
-        print(num_epochs, lr_scheduler)
-        trainer = Trainer(cfg,model,optimizer,scaler,lr_scheduler, default_args['work_dir'], default_args['dali'], default_args['repartitions'], default_args['cfg_test'], default_args['cfg_challenge'])
+        trainer = Trainer_e2e(cfg,model,optimizer,scaler,lr_scheduler, default_args['work_dir'], default_args['dali'], default_args['repartitions'], default_args['cfg_test'], default_args['cfg_challenge'], default_args['cfg_val_data_frames'])
     else:
         call=MyCallback()
         trainer = pl.Trainer(max_epochs=cfg.max_epochs,devices=[cfg.GPU],callbacks=[call,CustomProgressBar(refresh_rate=1)],num_sanity_val_steps=0)
@@ -45,8 +44,16 @@ def get_lr_scheduler(args, optimizer, num_steps_per_epoch):
         CosineAnnealingLR(optimizer,
             num_steps_per_epoch * cosine_epochs)])
 
-class Trainer():
-    def __init__(self,args,model,optimizer,scaler,lr_scheduler, work_dir, dali, repartitions, cfg_test, cfg_challenge):
+class Trainer(ABC):
+    def __init__(self):
+        pass
+    
+    @abstractmethod
+    def train(self):
+        pass
+
+class Trainer_e2e(Trainer):
+    def __init__(self,args,model,optimizer,scaler,lr_scheduler, work_dir, dali, repartitions, cfg_test, cfg_challenge, cfg_val_data_frames):
         self.losses = []
         self.best_epoch = 0
         self.best_criterion = 0 if args.criterion == 'map' else float('inf')
@@ -71,16 +78,19 @@ class Trainer():
         self.repartitions = repartitions 
         self.cfg_test = cfg_test
         self.cfg_challenge = cfg_challenge
+        self.cfg_val_data_frames = cfg_val_data_frames
 
     def train(self,train_loader,val_loader,val_data_frames,classes):
         for epoch in range(self.epoch, self.num_epochs):
             train_loss = self.model.epoch(
-                train_loader, True, self.optimizer, self.scaler,
+                train_loader, self.dali, self.optimizer, self.scaler,
                 lr_scheduler=self.lr_scheduler, acc_grad_iter=self.acc_grad_iter)
             
-            val_loss = self.model.epoch(val_loader, True, acc_grad_iter=self.acc_grad_iter)
+            val_loss = self.model.epoch(val_loader, self.dali, acc_grad_iter=self.acc_grad_iter)
             print('[Epoch {}] Train loss: {:0.5f} Val loss: {:0.5f}'.format(
                 epoch, train_loss, val_loss))
+            
+            self.start_val_epoch = 0
             
             val_mAP = 0
             if self.criterion == 'loss':
@@ -95,8 +105,8 @@ class Trainer():
                         pred_file = os.path.join(
                             self.save_dir, 'pred-val.{}'.format(epoch))
                         os.makedirs(self.save_dir, exist_ok=True)
-                    val_mAP = self.evaluate(self.model, self.dali,  val_data_frames, 'VAL', classes,
-                                        pred_file, save_scores=False)
+                    val_mAP = evaluate_e2e(self.model, self.dali,  val_data_frames, 'VAL', classes, 
+                                           pred_file, save_scores=False)
                     if self.criterion == 'map' and val_mAP > self.best_criterion:
                         self.best_criterion = val_mAP
                         self.best_epoch = epoch
@@ -122,12 +132,14 @@ class Trainer():
                         'lr_state_dict': self.lr_scheduler.state_dict()},
                     os.path.join(self.save_dir,
                                     'optim_{:03d}.pt'.format(epoch)))
-         
+            
         print('Best epoch: {}\n'.format(self.best_epoch))
 
-        train_loader.delete()
-        val_loader.delete()
-        val_data_frames.delete()
+        if self.dali:
+            train_loader.delete()
+            val_loader.delete()
+            if self.criterion == 'map':
+                val_data_frames.delete()
 
         if self.save_dir is not None:
             self.model.load(torch.load(os.path.join(
@@ -139,6 +151,8 @@ class Trainer():
             # Evaluate on hold out splits
             eval_splits += ['test', 'challenge']
             for split in eval_splits:
+                if split == 'val':
+                    cfg_tmp = self.cfg_val_data_frames
                 if split == 'test':
                     cfg_tmp = self.cfg_test
                 elif split == 'challenge':
@@ -148,11 +162,13 @@ class Trainer():
                 #     '{}.json'.format(split))
                 if os.path.exists(split_path):
                     if self.dali:
-                        split_data = DaliDataSetVideo(
-                            cfg_tmp.dataloader.batch_size,cfg_tmp.output_map,self.repartitions[0],
-                            classes, cfg_tmp.label_file,
-                            cfg_tmp.modality, cfg_tmp.clip_len, cfg_tmp.stride, cfg_tmp.data_root, 
-                            crop_dim=cfg_tmp.crop_dim, overlap_len=cfg_tmp.clip_len // 2)
+                        cfg_tmp.overlap_len = cfg_tmp.clip_len // 2
+                        split_data = build_dataset(cfg_tmp,None,{'repartitions' : self.repartitions, 'classes' : classes})
+                        # split_data = DaliDataSetVideo(
+                        #     cfg_tmp.dataloader.batch_size,cfg_tmp.output_map,self.repartitions[0],
+                        #     classes, cfg_tmp.label_file,
+                        #     cfg_tmp.modality, cfg_tmp.clip_len, cfg_tmp.stride, cfg_tmp.data_root, 
+                        #     crop_dim=cfg_tmp.crop_dim, overlap_len=cfg_tmp.clip_len // 2)
                     # else:
                     #     split_data = ActionSpotVideoDataset(
                     #     classes, split_path, args.frame_dir, args.modality,
@@ -165,88 +181,8 @@ class Trainer():
                         pred_file = os.path.join(
                             self.save_dir, 'pred-{}.{}'.format(split, self.best_epoch))
 
-                    self.evaluate(self.model, self.dali, split_data, split.upper(), classes, pred_file,
+                    evaluate_e2e(self.model, self.dali, split_data, split.upper(), classes, pred_file,
                             calc_stats=split != 'challenge')
                     
                     if self.dali:
                         split_data.delete()
-                
-    def evaluate(self, model, dali, dataset, split, classes, save_pred, calc_stats=True,
-             save_scores=True):
-        pred_dict = {}
-        for video, video_len, _ in dataset.videos:
-            pred_dict[video] = (
-                np.zeros((video_len, len(classes) + 1), np.float32),
-                np.zeros(video_len, np.int32))
-
-        # Do not up the batch size if the dataset augments
-        batch_size = 1 if dataset.augment else self.inference_batch_size
-
-        for clip in tqdm(dataset if dali else DataLoader(
-                dataset, num_workers=8, pin_memory=True,
-                batch_size=batch_size
-        )):
-            if batch_size > 1:
-                # Batched by dataloader
-                _, batch_pred_scores = model.predict(clip['frame'])
-                for i in range(clip['frame'].shape[0]):
-                    video = clip['video'][i]
-                    scores, support = pred_dict[video]
-                    pred_scores = batch_pred_scores[i]
-                    start = clip['start'][i].item()
-                    if start < 0:
-                        pred_scores = pred_scores[-start:, :]
-                        start = 0
-                    end = start + pred_scores.shape[0]
-                    if end >= scores.shape[0]:
-                        end = scores.shape[0]
-                        pred_scores = pred_scores[:end - start, :]
-                    scores[start:end, :] += pred_scores
-                    support[start:end] += 1
-
-            else:
-                # Batched by dataset
-                scores, support = pred_dict[clip['video'][0]]
-
-                start = clip['start'][0].item()
-                start=start-1
-                _, pred_scores = model.predict(clip['frame'][0])
-                if start < 0:
-                    pred_scores = pred_scores[:, -start:, :]
-                    start = 0
-                end = start + pred_scores.shape[1]
-                if end >= scores.shape[0]:
-                    end = scores.shape[0]
-                    pred_scores = pred_scores[:,:end - start, :]
-
-                print(pred_scores.shape)
-                scores[start:end, :] += np.sum(pred_scores, axis=0)
-                support[start:end] += pred_scores.shape[0]
-
-        err, f1, pred_events, pred_events_high_recall, pred_scores = \
-            process_frame_predictions(dataset, classes, pred_dict)
-
-        avg_mAP = None
-        if calc_stats:
-            print('=== Results on {} (w/o NMS) ==='.format(split))
-            print('Error (frame-level): {:0.2f}\n'.format(err.get() * 100))
-
-            def get_f1_tab_row(str_k):
-                k = classes[str_k] if str_k != 'any' else None
-                return [str_k, f1.get(k) * 100, *f1.tp_fp_fn(k)]
-            rows = [get_f1_tab_row('any')]
-            for c in sorted(classes):
-                rows.append(get_f1_tab_row(c))
-            print(tabulate(rows, headers=['Exact frame', 'F1', 'TP', 'FP', 'FN'],
-                        floatfmt='0.2f'))
-            print()
-
-            mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall)
-            avg_mAP = np.mean(mAPs[1:])
-
-        if save_pred is not None:
-            store_json(save_pred + '.json', pred_events)
-            store_gz_json(save_pred + '.recall.json.gz', pred_events_high_recall)
-            if save_scores:
-                store_gz_json(save_pred + '.score.json.gz', pred_scores)
-        return avg_mAP

@@ -105,7 +105,7 @@ def build_dataset(cfg, gpu=None,  default_args=None):
             cfg.label_file, 
             cfg.modality, cfg.clip_len, cfg.stride,
             cfg.data_root,
-            crop_dim=cfg.crop_dim, overlap_len=0)
+            crop_dim=cfg.crop_dim, overlap_len=cfg.overlap_len)
     else:
         dataset=None
     return dataset

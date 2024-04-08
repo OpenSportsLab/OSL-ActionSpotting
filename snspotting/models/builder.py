@@ -22,16 +22,19 @@ def build_model(cfg, verbose=True, default_args=None):
                   neck=cfg.model.neck, post_proc=cfg.model.post_proc, runner=cfg.runner.type)
     elif cfg.model.type == "ContextAware":
         model = LiteContextAwareModel(cfg = cfg, weights=cfg.model.load_weights,
-                                input_size=cfg.model.input_size,
-                                num_classes=cfg.model.num_classes,
-                                chunk_size=cfg.model.chunk_size,
-                                dim_capsule=cfg.model.dim_capsule,
-                                receptive_field=cfg.model.receptive_field,
-                                num_detections=cfg.model.num_detections,
-                                framerate=cfg.model.framerate, runner = cfg.runner.type)
+                                      backbone=cfg.model.backbone, head=cfg.model.head, 
+                                      neck=cfg.model.neck,
+                                # input_size=cfg.model.input_size,
+                                # num_classes=cfg.model.num_classes,
+                                # chunk_size=cfg.model.chunk_size,
+                                # dim_capsule=cfg.model.dim_capsule,
+                                # receptive_field=cfg.model.receptive_field,
+                                # num_detections=cfg.model.num_detections,
+                                # framerate=cfg.model.framerate, 
+                                runner = cfg.runner.type)
     elif cfg.model.type == "E2E":
         model = E2EModel(
-            len(default_args["classes"]) + 1, cfg.model.feature_arch, cfg.model.temporal_arch,
+            len(default_args["classes"]) + 1, cfg.model.backbone, cfg.model.head,
             clip_len=cfg.dataset.clip_len, modality=cfg.dataset.modality,
             multi_gpu=cfg.model.multi_gpu)
         if cfg.model.load_weights != None:

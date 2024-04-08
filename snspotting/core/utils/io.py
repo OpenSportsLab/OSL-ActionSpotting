@@ -4,7 +4,6 @@ import json
 import pickle
 import gzip
 
-
 def load_json(fpath):
     with open(fpath) as fp:
         return json.load(fp)
@@ -60,3 +59,48 @@ def clear_files(dir_name, re_str, exclude=[]):
             if file_name not in exclude:
                 file_path = os.path.join(dir_name, file_name)
                 os.remove(file_path)
+
+def check_config(cfg):
+    from snspotting.core.utils.dataset import load_classes
+    if cfg.runner.type == "runner_e2e":
+        assert cfg.dataset.modality in ['rgb']
+        assert cfg.model.backbone.type in [
+                # From torchvision
+                'rn18',
+                'rn18_tsm',
+                'rn18_gsm',
+                'rn50',
+                'rn50_tsm',
+                'rn50_gsm',
+
+                # From timm (following its naming conventions)
+                'rny002',
+                'rny002_tsm',
+                'rny002_gsm',
+                'rny008',
+                'rny008_tsm',
+                'rny008_gsm',
+
+                # From timm
+                'convnextt',
+                'convnextt_tsm',
+                'convnextt_gsm'
+            ]
+        assert cfg.model.head.type in ['', 'gru', 'deeper_gru', 'mstcn', 'asformer']
+        assert cfg.dataset.batch_size % cfg.training.acc_grad_iter == 0
+        assert cfg.training.criterion in ['map', 'loss']
+        if cfg.training.start_val_epoch is None:
+            cfg.training.start_val_epoch = cfg.training.num_epochs - cfg.training.base_num_val_epochs
+        if cfg.dataset.crop_dim <= 0:
+            cfg.dataset.crop_dim = None
+        if os.path.isfile(cfg.classes):
+            cfg.classes = load_classes(cfg.classes)
+        for key,value in cfg.dataset.items():
+            if key in ['train','val','val_data_frames','test','challenge']:
+                pass
+            else:
+                cfg.dataset['train'][key] = value
+                cfg.dataset['val'][key] = value
+                cfg.dataset['val_data_frames'][key] = value
+                cfg.dataset['test'][key] = value
+                cfg.dataset['challenge'][key] = value

@@ -49,7 +49,7 @@ dataset = dict(
         version=2,
         framerate=2,
         window_size=20,
-        split=["test","challenge"],
+        split=["test"],
         data_root=data_root,
         pipeline=[
             dict(type='LoadFeatureFromFile'),
@@ -57,6 +57,7 @@ dataset = dict(
         ],
         classes=classes,
         metric = "loose",
+        results = "results_spotting_test.zip",
         dataloader=dict(
             num_workers=1,
             batch_size=1,

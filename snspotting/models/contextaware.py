@@ -17,12 +17,20 @@ from SoccerNet.Downloader import getListGames
 
 from snspotting.models.utils import NMS, create_folders, predictions2json, predictions2json_runnerjson, zipResults
 
+from .heads import build_head
+from .backbones import build_backbone
+from .necks import build_neck
+
 class ContextAwareModel(nn.Module):
     def __init__(self, weights=None, 
-    input_size=512, num_classes=3, 
-    chunk_size=240, dim_capsule=16,
-    receptive_field=80, num_detections=5, 
-    framerate=2):
+                 backbone="PreExtracted", 
+                neck="NetVLAD++", 
+                head="LinearLayer", 
+                post_proc="NMS"):
+    # input_size=512, num_classes=3, 
+    # chunk_size=240, dim_capsule=16,
+    # receptive_field=80, num_detections=5, 
+    # framerate=2):
         """
         INPUT: a Tensor of the form (batch_size,1,chunk_size,input_size)
         OUTPUTS:    1. The segmentation of the form (batch_size,chunk_size,num_classes)
@@ -32,61 +40,70 @@ class ContextAwareModel(nn.Module):
         super(ContextAwareModel, self).__init__()
 
 
-        self.input_size = input_size
-        self.num_classes = num_classes
-        self.dim_capsule = dim_capsule
-        self.receptive_field = receptive_field
-        self.num_detections = num_detections
-        self.chunk_size = chunk_size
-        self.framerate = framerate
+        # self.input_size = input_size
+        # self.num_classes = num_classes
+        # self.dim_capsule = dim_capsule
+        # self.receptive_field = receptive_field
+        # self.num_detections = num_detections
+        # self.chunk_size = chunk_size
+        # self.framerate = framerate
 
-        self.pyramid_size_1 = int(np.ceil(receptive_field/7))
-        self.pyramid_size_2 = int(np.ceil(receptive_field/3))
-        self.pyramid_size_3 = int(np.ceil(receptive_field/2))
-        self.pyramid_size_4 = int(np.ceil(receptive_field))
+        # self.pyramid_size_1 = int(np.ceil(receptive_field/7))
+        # self.pyramid_size_2 = int(np.ceil(receptive_field/3))
+        # self.pyramid_size_3 = int(np.ceil(receptive_field/2))
+        # self.pyramid_size_4 = int(np.ceil(receptive_field))
 
-        # Base Convolutional Layers
-        self.conv_1 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=(1,input_size))
-        self.conv_2 = nn.Conv2d(in_channels=128, out_channels=32, kernel_size=(1,1))
+        # # Base Convolutional Layers
+        # self.conv_1 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=(1,input_size))
+        # self.conv_2 = nn.Conv2d(in_channels=128, out_channels=32, kernel_size=(1,1))
 
-        # Temporal Pyramidal Module
-        self.pad_p_1 = nn.ZeroPad2d((0,0,(self.pyramid_size_1-1)//2, self.pyramid_size_1-1-(self.pyramid_size_1-1)//2))
-        self.pad_p_2 = nn.ZeroPad2d((0,0,(self.pyramid_size_2-1)//2, self.pyramid_size_2-1-(self.pyramid_size_2-1)//2))
-        self.pad_p_3 = nn.ZeroPad2d((0,0,(self.pyramid_size_3-1)//2, self.pyramid_size_3-1-(self.pyramid_size_3-1)//2))
-        self.pad_p_4 = nn.ZeroPad2d((0,0,(self.pyramid_size_4-1)//2, self.pyramid_size_4-1-(self.pyramid_size_4-1)//2))
-        self.conv_p_1 = nn.Conv2d(in_channels=32, out_channels=8, kernel_size=(self.pyramid_size_1,1))
-        self.conv_p_2 = nn.Conv2d(in_channels=32, out_channels=16, kernel_size=(self.pyramid_size_2,1))
-        self.conv_p_3 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(self.pyramid_size_3,1))
-        self.conv_p_4 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(self.pyramid_size_4,1))
+        # # Temporal Pyramidal Module
+        # self.pad_p_1 = nn.ZeroPad2d((0,0,(self.pyramid_size_1-1)//2, self.pyramid_size_1-1-(self.pyramid_size_1-1)//2))
+        # self.pad_p_2 = nn.ZeroPad2d((0,0,(self.pyramid_size_2-1)//2, self.pyramid_size_2-1-(self.pyramid_size_2-1)//2))
+        # self.pad_p_3 = nn.ZeroPad2d((0,0,(self.pyramid_size_3-1)//2, self.pyramid_size_3-1-(self.pyramid_size_3-1)//2))
+        # self.pad_p_4 = nn.ZeroPad2d((0,0,(self.pyramid_size_4-1)//2, self.pyramid_size_4-1-(self.pyramid_size_4-1)//2))
+        # self.conv_p_1 = nn.Conv2d(in_channels=32, out_channels=8, kernel_size=(self.pyramid_size_1,1))
+        # self.conv_p_2 = nn.Conv2d(in_channels=32, out_channels=16, kernel_size=(self.pyramid_size_2,1))
+        # self.conv_p_3 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(self.pyramid_size_3,1))
+        # self.conv_p_4 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(self.pyramid_size_4,1))
 
-        # -------------------
-        # Segmentation module
-        # -------------------
+        # # -------------------
+        # # Segmentation module
+        # # -------------------
 
-        self.kernel_seg_size = 3
-        self.pad_seg = nn.ZeroPad2d((0,0,(self.kernel_seg_size-1)//2, self.kernel_seg_size-1-(self.kernel_seg_size-1)//2))
-        self.conv_seg = nn.Conv2d(in_channels=152, out_channels=dim_capsule*num_classes, kernel_size=(self.kernel_seg_size,1))
-        self.batch_seg = nn.BatchNorm2d(num_features=self.chunk_size, momentum=0.01,eps=0.001) 
+        # self.kernel_seg_size = 3
+        # self.pad_seg = nn.ZeroPad2d((0,0,(self.kernel_seg_size-1)//2, self.kernel_seg_size-1-(self.kernel_seg_size-1)//2))
+        # self.conv_seg = nn.Conv2d(in_channels=152, out_channels=dim_capsule*num_classes, kernel_size=(self.kernel_seg_size,1))
+        # self.batch_seg = nn.BatchNorm2d(num_features=self.chunk_size, momentum=0.01,eps=0.001) 
 
 
-        # -------------------
-        # detection module
-        # -------------------       
-        self.max_pool_spot = nn.MaxPool2d(kernel_size=(3,1),stride=(2,1))
-        self.kernel_spot_size = 3
-        self.pad_spot_1 = nn.ZeroPad2d((0,0,(self.kernel_spot_size-1)//2, self.kernel_spot_size-1-(self.kernel_spot_size-1)//2))
-        self.conv_spot_1 = nn.Conv2d(in_channels=num_classes*(dim_capsule+1), out_channels=32, kernel_size=(self.kernel_spot_size,1))
-        self.max_pool_spot_1 = nn.MaxPool2d(kernel_size=(3,1),stride=(2,1))
-        self.pad_spot_2 = nn.ZeroPad2d((0,0,(self.kernel_spot_size-1)//2, self.kernel_spot_size-1-(self.kernel_spot_size-1)//2))
-        self.conv_spot_2 = nn.Conv2d(in_channels=32, out_channels=16, kernel_size=(self.kernel_spot_size,1))
-        self.max_pool_spot_2 = nn.MaxPool2d(kernel_size=(3,1),stride=(2,1))
+        # # -------------------
+        # # detection module
+        # # -------------------       
+        # self.max_pool_spot = nn.MaxPool2d(kernel_size=(3,1),stride=(2,1))
+        # self.kernel_spot_size = 3
+        # self.pad_spot_1 = nn.ZeroPad2d((0,0,(self.kernel_spot_size-1)//2, self.kernel_spot_size-1-(self.kernel_spot_size-1)//2))
+        # self.conv_spot_1 = nn.Conv2d(in_channels=num_classes*(dim_capsule+1), out_channels=32, kernel_size=(self.kernel_spot_size,1))
+        # self.max_pool_spot_1 = nn.MaxPool2d(kernel_size=(3,1),stride=(2,1))
+        # self.pad_spot_2 = nn.ZeroPad2d((0,0,(self.kernel_spot_size-1)//2, self.kernel_spot_size-1-(self.kernel_spot_size-1)//2))
+        # self.conv_spot_2 = nn.Conv2d(in_channels=32, out_channels=16, kernel_size=(self.kernel_spot_size,1))
+        # self.max_pool_spot_2 = nn.MaxPool2d(kernel_size=(3,1),stride=(2,1))
 
-        # Confidence branch
-        self.conv_conf = nn.Conv2d(in_channels=16*(chunk_size//8-1), out_channels=self.num_detections*2, kernel_size=(1,1))
+        # # Confidence branch
+        # self.conv_conf = nn.Conv2d(in_channels=16*(chunk_size//8-1), out_channels=self.num_detections*2, kernel_size=(1,1))
 
-        # Class branch
-        self.conv_class = nn.Conv2d(in_channels=16*(chunk_size//8-1), out_channels=self.num_detections*self.num_classes, kernel_size=(1,1))
-        self.softmax = nn.Softmax(dim=-1)
+        # # Class branch
+        # self.conv_class = nn.Conv2d(in_channels=16*(chunk_size//8-1), out_channels=self.num_detections*self.num_classes, kernel_size=(1,1))
+        # self.softmax = nn.Softmax(dim=-1)
+
+        # Build Backbone
+        self.backbone = build_backbone(backbone)
+
+        # Build Neck
+        self.neck = build_neck(neck)
+        
+        # Build Head
+        self.head = build_head(head)
 
         # load weight if needed
         self.load_weights(weights=weights)
@@ -107,6 +124,10 @@ class ContextAwareModel(nn.Module):
         # input_shape: (batch,channel,frames,dim_features)
         #print("Input size: ", inputs.size())
 
+        features = self.backbone(inputs)
+        conv_seg, output_segmentation = self.neck(features)
+        output_spotting = self.head(conv_seg, output_segmentation)
+        return output_segmentation, output_spotting
         # -------------------------------------
         # Temporal Convolutional neural network
         # -------------------------------------
@@ -213,21 +234,38 @@ class ContextAwareModel(nn.Module):
         return output_segmentation, output_spotting
 
 class LiteContextAwareModel(LiteBaseModel):
-    def __init__(self, cfg=None, weights=None, 
-                 input_size=512, num_classes=3, 
-                 chunk_size=240, dim_capsule=16,
-                 receptive_field=80, num_detections=5, 
-                 framerate=2, runner="runner_CALF"):
+    def __init__(self, cfg=None, weights=None,
+                 backbone="PreExtracted", 
+                neck="CNN++", 
+                head="SpottingCALF", 
+                post_proc="NMS",
+                runner="runner_CALF"):
+                #  input_size=512, num_classes=3, 
+                #  chunk_size=240, dim_capsule=16,
+                #  receptive_field=80, num_detections=5, 
+                #  framerate=2, runner="runner_CALF"):
         """
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
         super().__init__(cfg.training)
 
-        self.model=ContextAwareModel(weights,input_size,
-                                     num_classes,chunk_size,
-                                     dim_capsule,receptive_field,
-                                     num_detections,framerate)
+        # self.model=ContextAwareModel(weights,input_size,
+        #                              num_classes,chunk_size,
+        #                              dim_capsule,receptive_field,
+        #                              num_detections,framerate)
+        # check compatibility dims Backbone - Neck - Head
+        assert(backbone.output_dim == neck.input_size)
+        assert(neck.num_classes == head.num_classes)
+        assert(neck.dim_capsule == head.dim_capsule)
+        assert(neck.num_detections == head.num_detections)
+        assert(neck.chunk_size == head.chunk_size)
+        
+        self.chunk_size = neck.chunk_size
+        self.receptive_field = neck.receptive_field
+        self.framerate = neck.framerate
+
+        self.model=ContextAwareModel(weights,backbone,neck,head,post_proc)
         
         self.overwrite = True
 
@@ -265,16 +303,12 @@ class LiteContextAwareModel(LiteBaseModel):
             self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
         else:
             self.target_dir = self.output_results
-        print(self.output_folder)
-        print(self.output_results)
-        print(self.target_dir)
+
         if not self.stop_predict:
             self.spotting_predictions = list()
             self.spotting_grountruth = list()
             self.spotting_grountruth_visibility = list()
             self.segmentation_predictions = list()
-            self.chunk_size = self.model.chunk_size
-            self.receptive_field = self.model.receptive_field
     
     def on_predict_end(self):
         if not self.stop_predict:
@@ -285,7 +319,7 @@ class LiteContextAwareModel(LiteBaseModel):
             for target, detection in zip(self.spotting_grountruth_visibility,self.spotting_predictions):
                 target_numpy = target.cpu().numpy()
                 targets_numpy.append(target_numpy)
-                detections_numpy.append(NMS(detection.numpy(), 20*self.model.framerate))
+                detections_numpy.append(NMS(detection.numpy(), 20*self.framerate))
                 closest_numpy = np.zeros(target_numpy.shape)-1
                 #Get the closest action index
                 for c in np.arange(target_numpy.shape[-1]):
@@ -305,11 +339,11 @@ class LiteContextAwareModel(LiteBaseModel):
             if self.runner == "runner_CALF":
                 list_game = getListGames(self.trainer.predict_dataloaders.dataset.split)
                 for index in np.arange(len(list_game)):
-                    predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],self.cfg.work_dir+"/"+self.output_folder+"/", list_game[index], self.model.framerate)
+                    predictions2json(detections_numpy[index*2], detections_numpy[(index*2)+1],self.cfg.work_dir+"/"+self.output_folder+"/", list_game[index], self.framerate)
             elif self.runner == "runner_JSON":
                 list_videos = self.trainer.predict_dataloaders.dataset.data_json["videos"]
                 for index in np.arange(len(list_videos)):
-                    predictions2json_runnerjson(detections_numpy[index], self.cfg.work_dir+"/"+self.output_folder+"/", os.path.splitext(list_videos[index]["path_video"])[0], self.model.framerate, inverse_event_dictionary= self.trainer.predict_dataloaders.dataset.inverse_event_dictionary)
+                    predictions2json_runnerjson(detections_numpy[index], self.cfg.work_dir+"/"+self.output_folder+"/", os.path.splitext(list_videos[index]["path_video"])[0], self.framerate, inverse_event_dictionary= self.trainer.predict_dataloaders.dataset.inverse_event_dictionary)
             zipResults(zip_path = self.output_results,
                        target_dir = os.path.join(self.cfg.work_dir, self.output_folder),
                        filename="results_spotting.json")

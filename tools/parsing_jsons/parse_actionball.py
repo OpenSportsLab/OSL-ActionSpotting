@@ -5,7 +5,6 @@ import argparse
 import json
 from collections import defaultdict
 
-from SoccerNet.utils import getListGames
 
 import math
 import json
@@ -46,34 +45,42 @@ def get_args():
     parser.add_argument('-dali', '--dali', action='store_true')
     return parser.parse_args()
 
-
-def load_split(split):
-    if split == 'val':
-        split = 'valid'
-
-    videos = []
-    for entry in getListGames(split):
-        league, season, game = entry.split('/')
-        videos.append((league, season, game))
-    return videos
-
-
 def get_label_names(labels):
     return {e['label'] for v in labels for e in v['events']}
 
 
 def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
     labels_by_split = defaultdict(list)
-    fpss=[]
+    data_paths = {
+        'train': [
+            'england_efl/2019-2020/2019-10-01 - Blackburn Rovers - Nottingham Forest/',
+            'england_efl/2019-2020/2019-10-01 - Brentford - Bristol City/',
+            'england_efl/2019-2020/2019-10-01 - Hull City - Sheffield Wednesday/',
+            'england_efl/2019-2020/2019-10-01 - Leeds United - West Bromwich/'
+        ],
+        'val': [
+            'england_efl/2019-2020/2019-10-01 - Middlesbrough - Preston North End/'
+        ],
+        'test': [
+            'england_efl/2019-2020/2019-10-01 - Reading - Fulham/',
+            'england_efl/2019-2020/2019-10-01 - Stoke City - Huddersfield Town/'
+        ],
+        'challenge': [
+            'england_efl/2019-2020/2019-10-01 - Wigan Athletic - Birmingham City/',
+            'england_efl/2019-2020/2019-10-02 - Cardiff City - Queens Park Rangers/'
+        ]
+    }
+
     for split in ['train', 'val', 'test', 'challenge']:
-        videos = load_split(split)
+        videos = data_paths[split]
         for video in videos:
-            league, season, game = video
+            parts = video.split('/')
+            league, season, game, _ = parts
 
             game = game.replace(' ','_')
             video_label_path = os.path.join(
-                label_dir, league, season, game, 'Labels-v2.json')
-
+                label_dir, league, season, game, 'Labels-ball.json')
+            
             if split != 'challenge':
                 video_labels = load_json(video_label_path)
             else:
@@ -88,9 +95,7 @@ def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
                 vc = cv2.VideoCapture(video_name)
                 fps = vc.get(cv2.CAP_PROP_FPS)
                 num_frames = int(vc.get(cv2.CAP_PROP_FRAME_COUNT))
-                # if(get_stride(fps,wanted_sample_fps)!=12):
-                #     print(video_name)
-
+            
                 sample_fps = read_fps(fps,wanted_sample_fps if wanted_sample_fps < fps else fps)
                 num_frames_after = get_num_frames(num_frames,fps,wanted_sample_fps if wanted_sample_fps < fps else fps)
                 
@@ -133,29 +138,17 @@ def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
                 #     if len(half_events) > 0 else 0
                 # if max_label_frame >= num_frames:
                 #     num_frames = max_label_frame + 1
-                if dali:
-                    labels_by_split[split].append({
-                        'video': video_id,
-                        'num_frames_2fps': num_frames_after,
-                        'num_frames_dali': num_frames_dali,
-                        'num_frames_base': num_frames,
-                        'num_events': len(half_events),
-                        'events': half_events,
-                        'fps': sample_fps,
-                        'width': 398,
-                        'height': 224
-                    })
-                else : 
-                    labels_by_split[split].append({
-                        'video': video_id,
-                        'num_frames': num_frames_after,
-                        'num_frames_base': num_frames,
-                        'num_events': len(half_events),
-                        'events': half_events,
-                        'fps': sample_fps,
-                        'width': 398,
-                        'height': 224
-                    })
+
+                labels_by_split[split].append({
+                    'video': video_id,
+                    'num_frames': num_frames_dali if dali else num_frames_after,
+                    'num_frames_base': num_frames,
+                    'num_events': len(half_events),
+                    'events': half_events,
+                    'fps': sample_fps,
+                    'width': 398,
+                    'height': 224
+                })
             assert len(video_labels['annotations']) == num_events, \
                 video_label_path
 
@@ -184,7 +177,6 @@ def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
 
     print('Done!')
 
-    print(set(fpss))
 
 if __name__ == '__main__':
     main(**vars(get_args()))
