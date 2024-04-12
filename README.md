@@ -55,4 +55,4 @@ If you think this repo is helpful, please cite us:
 }
 ```
 
-If you have any questions, please contact: `assine.benzakour@student.uliege.be`.
+If you have any questions, please contact: `yassine.benzakour@student.uliege.be`.
