@@ -1,0 +1,23 @@
+name: osl-action-spotting
+channels:
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.9
+  - pytorch=2.2.1
+  - torchvision=0.17.1
+  - cudatoolkit=11.8
+  - pip=23.3.1
+  - pip:
+    - SoccerNet==0.1.56
+    - matplotlib==3.8.3
+    - scikit-learn==1.4.1.post1
+    - cupy-cuda11x==13.0.0
+    - pytorch-lightning==2.2.1
+    - opencv-python==4.9.0.80
+    - moviepy==1.0.3
+    - tqdm==4.66.2
+    - tabulate==0.9.0
+    - nvidia-dali-cuda110==1.36.0
+    - timm==0.9.16
+    - mmengine==0.10.3

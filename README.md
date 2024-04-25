@@ -1,65 +1,58 @@
-# osl-spotting-pip
+# OSL-ActionSpotting: A Unified Library for Action Spotting in Sports Videos
 
-```bash
-conda create -y -n oslspotting python=3.9
-conda activate oslspotting
-conda install -y pytorch torchvision -c pytorch -c nvidia
-conda install -y cudatoolkit=11.8 -c pytorch
-pip install SoccerNet matplotlib scikit-learn cupy-cuda11x pytorch-lightning opencv-python moviepy tqdm tabulate nvidia-dali-cuda110 timm
-pip install mmengine
-pip install -e .
+[![ArXiv](https://img.shields.io/badge/arXiv-xxx.xxx-b31b1b.svg?style=flat)](https://arxiv.org/abs/xxx.xxx)
+[![License](https://img.shields.io/badge/License-GPL_3.0-blue.svg)](https://github.com/SoccerNet/sn-spotting-pip/blob/main/LICENSE)
+
+OSL-ActionSpotting is a plug-and-play library that unifies action
+spotting algorithms.
+
+## 🥳 What's New
+
+- A technical report of this library will be provided soon.
+
+## 📖 Major Features
+
+- **Support SoTA TAD methods with modular design.** We decompose the TAD pipeline into different components, and implement them in a modular way. This design makes it easy to implement new methods and reproduce existing methods.
+- **Support multiple datasets.** We support new datasets by giving a intermediate JSON format.
+- **Support feature-based training and end-to-end training.** The feature-based training can easily be extended to end-to-end training with raw video input, and the video backbone can be easily replaced.
+
+## 🌟 Model Zoo
+
+| Feature based | End to end |
+|:-------------:|:----------:|
+| [AvgPool](https://arxiv.org/pdf/1804.04527.pdf)   | [E2E-Spot](https://arxiv.org/pdf/2207.10213.pdf) |
+| [MaxPool](https://arxiv.org/pdf/1804.04527.pdf)   |                                                  |
+| [NetVLAD](https://arxiv.org/pdf/1804.04527.pdf)   |                                                  |
+| [NetRVLAD](https://arxiv.org/pdf/1804.04527.pdf)  |                                                  |
+| [CALF](https://arxiv.org/pdf/1912.01326.pdf)      |                                                  |
+| [AvgPool++](https://arxiv.org/pdf/2104.06779.pdf) |                                                  |
+| [MaxPool++](https://arxiv.org/pdf/2104.06779.pdf) |                                                  |
+| [NetVLAD++](https://arxiv.org/pdf/2104.06779.pdf) |                                                  |
+| [NetRVLAD++](https://arxiv.org/pdf/2104.06779.pdf)|                                                  |
+
+## 🛠️ Installation
+
+Please refer to [install.md](docs/install.md) for installation and data preparation.
+
+## 🚀 Usage
+
+Please refer to [usage.md](docs/usage.md) for details of training and evaluation scripts.
+
+## 🤝 Roadmap
+
+All the things that need to be done in the future is in [roadmap.md](docs/en/roadmap.md).
+
+## 🖊️ Citation
+
+If you think this repo is helpful, please cite us:
+
+```bibtex
+@misc{name,
+    title={},
+    author={},
+    howpublished = {\url{https://github.com/SoccerNet/sn-spotting-pip}},
+    year={2024}
+}
 ```
-# Tools for SN-Spotting for training and evaluating
 
-## Training
-
-```bash
-python tools/train.py configs/learnablepooling/soccernet_avgpool_resnetpca512.py
-python tools/train.py configs/learnablepooling/soccernet_maxpool_resnetpca512.py
-python tools/train.py configs/learnablepooling/soccernet_netrvlad_resnetpca512.py
-python tools/train.py configs/learnablepooling/soccernet_netvlad_resnetpca512.py
-python tools/train.py configs/learnablepooling/soccernet_avgpool++_resnetpca512.py
-python tools/train.py configs/learnablepooling/soccernet_maxpool++_resnetpca512.py
-python tools/train.py configs/learnablepooling/soccernet_netrvlad++_resnetpca512.py
-python tools/train.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py
-
-
-python tools/train.py configs/contextawarelossfunction/soccernet_resnetpca512.py
-```
-
-### Train with custom config file
-
-```bash
-python tools/train.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py --cfg-options training.max_epochs=10 training.evaluation_frequency=8 data_root=/datasets/SoccerNet dataset.train.data_root=/datasets/SoccerNet dataset.test.data_root=/datasets/SoccerNet dataset.val.data_root=/datasets/SoccerNet
-```
-
-## Evaluate
-
-```bash
-python tools/evaluate.py configs/learnablepooling/soccernet_avgpool_resnetpca512.py
-python tools/evaluate.py configs/learnablepooling/soccernet_maxpool_resnetpca512.py
-python tools/evaluate.py configs/learnablepooling/soccernet_netrvlad_resnetpca512.py
-python tools/evaluate.py configs/learnablepooling/soccernet_netvlad_resnetpca512.py
-python tools/evaluate.py configs/learnablepooling/soccernet_avgpool++_resnetpca512.py
-python tools/evaluate.py configs/learnablepooling/soccernet_maxpool++_resnetpca512.py
-python tools/evaluate.py configs/learnablepooling/soccernet_netrvlad++_resnetpca512.py
-python tools/evaluate.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py
-
-python tools/evaluate.py configs/contextawarelossfunction/soccernet_resnetpca512.py
-
-```
-
-### Evaluate with custom config file
-
-```bash
-python tools/evaluate.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py --cfg-options model.load_weights=/home/giancos/git/sn-spotting/Benchmarks/TemporallyAwarePooling/models/NetVLAD++/model.pth.tar data_root=/datasets/SoccerNet dataset.train.data_root=/datasets/SoccerNet dataset.test.data_root=/datasets/SoccerNet dataset.val.data_root=/datasets/SoccerNet
-```
-
-## TODO
-
-[x] Create pip package setup
-[x] Push library to pypi
-[X] Integrate CALF -> Need fix for parameters K forced to cuda!
-[] Integrate PTS
-[X] Integrate Pytorch Lightning
-
+If you have any questions, please contact: `yassine.benzakour@student.uliege.be`.
