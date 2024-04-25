@@ -1,4 +1,4 @@
-# Tools for SN-Spotting
+# Tools for OSL-Spotting
 
 ## Training
 

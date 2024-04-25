@@ -1,5 +1,6 @@
-classes = ("Medical",) 
-
+# classes = ("Medical",) 
+classes = '/scratch/users/ybenzakour/zip/features/class.txt'
+# classes = '/home/ybenzakour/datasets/SoccerNet/class.txt'
 dataset = dict(
     train=dict(
         type="FeatureClipsfromJSON",

@@ -4,7 +4,7 @@
 
 ## TF2_ResNET_PCA512
 ```bash
-conda activate snspotting
+conda activate oslspotting
 pip install scikit-video tensorflow==2.3.0 imutils opencv-python==3.4.11.41 SoccerNet moviepy scikit-learn ffmpy protobuf==3.20 ffmpeg ffmpy
 ```
 

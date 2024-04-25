@@ -9,7 +9,7 @@ import numpy as np
 from tabulate import tabulate
 import torch
 
-from snspotting.models.e2espot import E2EModel
+from oslspotting.models.e2espot import E2EModel
 torch.backends.cudnn.benchmark = True
 import torch.nn as nn
 import torch.nn.functional as F
@@ -21,11 +21,11 @@ import timm
 from tqdm import tqdm
 
 
-from snspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
-from snspotting.core.utils.eval import process_frame_predictions
-from snspotting.core.utils.io import load_json, store_json, store_gz_json, clear_files
-from snspotting.core.utils.dataset import DATASETS, load_classes
-from snspotting.core.utils.score import compute_mAPs
+from oslspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
+from oslspotting.core.utils.eval import process_frame_predictions
+from oslspotting.core.utils.io import load_json, store_json, store_gz_json, clear_files
+from oslspotting.core.utils.dataset import DATASETS, load_classes
+from oslspotting.core.utils.score import compute_mAPs
 
 # EPOCH_NUM_FRAMES = 500000
 EPOCH_NUM_FRAMES = 6400

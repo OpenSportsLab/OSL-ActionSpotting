@@ -64,7 +64,6 @@ def get_label_names(labels):
 
 def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
     labels_by_split = defaultdict(list)
-    fpss=[]
     for split in ['train', 'val', 'test', 'challenge']:
         videos = load_split(split)
         for video in videos:
@@ -112,7 +111,7 @@ def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
                                 adj_frame = float(label['position']) / 1000 * (fps/get_stride(input_fps,wanted_sample_fps))
                             else:
                                 adj_frame = float(label['position']) / 1000 * sample_fps
-                            if adj_frame == 0: adj_frame=1
+                            if int(adj_frame) == 0: adj_frame=1
                         else:
                             adj_frame = float(label['position']) / 1000 * sample_fps
                         half_events.append({
@@ -171,7 +170,6 @@ def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
 
     print('Done!')
 
-    print(set(fpss))
 
 if __name__ == '__main__':
     main(**vars(get_args()))

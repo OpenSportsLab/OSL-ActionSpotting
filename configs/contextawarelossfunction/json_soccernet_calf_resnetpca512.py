@@ -7,9 +7,9 @@ _base_ = [
 work_dir = "outputs/contextawarelossfunction/json_soccernet_calf_resnetpca512"
 
 dataset = dict(
-    train=dict(path="/home/ybenzakour/datasets/SoccerNet/train.json"),
-    val=dict(path="/home/ybenzakour/datasets/SoccerNet/val.json"),
-    test=dict(path="/home/ybenzakour/datasets/SoccerNet/test.json")
+    train=dict(path="/scratch/users/ybenzakour/zip/features/Train.json"),
+    val=dict(path="/scratch/users/ybenzakour/zip/features/Valid.json"),
+    test=dict(path="/scratch/users/ybenzakour/zip/features/Test.json")
 )
 runner = dict(
     type="runner_JSON"

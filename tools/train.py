@@ -7,20 +7,15 @@ import numpy as np
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import torch
-import mmengine
 from mmengine.config import Config, DictAction
-from snspotting.core.utils.dali import get_repartition_gpu
-from snspotting.core.utils.default_args import get_default_args_dataset, get_default_args_model, get_default_args_trainer
+from oslspotting.core.utils.dali import get_repartition_gpu
+from oslspotting.core.utils.default_args import get_default_args_dataset, get_default_args_model, get_default_args_trainer
 
 
-from snspotting.core.utils.io import check_config
-from snspotting.datasets import build_dataset, build_dataloader
-from snspotting.models import build_model
-from snspotting.core import build_trainer 
-
-
-import json
-
+from oslspotting.core.utils.io import check_config
+from oslspotting.datasets import build_dataset, build_dataloader
+from oslspotting.models import build_model
+from oslspotting.core import build_trainer 
         
 def parse_args():
 
@@ -86,19 +81,12 @@ def main():
             logging.StreamHandler()
         ])
 
-    # check if cuda available
-    has_gpu=torch.cuda.is_available()
-    cfg_training_gpu = None
-    if 'GPU' in cfg.training.keys():
-        if cfg.training.GPU >= 0:
-            if not has_gpu:
-                cfg.training.GPU = -1
-        cfg_training_gpu = True
-
+    #Check configs files
+    logging.info('Checking configs files')
     check_config(cfg)
 
     dali=False
-    if 'dali' in cfg.keys():
+    if 'dali' in cfg.keys() and cfg.dali == True:
         dali = True
         cfg.repartitions = get_repartition_gpu()
     
@@ -117,24 +105,25 @@ def main():
     # Build Datasets    
     logging.info('Build Datasets')
 
-    dataset_Train = build_dataset(cfg.dataset.train,cfg.training.GPU if cfg_training_gpu is not None else None, get_default_args_dataset('train', cfg, cfg.runner.type == "runner_e2e", dali))
-    dataset_Val = build_dataset(cfg.dataset.val,cfg.training.GPU if cfg_training_gpu is not None else None, get_default_args_dataset('val', cfg, cfg.runner.type == "runner_e2e", dali))
+    dataset_Train = build_dataset(cfg.dataset.train,cfg.training.GPU, get_default_args_dataset('train', cfg, cfg.runner.type == "runner_e2e", dali))
+    dataset_Val = build_dataset(cfg.dataset.val,cfg.training.GPU, get_default_args_dataset('val', cfg, cfg.runner.type == "runner_e2e", dali))
     dataset_Val_Frames = None
     if cfg.runner.type == "runner_e2e" and 'criterion' in cfg.training.keys() and cfg.training.criterion == 'map':
         dataset_Val_Frames = build_dataset(cfg.dataset.val_data_frames,None,get_default_args_dataset('val_data_frames', cfg, True, dali))
     
     # Build Dataloaders
     logging.info('Build Dataloaders')
-    if dali:
-        train_loader = dataset_Train
-        val_loader = dataset_Val
-    else:
-        train_loader = build_dataloader(dataset_Train, cfg.dataset.train.dataloader,cfg.training.GPU)
-        val_loader = build_dataloader(dataset_Val, cfg.dataset.val.dataloader,cfg.training.GPU)
+
+    
+    train_loader = build_dataloader(dataset_Train, cfg.dataset.train.dataloader,cfg.training.GPU, dali)
+    val_loader = build_dataloader(dataset_Val, cfg.dataset.val.dataloader,cfg.training.GPU, dali)
+    if dataset_Val_Frames is not None:
+        val_frames_loader = build_dataloader( dataset_Val_Frames, cfg.dataset.val_data_frames.dataloader,cfg.training.GPU, dali)
+
 
     # Build Trainer
     logging.info('Build Trainer')
-    trainer = build_trainer(cfg.training, model, get_default_args_trainer(cfg, cfg.runner.type == "runner_e2e", len(train_loader)))
+    trainer = build_trainer(cfg.training, model, get_default_args_trainer(cfg, cfg.runner.type == "runner_e2e", dali, len(train_loader)))
 
     # Start training`
     logging.info("Start training")

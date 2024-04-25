@@ -63,7 +63,7 @@ dataset = dict(
         ],
         classes=classes,
         metric = "loose",
-        results = "results_spotting_test.zip",
+        results = "results_spotting_test",
         dataloader=dict(
             num_workers=1,
             batch_size=1,

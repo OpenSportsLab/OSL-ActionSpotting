@@ -330,9 +330,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 65,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2014-2015/2015-05-17_-_18-00_Manchester_United_1_-_1_Arsenal/1_224p",
     "width": 398
   },
@@ -340,7 +339,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -882,9 +881,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 108,
-    "num_frames_2fps": 6340,
+    "num_frames": 6340,
     "num_frames_base": 76075,
-    "num_frames_dali": 6340,
     "video": "england_epl/2014-2015/2015-05-17_-_18-00_Manchester_United_1_-_1_Arsenal/2_224p",
     "width": 398
   },
@@ -892,7 +890,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -1439,9 +1437,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 109,
-    "num_frames_2fps": 5917,
+    "num_frames": 5917,
     "num_frames_base": 71000,
-    "num_frames_dali": 5917,
     "video": "england_epl/2015-2016/2015-08-16_-_18-00_Manchester_City_3_-_0_Chelsea/1_224p",
     "width": 398
   },
@@ -2066,9 +2063,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 123,
-    "num_frames_2fps": 5848,
+    "num_frames": 5848,
     "num_frames_base": 70176,
-    "num_frames_dali": 5848,
     "video": "england_epl/2015-2016/2015-08-16_-_18-00_Manchester_City_3_-_0_Chelsea/2_224p",
     "width": 398
   },
@@ -2076,7 +2072,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -2553,9 +2549,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 95,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-08-23_-_15-30_West_Brom_2_-_3_Chelsea/1_224p",
     "width": 398
   },
@@ -2563,7 +2558,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -3130,9 +3125,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-08-23_-_15-30_West_Brom_2_-_3_Chelsea/2_224p",
     "width": 398
   },
@@ -3697,9 +3691,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 111,
-    "num_frames_2fps": 6213,
+    "num_frames": 6213,
     "num_frames_base": 74550,
-    "num_frames_dali": 6213,
     "video": "england_epl/2015-2016/2015-08-29_-_17-00_Liverpool_0_-_3_West_Ham/1_224p",
     "width": 398
   },
@@ -4359,9 +4352,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 130,
-    "num_frames_2fps": 6432,
+    "num_frames": 6432,
     "num_frames_base": 77175,
-    "num_frames_dali": 6432,
     "video": "england_epl/2015-2016/2015-08-29_-_17-00_Liverpool_0_-_3_West_Ham/2_224p",
     "width": 398
   },
@@ -4369,7 +4361,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -4846,9 +4838,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 95,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-09-20_-_18-00_Southampton_2_-_3_Manchester_United/1_224p",
     "width": 398
   },
@@ -4856,17 +4847,17 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Substitution"
       },
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Substitution"
       },
       {
@@ -5358,9 +5349,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 100,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-09-20_-_18-00_Southampton_2_-_3_Manchester_United/2_224p",
     "width": 398
   },
@@ -6055,9 +6045,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 137,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-09-26_-_19-30_Newcastle_Utd_2_-_2_Chelsea/1_224p",
     "width": 398
   },
@@ -6722,9 +6711,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 131,
-    "num_frames_2fps": 6586,
+    "num_frames": 6586,
     "num_frames_base": 79025,
-    "num_frames_dali": 6586,
     "video": "england_epl/2015-2016/2015-09-26_-_19-30_Newcastle_Utd_2_-_2_Chelsea/2_224p",
     "width": 398
   },
@@ -7219,9 +7207,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 97,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-10-03_-_19-30_Chelsea_1_-_3_Southampton/1_224p",
     "width": 398
   },
@@ -7881,9 +7868,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 130,
-    "num_frames_2fps": 5878,
+    "num_frames": 5878,
     "num_frames_base": 70525,
-    "num_frames_dali": 5878,
     "video": "england_epl/2015-2016/2015-10-03_-_19-30_Chelsea_1_-_3_Southampton/2_224p",
     "width": 398
   },
@@ -8458,9 +8444,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 5742,
+    "num_frames": 5742,
     "num_frames_base": 68900,
-    "num_frames_dali": 5742,
     "video": "england_epl/2015-2016/2015-10-24_-_17-00_West_Ham_2_-_1_Chelsea/1_224p",
     "width": 398
   },
@@ -8468,12 +8453,12 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Substitution"
       },
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -9130,9 +9115,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 132,
-    "num_frames_2fps": 6315,
+    "num_frames": 6315,
     "num_frames_base": 75775,
-    "num_frames_dali": 6315,
     "video": "england_epl/2015-2016/2015-10-24_-_17-00_West_Ham_2_-_1_Chelsea/2_224p",
     "width": 398
   },
@@ -9140,7 +9124,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -9767,9 +9751,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 125,
-    "num_frames_2fps": 5847,
+    "num_frames": 5847,
     "num_frames_base": 70153,
-    "num_frames_dali": 5847,
     "video": "england_epl/2015-2016/2015-11-07_-_20-30_Stoke_City_1_-_0_Chelsea/1_224p",
     "width": 398
   },
@@ -9777,7 +9760,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -10389,9 +10372,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 5741,
+    "num_frames": 5741,
     "num_frames_base": 68892,
-    "num_frames_dali": 5741,
     "video": "england_epl/2015-2016/2015-11-07_-_20-30_Stoke_City_1_-_0_Chelsea/2_224p",
     "width": 398
   },
@@ -10916,9 +10898,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 103,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-11-08_-_19-00_Arsenal_1_-_1_Tottenham/1_224p",
     "width": 398
   },
@@ -10926,13 +10907,13 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
-        "label": "Substitution"
+        "frame": 1,
+        "label": "Kick-off"
       },
       {
         "comment": "home; not shown",
         "frame": 1,
-        "label": "Kick-off"
+        "label": "Substitution"
       },
       {
         "comment": "not applicable; visible",
@@ -11763,9 +11744,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 167,
-    "num_frames_2fps": 5792,
+    "num_frames": 5792,
     "num_frames_base": 69500,
-    "num_frames_dali": 5792,
     "video": "england_epl/2015-2016/2015-11-08_-_19-00_Arsenal_1_-_1_Tottenham/2_224p",
     "width": 398
   },
@@ -11773,7 +11753,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -12210,9 +12190,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 87,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2015-12-28_-_20-30_Manchester_United_0_-_0_Chelsea/1_224p",
     "width": 398
   },
@@ -12220,7 +12199,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -12727,9 +12706,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 101,
-    "num_frames_2fps": 6086,
+    "num_frames": 6086,
     "num_frames_base": 73025,
-    "num_frames_dali": 6086,
     "video": "england_epl/2015-2016/2015-12-28_-_20-30_Manchester_United_0_-_0_Chelsea/2_224p",
     "width": 398
   },
@@ -13214,9 +13192,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 95,
-    "num_frames_2fps": 5953,
+    "num_frames": 5953,
     "num_frames_base": 71425,
-    "num_frames_dali": 5953,
     "video": "england_epl/2015-2016/2016-02-03_-_22-45_Watford_0_-_0_Chelsea/1_224p",
     "width": 398
   },
@@ -13641,9 +13618,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 83,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2016-02-03_-_22-45_Watford_0_-_0_Chelsea/2_224p",
     "width": 398
   },
@@ -14088,9 +14064,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 87,
-    "num_frames_2fps": 5842,
+    "num_frames": 5842,
     "num_frames_base": 70100,
-    "num_frames_dali": 5842,
     "video": "england_epl/2015-2016/2016-03-01_-_22-45_Norwich_1_-_2_Chelsea/1_224p",
     "width": 398
   },
@@ -14098,7 +14073,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -14670,9 +14645,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2015-2016/2016-03-01_-_22-45_Norwich_1_-_2_Chelsea/2_224p",
     "width": 398
   },
@@ -15327,9 +15301,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 129,
-    "num_frames_2fps": 5828,
+    "num_frames": 5828,
     "num_frames_base": 69925,
-    "num_frames_dali": 5828,
     "video": "england_epl/2016-2017/2016-08-27_-_14-30_Tottenham_1_-_1_Liverpool/1_224p",
     "width": 398
   },
@@ -16084,9 +16057,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 149,
-    "num_frames_2fps": 6205,
+    "num_frames": 6205,
     "num_frames_base": 74450,
-    "num_frames_dali": 6205,
     "video": "england_epl/2016-2017/2016-08-27_-_14-30_Tottenham_1_-_1_Liverpool/2_224p",
     "width": 398
   },
@@ -16686,19 +16658,13 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 118,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2016-2017/2016-09-24_-_14-30_Manchester_United_4_-_1_Leicester/1_224p",
     "width": 398
   },
   {
     "events": [
-      {
-        "comment": "away; not shown",
-        "frame": 0,
-        "label": "Substitution"
-      },
       {
         "comment": "away; not shown",
         "frame": 1,
@@ -16708,6 +16674,11 @@
         "comment": "away; not shown",
         "frame": 1,
         "label": "Kick-off"
+      },
+      {
+        "comment": "away; not shown",
+        "frame": 1,
+        "label": "Substitution"
       },
       {
         "comment": "not applicable; visible",
@@ -17228,9 +17199,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 106,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2016-2017/2016-09-24_-_14-30_Manchester_United_4_-_1_Leicester/2_224p",
     "width": 398
   },
@@ -17740,9 +17710,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 100,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2016-2017/2016-10-15_-_14-30_Chelsea_3_-_0_Leicester/1_224p",
     "width": 398
   },
@@ -17750,7 +17719,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -18277,9 +18246,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 105,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2016-2017/2016-10-15_-_14-30_Chelsea_3_-_0_Leicester/2_224p",
     "width": 398
   },
@@ -18769,9 +18737,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 96,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2016-2017/2017-01-21_-_15-30_Liverpool_2_-_3_Swansea/1_224p",
     "width": 398
   },
@@ -19401,9 +19368,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 124,
-    "num_frames_2fps": 6228,
+    "num_frames": 6228,
     "num_frames_base": 74725,
-    "num_frames_dali": 6228,
     "video": "england_epl/2016-2017/2017-01-21_-_15-30_Liverpool_2_-_3_Swansea/2_224p",
     "width": 398
   },
@@ -19928,9 +19894,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 103,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "england_epl/2016-2017/2017-05-06_-_17-00_Leicester_3_-_0_Watford/1_224p",
     "width": 398
   },
@@ -20505,9 +20470,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 6016,
+    "num_frames": 6016,
     "num_frames_base": 72188,
-    "num_frames_dali": 6016,
     "video": "england_epl/2016-2017/2017-05-06_-_17-00_Leicester_3_-_0_Watford/2_224p",
     "width": 398
   },
@@ -20515,7 +20479,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -21217,9 +21181,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 140,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2014-2015/2014-11-04_-_20-00_Zenit_Petersburg_1_-_2_Bayer_Leverkusen/1_224p",
     "width": 398
   },
@@ -21227,7 +21190,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -21894,9 +21857,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 133,
-    "num_frames_2fps": 5873,
+    "num_frames": 5873,
     "num_frames_base": 70475,
-    "num_frames_dali": 5873,
     "video": "europe_uefa-champions-league/2014-2015/2014-11-04_-_20-00_Zenit_Petersburg_1_-_2_Bayer_Leverkusen/2_224p",
     "width": 398
   },
@@ -22376,9 +22338,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 94,
-    "num_frames_2fps": 5646,
+    "num_frames": 5646,
     "num_frames_base": 67750,
-    "num_frames_dali": 5646,
     "video": "europe_uefa-champions-league/2014-2015/2015-02-24_-_22-45_Manchester_City_1_-_2_Barcelona/1_224p",
     "width": 398
   },
@@ -22386,7 +22347,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -22978,9 +22939,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 118,
-    "num_frames_2fps": 6194,
+    "num_frames": 6194,
     "num_frames_base": 74325,
-    "num_frames_dali": 6194,
     "video": "europe_uefa-champions-league/2014-2015/2015-02-24_-_22-45_Manchester_City_1_-_2_Barcelona/2_224p",
     "width": 398
   },
@@ -23525,9 +23485,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 107,
-    "num_frames_2fps": 5740,
+    "num_frames": 5740,
     "num_frames_base": 68876,
-    "num_frames_dali": 5740,
     "video": "europe_uefa-champions-league/2014-2015/2015-03-10_-_22-45_Real_Madrid_3_-_4_Schalke/1_224p",
     "width": 398
   },
@@ -24147,9 +24106,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 6117,
+    "num_frames": 6117,
     "num_frames_base": 73400,
-    "num_frames_dali": 6117,
     "video": "europe_uefa-champions-league/2014-2015/2015-03-10_-_22-45_Real_Madrid_3_-_4_Schalke/2_224p",
     "width": 398
   },
@@ -24589,9 +24547,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 86,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2014-2015/2015-03-17_-_22-45_Monaco_0_-_2_Arsenal/1_224p",
     "width": 398
   },
@@ -24599,7 +24556,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -25136,9 +25093,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 107,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2014-2015/2015-03-17_-_22-45_Monaco_0_-_2_Arsenal/2_224p",
     "width": 398
   },
@@ -25146,7 +25102,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -25718,9 +25674,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2014-2015/2015-04-15_-_21-45_FC_Porto_3_-_1_Bayern_Munich/1_224p",
     "width": 398
   },
@@ -26285,9 +26240,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 111,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2014-2015/2015-04-15_-_21-45_FC_Porto_3_-_1_Bayern_Munich/2_224p",
     "width": 398
   },
@@ -26295,7 +26249,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -26897,9 +26851,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2014-2015/2015-04-22_-_21-45_Real_Madrid_1_-_0_Atl._Madrid/1_224p",
     "width": 398
   },
@@ -27499,9 +27452,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 118,
-    "num_frames_2fps": 6167,
+    "num_frames": 6167,
     "num_frames_base": 74000,
-    "num_frames_dali": 6167,
     "video": "europe_uefa-champions-league/2014-2015/2015-04-22_-_21-45_Real_Madrid_1_-_0_Atl._Madrid/2_224p",
     "width": 398
   },
@@ -27509,7 +27461,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -28061,9 +28013,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 110,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2014-2015/2015-05-05_-_21-45_Juventus_2_-_1_Real_Madrid/1_224p",
     "width": 398
   },
@@ -28071,7 +28022,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -28693,9 +28644,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 124,
-    "num_frames_2fps": 6005,
+    "num_frames": 6005,
     "num_frames_base": 72050,
-    "num_frames_dali": 6005,
     "video": "europe_uefa-champions-league/2014-2015/2015-05-05_-_21-45_Juventus_2_-_1_Real_Madrid/2_224p",
     "width": 398
   },
@@ -29195,9 +29145,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 98,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2015-2016/2015-09-29_-_21-45_Bayern_Munich_5_-_0_D._Zagreb/1_224p",
     "width": 398
   },
@@ -29717,9 +29666,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 102,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2015-2016/2015-09-29_-_21-45_Bayern_Munich_5_-_0_D._Zagreb/2_224p",
     "width": 398
   },
@@ -30294,9 +30242,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 5650,
+    "num_frames": 5650,
     "num_frames_base": 67800,
-    "num_frames_dali": 5650,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-03_-_22-45_Real_Madrid_1_-_0_Paris_SG/1_224p",
     "width": 398
   },
@@ -30896,9 +30843,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 118,
-    "num_frames_2fps": 5921,
+    "num_frames": 5921,
     "num_frames_base": 71050,
-    "num_frames_dali": 5921,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-03_-_22-45_Real_Madrid_1_-_0_Paris_SG/2_224p",
     "width": 398
   },
@@ -31473,9 +31419,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-03_-_22-45_Sevilla_1_-_3_Manchester_City/1_224p",
     "width": 398
   },
@@ -32040,9 +31985,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 111,
-    "num_frames_2fps": 5707,
+    "num_frames": 5707,
     "num_frames_base": 68475,
-    "num_frames_dali": 5707,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-03_-_22-45_Sevilla_1_-_3_Manchester_City/2_224p",
     "width": 398
   },
@@ -32050,7 +31994,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -32647,9 +32591,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 119,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-03_-_22-45_Shakhtar_Donetsk_4_-_0_Malmo_FF/1_224p",
     "width": 398
   },
@@ -33244,9 +33187,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 117,
-    "num_frames_2fps": 5794,
+    "num_frames": 5794,
     "num_frames_base": 69525,
-    "num_frames_dali": 5794,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-03_-_22-45_Shakhtar_Donetsk_4_-_0_Malmo_FF/2_224p",
     "width": 398
   },
@@ -33641,9 +33583,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 77,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-25_-_22-45_Shakhtar_Donetsk_3_-_4_Real_Madrid/1_224p",
     "width": 398
   },
@@ -33651,7 +33592,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -34098,9 +34039,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 89,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2015-2016/2015-11-25_-_22-45_Shakhtar_Donetsk_3_-_4_Real_Madrid/2_224p",
     "width": 398
   },
@@ -34570,9 +34510,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 92,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2015-2016/2016-04-05_-_21-45_Bayern_Munich_1_-_0_Benfica/1_224p",
     "width": 398
   },
@@ -35127,9 +35066,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 109,
-    "num_frames_2fps": 5763,
+    "num_frames": 5763,
     "num_frames_base": 69150,
-    "num_frames_dali": 5763,
     "video": "europe_uefa-champions-league/2015-2016/2016-04-05_-_21-45_Bayern_Munich_1_-_0_Benfica/2_224p",
     "width": 398
   },
@@ -35684,9 +35622,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 109,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2016-2017/2016-11-01_-_20-45_Besiktas_1_-_1_Napoli/1_224p",
     "width": 398
   },
@@ -36246,9 +36183,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 110,
-    "num_frames_2fps": 5624,
+    "num_frames": 5624,
     "num_frames_base": 67487,
-    "num_frames_dali": 5624,
     "video": "europe_uefa-champions-league/2016-2017/2016-11-01_-_20-45_Besiktas_1_-_1_Napoli/2_224p",
     "width": 398
   },
@@ -36256,7 +36192,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -36868,9 +36804,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2016-2017/2016-11-01_-_22-45_Manchester_City_3_-_1_Barcelona/1_224p",
     "width": 398
   },
@@ -36878,7 +36813,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -37485,9 +37420,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 121,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2016-2017/2016-11-01_-_22-45_Manchester_City_3_-_1_Barcelona/2_224p",
     "width": 398
   },
@@ -37495,7 +37429,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -37957,9 +37891,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 92,
-    "num_frames_2fps": 5838,
+    "num_frames": 5838,
     "num_frames_base": 70050,
-    "num_frames_dali": 5838,
     "video": "europe_uefa-champions-league/2016-2017/2016-11-23_-_22-45_Arsenal_2_-_2_Paris_SG/1_224p",
     "width": 398
   },
@@ -38474,9 +38407,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 101,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2016-2017/2016-11-23_-_22-45_Arsenal_2_-_2_Paris_SG/2_224p",
     "width": 398
   },
@@ -39181,9 +39113,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 139,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2016-2017/2017-03-08_-_22-45_Barcelona_6_-_1_Paris_SG/1_224p",
     "width": 398
   },
@@ -39938,9 +39869,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 149,
-    "num_frames_2fps": 6334,
+    "num_frames": 6334,
     "num_frames_base": 76000,
-    "num_frames_dali": 6334,
     "video": "europe_uefa-champions-league/2016-2017/2017-03-08_-_22-45_Barcelona_6_-_1_Paris_SG/2_224p",
     "width": 398
   },
@@ -40520,9 +40450,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 5861,
+    "num_frames": 5861,
     "num_frames_base": 70325,
-    "num_frames_dali": 5861,
     "video": "europe_uefa-champions-league/2016-2017/2017-04-12_-_21-45_Bayern_Munich_1_-_2_Real_Madrid/1_224p",
     "width": 398
   },
@@ -41032,9 +40961,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 100,
-    "num_frames_2fps": 5794,
+    "num_frames": 5794,
     "num_frames_base": 69525,
-    "num_frames_dali": 5794,
     "video": "europe_uefa-champions-league/2016-2017/2017-04-12_-_21-45_Bayern_Munich_1_-_2_Real_Madrid/2_224p",
     "width": 398
   },
@@ -41042,7 +40970,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -41564,9 +41492,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 104,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2016-2017/2017-05-02_-_21-45_Real_Madrid_3_-_0_Atl._Madrid/1_224p",
     "width": 398
   },
@@ -41574,13 +41501,13 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
-        "label": "Kick-off"
+        "frame": 1,
+        "label": "Substitution"
       },
       {
         "comment": "home; not shown",
         "frame": 1,
-        "label": "Substitution"
+        "label": "Kick-off"
       },
       {
         "comment": "away; visible",
@@ -42071,9 +41998,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 99,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "europe_uefa-champions-league/2016-2017/2017-05-02_-_21-45_Real_Madrid_3_-_0_Atl._Madrid/2_224p",
     "width": 398
   },
@@ -42081,7 +42007,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -42568,9 +42494,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 97,
-    "num_frames_2fps": 5928,
+    "num_frames": 5928,
     "num_frames_base": 71125,
-    "num_frames_dali": 5928,
     "video": "france_ligue-1/2016-2017/2016-08-28_-_21-45_Monaco_3_-_1_Paris_SG/1_224p",
     "width": 398
   },
@@ -42578,7 +42503,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -43055,9 +42980,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 95,
-    "num_frames_2fps": 5867,
+    "num_frames": 5867,
     "num_frames_base": 70400,
-    "num_frames_dali": 5867,
     "video": "france_ligue-1/2016-2017/2016-08-28_-_21-45_Monaco_3_-_1_Paris_SG/2_224p",
     "width": 398
   },
@@ -43507,9 +43431,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 88,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "france_ligue-1/2016-2017/2016-11-30_-_23-00_Paris_SG_2_-_0_Angers/1_224p",
     "width": 398
   },
@@ -44039,9 +43962,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 104,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "france_ligue-1/2016-2017/2016-11-30_-_23-00_Paris_SG_2_-_0_Angers/2_224p",
     "width": 398
   },
@@ -44049,7 +43971,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -44676,23 +44598,22 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 125,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2014-2015/2015-05-09_-_16-30_Bayern_Munich_0_-_1_FC_Augsburg/1_224p",
     "width": 398
   },
   {
     "events": [
       {
-        "comment": "home; not shown",
-        "frame": 0,
-        "label": "Kick-off"
-      },
-      {
         "comment": "away; visible",
         "frame": 1,
         "label": "Substitution"
+      },
+      {
+        "comment": "home; not shown",
+        "frame": 1,
+        "label": "Kick-off"
       },
       {
         "comment": "away; visible",
@@ -45273,9 +45194,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 117,
-    "num_frames_2fps": 5907,
+    "num_frames": 5907,
     "num_frames_base": 70875,
-    "num_frames_dali": 5907,
     "video": "germany_bundesliga/2014-2015/2015-05-09_-_16-30_Bayern_Munich_0_-_1_FC_Augsburg/2_224p",
     "width": 398
   },
@@ -45283,7 +45203,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -45850,9 +45770,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2015-2016/2015-08-29_-_19-30_Bayern_Munich_3_-_0_Bayer_Leverkusen/1_224p",
     "width": 398
   },
@@ -46452,9 +46371,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 118,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2015-2016/2015-08-29_-_19-30_Bayern_Munich_3_-_0_Bayer_Leverkusen/2_224p",
     "width": 398
   },
@@ -46944,9 +46862,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 96,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2015-2016/2015-09-12_-_16-30_Bayern_Munich_2_-_1_FC_Augsburg/1_224p",
     "width": 398
   },
@@ -46954,7 +46871,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -47441,9 +47358,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 97,
-    "num_frames_2fps": 5959,
+    "num_frames": 5959,
     "num_frames_base": 71500,
-    "num_frames_dali": 5959,
     "video": "germany_bundesliga/2015-2016/2015-09-12_-_16-30_Bayern_Munich_2_-_1_FC_Augsburg/2_224p",
     "width": 398
   },
@@ -47451,7 +47367,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -47933,9 +47849,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 96,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2015-2016/2015-10-24_-_16-30_Bayern_Munich_4_-_0_FC_Koln/1_224p",
     "width": 398
   },
@@ -47943,7 +47858,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -48395,9 +48310,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 90,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2015-2016/2015-10-24_-_16-30_Bayern_Munich_4_-_0_FC_Koln/2_224p",
     "width": 398
   },
@@ -48405,7 +48319,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -48952,9 +48866,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 109,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2015-2016/2015-11-08_-_17-30_Dortmund_3_-_2_Schalke/1_224p",
     "width": 398
   },
@@ -48962,7 +48875,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -49614,9 +49527,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 130,
-    "num_frames_2fps": 6144,
+    "num_frames": 6144,
     "num_frames_base": 73725,
-    "num_frames_dali": 6144,
     "video": "germany_bundesliga/2015-2016/2015-11-08_-_17-30_Dortmund_3_-_2_Schalke/2_224p",
     "width": 398
   },
@@ -50261,9 +50173,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 127,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2016-09-10_-_19-30_RB_Leipzig_1_-_0_Dortmund/1_224p",
     "width": 398
   },
@@ -50803,9 +50714,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 106,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2016-09-10_-_19-30_RB_Leipzig_1_-_0_Dortmund/2_224p",
     "width": 398
   },
@@ -51340,19 +51250,13 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 105,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2016-10-01_-_19-30_Bayer_Leverkusen_2_-_0_Dortmund/1_224p",
     "width": 398
   },
   {
     "events": [
-      {
-        "comment": "away; visible",
-        "frame": 0,
-        "label": "Kick-off"
-      },
       {
         "comment": "home; not shown",
         "frame": 1,
@@ -51367,6 +51271,11 @@
         "comment": "away; not shown",
         "frame": 1,
         "label": "Substitution"
+      },
+      {
+        "comment": "away; visible",
+        "frame": 1,
+        "label": "Kick-off"
       },
       {
         "comment": "away; visible",
@@ -51952,9 +51861,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5700,
+    "num_frames": 5700,
     "num_frames_base": 68400,
-    "num_frames_dali": 5700,
     "video": "germany_bundesliga/2016-2017/2016-10-01_-_19-30_Bayer_Leverkusen_2_-_0_Dortmund/2_224p",
     "width": 398
   },
@@ -51962,7 +51870,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -52564,9 +52472,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2016-11-05_-_17-30_Hamburger_SV_2_-_5_Dortmund/1_224p",
     "width": 398
   },
@@ -52574,7 +52481,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -53261,9 +53168,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 137,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2016-11-05_-_17-30_Hamburger_SV_2_-_5_Dortmund/2_224p",
     "width": 398
   },
@@ -53271,7 +53177,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -53748,9 +53654,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 95,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2016-11-19_-_20-30_Dortmund_1_-_0_Bayern_Munich/1_224p",
     "width": 398
   },
@@ -53758,7 +53663,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -54330,9 +54235,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 5832,
+    "num_frames": 5832,
     "num_frames_base": 69975,
-    "num_frames_dali": 5832,
     "video": "germany_bundesliga/2016-2017/2016-11-19_-_20-30_Dortmund_1_-_0_Bayern_Munich/2_224p",
     "width": 398
   },
@@ -54340,7 +54244,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -55007,9 +54911,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 133,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2016-12-16_-_22-30_Hoffenheim_2_-_2_Dortmund/1_224p",
     "width": 398
   },
@@ -55619,9 +55522,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5963,
+    "num_frames": 5963,
     "num_frames_base": 71550,
-    "num_frames_dali": 5963,
     "video": "germany_bundesliga/2016-2017/2016-12-16_-_22-30_Hoffenheim_2_-_2_Dortmund/2_224p",
     "width": 398
   },
@@ -56241,9 +56143,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2017-01-21_-_17-30_SV_Werder_Bremen_1_-_2_Dortmund/1_224p",
     "width": 398
   },
@@ -56853,9 +56754,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2017-01-21_-_17-30_SV_Werder_Bremen_1_-_2_Dortmund/2_224p",
     "width": 398
   },
@@ -56863,7 +56763,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -57410,9 +57310,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 109,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2017-01-29_-_19-30_1._FSV_Mainz_05_1_-_1_Dortmund/1_224p",
     "width": 398
   },
@@ -57420,7 +57319,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -58172,9 +58071,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 150,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2017-01-29_-_19-30_1._FSV_Mainz_05_1_-_1_Dortmund/2_224p",
     "width": 398
   },
@@ -58182,7 +58080,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -58844,9 +58742,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 132,
-    "num_frames_2fps": 6098,
+    "num_frames": 6098,
     "num_frames_base": 73175,
-    "num_frames_dali": 6098,
     "video": "germany_bundesliga/2016-2017/2017-03-04_-_17-30_Dortmund_6_-_2_Bayer_Leverkusen/1_224p",
     "width": 398
   },
@@ -59496,9 +59393,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 128,
-    "num_frames_2fps": 5884,
+    "num_frames": 5884,
     "num_frames_base": 70600,
-    "num_frames_dali": 5884,
     "video": "germany_bundesliga/2016-2017/2017-03-04_-_17-30_Dortmund_6_-_2_Bayer_Leverkusen/2_224p",
     "width": 398
   },
@@ -60118,9 +60014,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "germany_bundesliga/2016-2017/2017-04-29_-_16-30_Dortmund_0_-_0_FC_Koln/1_224p",
     "width": 398
   },
@@ -60725,9 +60620,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 119,
-    "num_frames_2fps": 5630,
+    "num_frames": 5630,
     "num_frames_base": 67550,
-    "num_frames_dali": 5630,
     "video": "germany_bundesliga/2016-2017/2017-04-29_-_16-30_Dortmund_0_-_0_FC_Koln/2_224p",
     "width": 398
   },
@@ -60735,7 +60629,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -61302,9 +61196,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 5755,
+    "num_frames": 5755,
     "num_frames_base": 69050,
-    "num_frames_dali": 5755,
     "video": "italy_serie-a/2014-2015/2015-04-29_-_21-45_Juventus_3_-_2_Fiorentina/1_224p",
     "width": 398
   },
@@ -61312,7 +61205,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -61884,9 +61777,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 5722,
+    "num_frames": 5722,
     "num_frames_base": 68664,
-    "num_frames_dali": 5722,
     "video": "italy_serie-a/2014-2015/2015-04-29_-_21-45_Juventus_3_-_2_Fiorentina/2_224p",
     "width": 398
   },
@@ -61894,7 +61786,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -62531,9 +62423,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 127,
-    "num_frames_2fps": 5624,
+    "num_frames": 5624,
     "num_frames_base": 67484,
-    "num_frames_dali": 5624,
     "video": "italy_serie-a/2015-2016/2015-08-29_-_21-45_AC_Milan_2_-_1_Empoli/1_224p",
     "width": 398
   },
@@ -63253,9 +63144,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 142,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2015-2016/2015-08-29_-_21-45_AC_Milan_2_-_1_Empoli/2_224p",
     "width": 398
   },
@@ -63880,9 +63770,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 123,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2015-2016/2015-09-20_-_16-00_Genoa_0_-_2_Juventus/1_224p",
     "width": 398
   },
@@ -63890,12 +63779,12 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Offside"
       },
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -64517,9 +64406,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 125,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2015-2016/2015-09-20_-_16-00_Genoa_0_-_2_Juventus/2_224p",
     "width": 398
   },
@@ -65029,9 +64917,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 100,
-    "num_frames_2fps": 5624,
+    "num_frames": 5624,
     "num_frames_base": 67486,
-    "num_frames_dali": 5624,
     "video": "italy_serie-a/2015-2016/2015-09-27_-_21-45_Inter_1_-_4_Fiorentina/1_224p",
     "width": 398
   },
@@ -65381,9 +65268,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 68,
-    "num_frames_2fps": 5719,
+    "num_frames": 5719,
     "num_frames_base": 68625,
-    "num_frames_dali": 5719,
     "video": "italy_serie-a/2015-2016/2015-09-27_-_21-45_Inter_1_-_4_Fiorentina/2_224p",
     "width": 398
   },
@@ -65391,7 +65277,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -65883,9 +65769,8 @@
     "fps": 1.3930246913580246,
     "height": 224,
     "num_events": 98,
-    "num_frames_2fps": 5642,
+    "num_frames": 3762,
     "num_frames_base": 45134,
-    "num_frames_dali": 3762,
     "video": "italy_serie-a/2016-2017/2016-08-27_-_21-45_Napoli_4_-_2_AC_Milan/1_224p",
     "width": 398
   },
@@ -65893,7 +65778,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -66465,9 +66350,8 @@
     "fps": 1.4003562054743155,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 6193,
+    "num_frames": 4129,
     "num_frames_base": 49539,
-    "num_frames_dali": 4129,
     "video": "italy_serie-a/2016-2017/2016-08-27_-_21-45_Napoli_4_-_2_AC_Milan/2_224p",
     "width": 398
   },
@@ -66475,7 +66359,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -66947,9 +66831,8 @@
     "fps": 1.4674382716049383,
     "height": 224,
     "num_events": 94,
-    "num_frames_2fps": 5944,
+    "num_frames": 3963,
     "num_frames_base": 47545,
-    "num_frames_dali": 3963,
     "video": "italy_serie-a/2016-2017/2016-09-11_-_16-00_AC_Milan_0_-_1_Udinese/1_224p",
     "width": 398
   },
@@ -66957,7 +66840,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -67479,9 +67362,8 @@
     "fps": 1.4772044088176353,
     "height": 224,
     "num_events": 104,
-    "num_frames_2fps": 6635,
+    "num_frames": 4423,
     "num_frames_base": 53073,
-    "num_frames_dali": 4423,
     "video": "italy_serie-a/2016-2017/2016-09-11_-_16-00_AC_Milan_0_-_1_Udinese/2_224p",
     "width": 398
   },
@@ -68041,9 +67923,8 @@
     "fps": 1.4594187168355042,
     "height": 224,
     "num_events": 110,
-    "num_frames_2fps": 6051,
+    "num_frames": 4034,
     "num_frames_base": 48406,
-    "num_frames_dali": 4034,
     "video": "italy_serie-a/2016-2017/2016-09-20_-_21-45_AC_Milan_2_-_0_Lazio/1_224p",
     "width": 398
   },
@@ -68051,18 +67932,18 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
+        "label": "Substitution"
+      },
+      {
+        "comment": "away; visible",
+        "frame": 1,
+        "label": "Substitution"
+      },
+      {
+        "comment": "away; visible",
+        "frame": 1,
         "label": "Kick-off"
-      },
-      {
-        "comment": "away; visible",
-        "frame": 1,
-        "label": "Substitution"
-      },
-      {
-        "comment": "away; visible",
-        "frame": 1,
-        "label": "Substitution"
       },
       {
         "comment": "home; visible",
@@ -68728,9 +68609,8 @@
     "fps": 1.453858024691358,
     "height": 224,
     "num_events": 135,
-    "num_frames_2fps": 5889,
+    "num_frames": 3926,
     "num_frames_base": 47105,
-    "num_frames_dali": 3926,
     "video": "italy_serie-a/2016-2017/2016-09-20_-_21-45_AC_Milan_2_-_0_Lazio/2_224p",
     "width": 398
   },
@@ -68738,7 +68618,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -69250,9 +69130,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 102,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2016-09-24_-_21-45_Napoli_2_-_0_Chievo/1_224p",
     "width": 398
   },
@@ -69260,7 +69139,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -69717,9 +69596,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 91,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2016-09-24_-_21-45_Napoli_2_-_0_Chievo/2_224p",
     "width": 398
   },
@@ -70384,23 +70262,22 @@
     "fps": 1.466820987654321,
     "height": 224,
     "num_events": 131,
-    "num_frames_2fps": 5941,
+    "num_frames": 3961,
     "num_frames_base": 47523,
-    "num_frames_dali": 3961,
     "video": "italy_serie-a/2016-2017/2016-09-25_-_13-30_Torino_3_-_1_AS_Roma/1_224p",
     "width": 398
   },
   {
     "events": [
       {
-        "comment": "home; visible",
-        "frame": 0,
-        "label": "Kick-off"
-      },
-      {
         "comment": "away; visible",
         "frame": 1,
         "label": "Substitution"
+      },
+      {
+        "comment": "home; visible",
+        "frame": 1,
+        "label": "Kick-off"
       },
       {
         "comment": "not applicable; visible",
@@ -71006,9 +70883,8 @@
     "fps": 1.4812962962962963,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 6000,
+    "num_frames": 4000,
     "num_frames_base": 47994,
-    "num_frames_dali": 4000,
     "video": "italy_serie-a/2016-2017/2016-09-25_-_13-30_Torino_3_-_1_AS_Roma/2_224p",
     "width": 398
   },
@@ -71653,9 +71529,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 127,
-    "num_frames_2fps": 5705,
+    "num_frames": 5705,
     "num_frames_base": 68450,
-    "num_frames_dali": 5705,
     "video": "italy_serie-a/2016-2017/2016-09-25_-_21-45_Fiorentina_0_-_0_AC_Milan/1_224p",
     "width": 398
   },
@@ -72175,9 +72050,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 102,
-    "num_frames_2fps": 6332,
+    "num_frames": 6332,
     "num_frames_base": 75975,
-    "num_frames_dali": 6332,
     "video": "italy_serie-a/2016-2017/2016-09-25_-_21-45_Fiorentina_0_-_0_AC_Milan/2_224p",
     "width": 398
   },
@@ -72862,9 +72736,8 @@
     "fps": 1.411388888888889,
     "height": 224,
     "num_events": 135,
-    "num_frames_2fps": 5717,
+    "num_frames": 3811,
     "num_frames_base": 45729,
-    "num_frames_dali": 3811,
     "video": "italy_serie-a/2016-2017/2016-10-02_-_21-45_AS_Roma_2_-_1_Inter/1_224p",
     "width": 398
   },
@@ -72872,7 +72745,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -73414,9 +73287,8 @@
     "fps": 1.4088955026455026,
     "height": 224,
     "num_events": 108,
-    "num_frames_2fps": 5734,
+    "num_frames": 3823,
     "num_frames_base": 45868,
-    "num_frames_dali": 3823,
     "video": "italy_serie-a/2016-2017/2016-10-02_-_21-45_AS_Roma_2_-_1_Inter/2_224p",
     "width": 398
   },
@@ -74021,9 +73893,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 119,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2016-11-20_-_17-00_Atalanta_2_-_1_AS_Roma/1_224p",
     "width": 398
   },
@@ -74753,9 +74624,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 144,
-    "num_frames_2fps": 6025,
+    "num_frames": 6025,
     "num_frames_base": 72300,
-    "num_frames_dali": 6025,
     "video": "italy_serie-a/2016-2017/2016-11-20_-_17-00_Atalanta_2_-_1_AS_Roma/2_224p",
     "width": 398
   },
@@ -74763,7 +74633,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -75445,9 +75315,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 136,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2016-11-26_-_22-45_Empoli_1_-_4_AC_Milan/1_224p",
     "width": 398
   },
@@ -75455,7 +75324,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -75997,9 +75866,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 108,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2016-11-26_-_22-45_Empoli_1_-_4_AC_Milan/2_224p",
     "width": 398
   },
@@ -76574,9 +76442,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 113,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2016-12-04_-_17-00_Lazio_0_-_2_AS_Roma/1_224p",
     "width": 398
   },
@@ -77281,9 +77148,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 139,
-    "num_frames_2fps": 6223,
+    "num_frames": 6223,
     "num_frames_base": 74675,
-    "num_frames_dali": 6223,
     "video": "italy_serie-a/2016-2017/2016-12-04_-_17-00_Lazio_0_-_2_AS_Roma/2_224p",
     "width": 398
   },
@@ -77291,7 +77157,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -77853,9 +77719,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 112,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-01-08_-_17-00_Genoa_0_-_1_AS_Roma/1_224p",
     "width": 398
   },
@@ -78390,9 +78255,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 105,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-01-08_-_17-00_Genoa_0_-_1_AS_Roma/2_224p",
     "width": 398
   },
@@ -79017,9 +78881,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 123,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-01-29_-_17-00_Sampdoria_3_-_2_AS_Roma/1_224p",
     "width": 398
   },
@@ -79784,9 +79647,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 151,
-    "num_frames_2fps": 5807,
+    "num_frames": 5807,
     "num_frames_base": 69675,
-    "num_frames_dali": 5807,
     "video": "italy_serie-a/2016-2017/2017-01-29_-_17-00_Sampdoria_3_-_2_AS_Roma/2_224p",
     "width": 398
   },
@@ -80491,9 +80353,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 139,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-02-07_-_22-45_AS_Roma_4_-_0_Fiorentina/1_224p",
     "width": 398
   },
@@ -80501,7 +80362,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -80993,9 +80854,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 98,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-02-07_-_22-45_AS_Roma_4_-_0_Fiorentina/2_224p",
     "width": 398
   },
@@ -81003,7 +80863,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -81605,9 +81465,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5624,
+    "num_frames": 5624,
     "num_frames_base": 67479,
-    "num_frames_dali": 5624,
     "video": "italy_serie-a/2016-2017/2017-02-25_-_20-00_Napoli_0_-_2_Atalanta/1_224p",
     "width": 398
   },
@@ -81615,7 +81474,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -82167,9 +82026,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 110,
-    "num_frames_2fps": 5857,
+    "num_frames": 5857,
     "num_frames_base": 70275,
-    "num_frames_dali": 5857,
     "video": "italy_serie-a/2016-2017/2017-02-25_-_20-00_Napoli_0_-_2_Atalanta/2_224p",
     "width": 398
   },
@@ -82177,7 +82035,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -82809,9 +82667,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 126,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-02-26_-_22-45_Inter_1_-_3_AS_Roma/1_224p",
     "width": 398
   },
@@ -82819,7 +82676,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -83486,9 +83343,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 133,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-02-26_-_22-45_Inter_1_-_3_AS_Roma/2_224p",
     "width": 398
   },
@@ -83496,7 +83352,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -84143,9 +83999,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 129,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-04-01_-_21-45_AS_Roma_2_-_0_Empoli/1_224p",
     "width": 398
   },
@@ -84153,7 +84008,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -84775,9 +84630,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 124,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-04-01_-_21-45_AS_Roma_2_-_0_Empoli/2_224p",
     "width": 398
   },
@@ -84785,7 +84639,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -85252,9 +85106,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 93,
-    "num_frames_2fps": 5620,
+    "num_frames": 5620,
     "num_frames_base": 67431,
-    "num_frames_dali": 5620,
     "video": "italy_serie-a/2016-2017/2017-04-30_-_21-45_Inter_0_-_1_Napoli/1_224p",
     "width": 398
   },
@@ -85262,7 +85115,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -85869,9 +85722,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 121,
-    "num_frames_2fps": 5621,
+    "num_frames": 5621,
     "num_frames_base": 67442,
-    "num_frames_dali": 5621,
     "video": "italy_serie-a/2016-2017/2017-04-30_-_21-45_Inter_0_-_1_Napoli/2_224p",
     "width": 398
   },
@@ -85879,7 +85731,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -86386,9 +86238,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 101,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-05-20_-_21-45_Napoli_4_-_1_Fiorentina/1_224p",
     "width": 398
   },
@@ -86396,7 +86247,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -86988,9 +86839,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 118,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "italy_serie-a/2016-2017/2017-05-20_-_21-45_Napoli_4_-_1_Fiorentina/2_224p",
     "width": 398
   },
@@ -86998,7 +86848,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -87585,9 +87435,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 117,
-    "num_frames_2fps": 5678,
+    "num_frames": 5678,
     "num_frames_base": 68125,
-    "num_frames_dali": 5678,
     "video": "spain_laliga/2014-2015/2015-02-14_-_20-00_Real_Madrid_2_-_0_Dep._La_Coruna/1_224p",
     "width": 398
   },
@@ -88122,9 +87971,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 105,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2014-2015/2015-02-14_-_20-00_Real_Madrid_2_-_0_Dep._La_Coruna/2_224p",
     "width": 398
   },
@@ -88684,9 +88532,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 110,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2014-2015/2015-04-18_-_21-00_Real_Madrid_3_-_1_Malaga/1_224p",
     "width": 398
   },
@@ -89326,9 +89173,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 126,
-    "num_frames_2fps": 5880,
+    "num_frames": 5880,
     "num_frames_base": 70550,
-    "num_frames_dali": 5880,
     "video": "spain_laliga/2014-2015/2015-04-18_-_21-00_Real_Madrid_3_-_1_Malaga/2_224p",
     "width": 398
   },
@@ -89336,7 +89182,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -89828,9 +89674,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 98,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2014-2015/2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona/1_224p",
     "width": 398
   },
@@ -89838,7 +89683,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -90440,9 +90285,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5875,
+    "num_frames": 5875,
     "num_frames_base": 70500,
-    "num_frames_dali": 5875,
     "video": "spain_laliga/2014-2015/2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona/2_224p",
     "width": 398
   },
@@ -90450,7 +90294,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -90992,9 +90836,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 108,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2014-2015/2015-04-29_-_21-00_Real_Madrid_3_-_0_Almeria/1_224p",
     "width": 398
   },
@@ -91534,9 +91377,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 106,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2014-2015/2015-04-29_-_21-00_Real_Madrid_3_-_0_Almeria/2_224p",
     "width": 398
   },
@@ -91544,7 +91386,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -92046,23 +91888,22 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 100,
-    "num_frames_2fps": 5988,
+    "num_frames": 5988,
     "num_frames_base": 71850,
-    "num_frames_dali": 5988,
     "video": "spain_laliga/2014-2015/2015-05-02_-_17-00_Cordoba_0_-_8_Barcelona/1_224p",
     "width": 398
   },
   {
     "events": [
       {
-        "comment": "away; visible",
-        "frame": 0,
-        "label": "Kick-off"
-      },
-      {
         "comment": "home; not shown",
         "frame": 1,
         "label": "Substitution"
+      },
+      {
+        "comment": "away; visible",
+        "frame": 1,
+        "label": "Kick-off"
       },
       {
         "comment": "away; visible",
@@ -92608,9 +92449,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 110,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2014-2015/2015-05-02_-_17-00_Cordoba_0_-_8_Barcelona/2_224p",
     "width": 398
   },
@@ -92618,7 +92458,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -93220,9 +93060,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2014-2015/2015-05-09_-_19-00_Barcelona_2_-_0_Real_Sociedad/1_224p",
     "width": 398
   },
@@ -93812,9 +93651,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 116,
-    "num_frames_2fps": 6092,
+    "num_frames": 6092,
     "num_frames_base": 73100,
-    "num_frames_dali": 6092,
     "video": "spain_laliga/2014-2015/2015-05-09_-_19-00_Barcelona_2_-_0_Real_Sociedad/2_224p",
     "width": 398
   },
@@ -93822,7 +93660,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -94394,23 +94232,22 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-08-29_-_23-30_Real_Madrid_5_-_0_Betis/1_224p",
     "width": 398
   },
   {
     "events": [
       {
-        "comment": "home; not shown",
-        "frame": 0,
-        "label": "Kick-off"
-      },
-      {
         "comment": "away; not shown",
         "frame": 1,
         "label": "Substitution"
+      },
+      {
+        "comment": "home; not shown",
+        "frame": 1,
+        "label": "Kick-off"
       },
       {
         "comment": "home; visible",
@@ -95031,9 +94868,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 125,
-    "num_frames_2fps": 5886,
+    "num_frames": 5886,
     "num_frames_base": 70625,
-    "num_frames_dali": 5886,
     "video": "spain_laliga/2015-2016/2015-08-29_-_23-30_Real_Madrid_5_-_0_Betis/2_224p",
     "width": 398
   },
@@ -95041,7 +94877,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -95693,9 +95529,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 130,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-09-19_-_17-00_Real_Madrid_1_-_0_Granada_CF/1_224p",
     "width": 398
   },
@@ -95703,7 +95538,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -96355,9 +96190,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 130,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-09-19_-_17-00_Real_Madrid_1_-_0_Granada_CF/2_224p",
     "width": 398
   },
@@ -96365,7 +96199,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -96952,9 +96786,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 117,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-11-08_-_18-00_Barcelona_3_-_0_Villarreal/1_224p",
     "width": 398
   },
@@ -96962,7 +96795,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -97544,9 +97377,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 116,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-11-08_-_18-00_Barcelona_3_-_0_Villarreal/2_224p",
     "width": 398
   },
@@ -97554,7 +97386,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -98116,9 +97948,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 112,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-12-05_-_18-00_Real_Madrid_4_-_1_Getafe/1_224p",
     "width": 398
   },
@@ -98548,9 +98379,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 84,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-12-05_-_18-00_Real_Madrid_4_-_1_Getafe/2_224p",
     "width": 398
   },
@@ -99165,9 +98995,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 121,
-    "num_frames_2fps": 5727,
+    "num_frames": 5727,
     "num_frames_base": 68724,
-    "num_frames_dali": 5727,
     "video": "spain_laliga/2015-2016/2015-12-30_-_18-00_Real_Madrid_3_-_1_Real_Sociedad/1_224p",
     "width": 398
   },
@@ -99175,7 +99004,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -99752,9 +99581,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 115,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2015-12-30_-_18-00_Real_Madrid_3_-_1_Real_Sociedad/2_224p",
     "width": 398
   },
@@ -100464,9 +100292,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 140,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2016-02-27_-_18-00_Real_Madrid_0_-_1_Atl._Madrid/1_224p",
     "width": 398
   },
@@ -101076,9 +100903,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 120,
-    "num_frames_2fps": 5913,
+    "num_frames": 5913,
     "num_frames_base": 70950,
-    "num_frames_dali": 5913,
     "video": "spain_laliga/2015-2016/2016-02-27_-_18-00_Real_Madrid_0_-_1_Atl._Madrid/2_224p",
     "width": 398
   },
@@ -101698,9 +101524,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2016-03-02_-_23-00_Levante_1_-_3_Real_Madrid/1_224p",
     "width": 398
   },
@@ -102290,9 +102115,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 116,
-    "num_frames_2fps": 5900,
+    "num_frames": 5900,
     "num_frames_base": 70800,
-    "num_frames_dali": 5900,
     "video": "spain_laliga/2015-2016/2016-03-02_-_23-00_Levante_1_-_3_Real_Madrid/2_224p",
     "width": 398
   },
@@ -102732,9 +102556,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 86,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2016-05-08_-_18-00_Real_Madrid_3_-_2_Valencia/1_224p",
     "width": 398
   },
@@ -102742,7 +102565,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -103224,9 +103047,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 96,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2016-05-08_-_18-00_Real_Madrid_3_-_2_Valencia/2_224p",
     "width": 398
   },
@@ -103531,9 +103353,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 59,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2016-05-14_-_18-00_Dep._La_Coruna_0_-_2_Real_Madrid/1_224p",
     "width": 398
   },
@@ -103541,7 +103362,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -104058,9 +103879,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 103,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2015-2016/2016-05-14_-_18-00_Dep._La_Coruna_0_-_2_Real_Madrid/2_224p",
     "width": 398
   },
@@ -104605,9 +104425,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 107,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2016-09-10_-_21-30_Barcelona_1_-_2_Alaves/1_224p",
     "width": 398
   },
@@ -105172,9 +104991,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 111,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2016-09-10_-_21-30_Barcelona_1_-_2_Alaves/2_224p",
     "width": 398
   },
@@ -105182,7 +105000,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -105689,9 +105507,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 101,
-    "num_frames_2fps": 5788,
+    "num_frames": 5788,
     "num_frames_base": 69450,
-    "num_frames_dali": 5788,
     "video": "spain_laliga/2016-2017/2016-09-21_-_21-00_Real_Madrid_1_-_1_Villarreal/1_224p",
     "width": 398
   },
@@ -105699,7 +105516,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -106351,9 +106168,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 130,
-    "num_frames_2fps": 6155,
+    "num_frames": 6155,
     "num_frames_base": 73850,
-    "num_frames_dali": 6155,
     "video": "spain_laliga/2016-2017/2016-09-21_-_21-00_Real_Madrid_1_-_1_Villarreal/2_224p",
     "width": 398
   },
@@ -106888,9 +106704,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 105,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2016-09-24_-_21-45_Las_Palmas_2_-_2_Real_Madrid/1_224p",
     "width": 398
   },
@@ -106898,7 +106713,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -107515,9 +107330,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 123,
-    "num_frames_2fps": 5792,
+    "num_frames": 5792,
     "num_frames_base": 69500,
-    "num_frames_dali": 5792,
     "video": "spain_laliga/2016-2017/2016-09-24_-_21-45_Las_Palmas_2_-_2_Real_Madrid/2_224p",
     "width": 398
   },
@@ -108137,9 +107951,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 122,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2016-11-26_-_18-15_Real_Madrid_2_-_1_Gijon/1_224p",
     "width": 398
   },
@@ -108639,9 +108452,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 98,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2016-11-26_-_18-15_Real_Madrid_2_-_1_Gijon/2_224p",
     "width": 398
   },
@@ -109091,9 +108903,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 88,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2016-12-18_-_22-45_Barcelona_4_-_1_Espanyol/1_224p",
     "width": 398
   },
@@ -109101,7 +108912,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -109553,9 +109364,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 90,
-    "num_frames_2fps": 5628,
+    "num_frames": 5628,
     "num_frames_base": 67525,
-    "num_frames_dali": 5628,
     "video": "spain_laliga/2016-2017/2016-12-18_-_22-45_Barcelona_4_-_1_Espanyol/2_224p",
     "width": 398
   },
@@ -110120,9 +109930,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 111,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2017-02-11_-_22-45_Osasuna_1_-_3_Real_Madrid/1_224p",
     "width": 398
   },
@@ -110130,7 +109939,7 @@
     "events": [
       {
         "comment": "home; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -110687,9 +110496,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 111,
-    "num_frames_2fps": 6075,
+    "num_frames": 6075,
     "num_frames_base": 72900,
-    "num_frames_dali": 6075,
     "video": "spain_laliga/2016-2017/2017-02-11_-_22-45_Osasuna_1_-_3_Real_Madrid/2_224p",
     "width": 398
   },
@@ -111289,9 +111097,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 118,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2017-03-12_-_22-45_Real_Madrid_2_-_1_Betis/1_224p",
     "width": 398
   },
@@ -111299,7 +111106,7 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -111871,9 +111678,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 114,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2017-03-12_-_22-45_Real_Madrid_2_-_1_Betis/2_224p",
     "width": 398
   },
@@ -112528,9 +112334,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 129,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2017-04-02_-_17-15_Real_Madrid_3_-_0_Alaves/1_224p",
     "width": 398
   },
@@ -113125,9 +112930,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 117,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2017-04-02_-_17-15_Real_Madrid_3_-_0_Alaves/2_224p",
     "width": 398
   },
@@ -113135,7 +112939,7 @@
     "events": [
       {
         "comment": "home; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -113767,9 +113571,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 126,
-    "num_frames_2fps": 5692,
+    "num_frames": 5692,
     "num_frames_base": 68300,
-    "num_frames_dali": 5692,
     "video": "spain_laliga/2016-2017/2017-04-08_-_21-45_Malaga_2_-_0_Barcelona/1_224p",
     "width": 398
   },
@@ -113777,17 +113580,17 @@
     "events": [
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Substitution"
       },
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Substitution"
       },
       {
         "comment": "away; not shown",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -114339,9 +114142,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 112,
-    "num_frames_2fps": 5744,
+    "num_frames": 5744,
     "num_frames_base": 68925,
-    "num_frames_dali": 5744,
     "video": "spain_laliga/2016-2017/2017-04-08_-_21-45_Malaga_2_-_0_Barcelona/2_224p",
     "width": 398
   },
@@ -114701,9 +114503,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 70,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2017-04-26_-_20-30_Barcelona_7_-_1_Osasuna/1_224p",
     "width": 398
   },
@@ -114711,7 +114512,7 @@
     "events": [
       {
         "comment": "away; visible",
-        "frame": 0,
+        "frame": 1,
         "label": "Kick-off"
       },
       {
@@ -115148,9 +114949,8 @@
     "fps": 2.0833333333333335,
     "height": 224,
     "num_events": 87,
-    "num_frames_2fps": 5625,
+    "num_frames": 5625,
     "num_frames_base": 67500,
-    "num_frames_dali": 5625,
     "video": "spain_laliga/2016-2017/2017-04-26_-_20-30_Barcelona_7_-_1_Osasuna/2_224p",
     "width": 398
   }

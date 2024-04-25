@@ -1,7 +1,7 @@
 model = dict(
     type='E2E',
     backbone = dict(
-        type = 'rny002_gsm',
+        type = 'rny008_gsm',
     ),
     head = dict(
         type = 'gru',
