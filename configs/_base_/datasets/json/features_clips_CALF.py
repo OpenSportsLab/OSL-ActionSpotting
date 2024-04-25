@@ -1,5 +1,6 @@
-classes = ("Medical",) 
-
+# classes = ("Medical",) 
+classes = '/scratch/users/ybenzakour/zip/features/class.txt'
+# classes = '/home/ybenzakour/datasets/SoccerNet/class.txt'
 dataset = dict(
     train=dict(
         type="FeatureClipChunksfromJson",
@@ -39,6 +40,7 @@ dataset = dict(
         split=["test"],
         classes=classes,
         metric = "loose",
+        results = "results_spotting_test",
         dataloader=dict(
             num_workers=1,
             batch_size=1,

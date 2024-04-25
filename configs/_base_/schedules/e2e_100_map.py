@@ -8,4 +8,5 @@ training = dict(
     criterion = 'map',
     learning_rate = 0.001,
     inference_batch_size = 4,
+    GPU = 1
     )

@@ -1,8 +1,8 @@
-# sn-spotting-pip
+# osl-spotting-pip
 
 ```bash
-conda create -y -n snspotting python=3.9
-conda activate snspotting
+conda create -y -n oslspotting python=3.9
+conda activate oslspotting
 conda install -y pytorch torchvision -c pytorch -c nvidia
 conda install -y cudatoolkit=11.8 -c pytorch
 pip install SoccerNet matplotlib scikit-learn cupy-cuda11x pytorch-lightning opencv-python moviepy tqdm tabulate nvidia-dali-cuda110 timm

@@ -1,5 +1,5 @@
-classes = '/soccernetv2/2_fps/opencv/class.txt'
-labels_dir = '/soccernetv2/2_fps/opencv/'
+classes = 'datasets_jsons/soccernetv2/2_fps/dali/class.txt'
+extension = '.mkv'
             
 dataset = dict(
     batch_size = 8,
@@ -12,8 +12,9 @@ dataset = dict(
     train=dict(
         type="VideoGameWithOpencv",
         classes=classes,
-        label_file = "/soccernetv2/2_fps/opencv/train.json",                 # path to label json
+        path = "datasets_jsons/soccernetv2/2_fps/opencv/train.json",                 # path to label json
         data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        stride = 12,
         dataloader=dict(
             num_workers=8,
             batch_size=8,
@@ -25,8 +26,9 @@ dataset = dict(
     val=dict(
         type="VideoGameWithOpencv",
         classes=classes,
-        label_file = "/soccernetv2/2_fps/opencv/val.json",                 # path to label json
+        path = "datasets_jsons/soccernetv2/2_fps/opencv/val.json",                 # path to label json
         data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        stride = 12,
         dataloader=dict(
             num_workers=8,
             batch_size=8,
@@ -38,14 +40,47 @@ dataset = dict(
     val_data_frames=dict(
         type="VideoGameWithOpencvVideo",
         classes=classes,
-        label_file = "/soccernetv2/2_fps/opencv/val.json",                 # path to label json
+        path = "datasets_jsons/soccernetv2/2_fps/opencv/val.json",                 # path to label json
         data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        stride = 12,
+        overlap_len = 0,
         dataloader=dict(
             num_workers=8,
             batch_size=4,
             shuffle=False,
             pin_memory=True,
             prefetch_factor = 1,
+        ),
+    ),
+    test = dict(
+        type="VideoGameWithOpencvVideo",
+        classes=classes,
+        path = "datasets_jsons/soccernetv2/2_fps/opencv/val.json",                 # path to label json
+        data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        stride = 12,
+        split=["test"],
+        results = "results_spotting_test_ocv",
+        metric = "loose",
+        overlap_len = 50,
+        dataloader=dict(
+            num_workers=8,
+            batch_size=8,
+            shuffle=False,
+            pin_memory=True,
+        ),
+    ),
+    challenge = dict(
+        type="VideoGameWithOpencvVideo",
+        classes=classes,
+        path = "datasets_jsons/soccernetv2/2_fps/opencv/val.json",                 # path to label json
+        data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        stride = 12,
+        overlap_len = 50,
+        dataloader=dict(
+            num_workers=8,
+            batch_size=4,
+            shuffle=False,
+            pin_memory=True,
         ),
     ),
 )
