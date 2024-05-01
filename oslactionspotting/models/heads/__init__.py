@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from oslspotting.models.modules import *
+from oslactionspotting.models.modules import *
 
 def build_head(cfg, default_args=None):
     """Build a head from config dict.

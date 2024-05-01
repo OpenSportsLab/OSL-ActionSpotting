@@ -1,5 +1,5 @@
 
-from oslspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
+from oslactionspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
 from .soccernet import SoccerNet,SoccerNetClips,SoccerNetClipsChunks, SoccerNetGameClips, SoccerNetGameClipsChunks
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipChunksfromJson, FeatureClipsfromJSON

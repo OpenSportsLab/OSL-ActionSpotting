@@ -4,14 +4,14 @@ import sys
 from shutil import rmtree
 from setuptools import setup, find_packages, Command
 
-from oslspotting import __version__, __authors__, __author_email__, __github__
+from oslactionspotting import __version__, __authors__, __author_email__, __github__
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
 setup(
-    name='oslspotting',         # How you named your package folder (MyLib)
-    packages=['oslspotting'],   # Chose the same as "name"
+    name='oslactionspotting',         # How you named your package folder (MyLib)
+    packages=['oslactionspotting'],   # Chose the same as "name"
     # Start with a small number and increase it with every change you make
     version=__version__,
     # Chose a license from here: https://help.github.com/articles/licensing-a-repository

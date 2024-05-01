@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from oslspotting.models.common import SingleStageTCN
+from oslactionspotting.models.common import SingleStageTCN
 from .impl.asformer import MyTransformer
 
 

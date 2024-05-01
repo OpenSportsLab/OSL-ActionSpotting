@@ -7,13 +7,13 @@ import time
 from mmengine.config import Config, DictAction
 import numpy as np
 import torch
-from oslspotting.apis.inference import build_inferer
-from oslspotting.core.utils.dali import get_repartition_gpu
-from oslspotting.core.utils.default_args import get_default_args_dataset
-from oslspotting.core.utils.eval import search_best_epoch
-from oslspotting.core.utils.io import check_config
-from oslspotting.datasets.builder import build_dataloader, build_dataset
-from oslspotting.models.builder import build_model
+from oslactionspotting.apis.inference import build_inferer
+from oslactionspotting.core.utils.dali import get_repartition_gpu
+from oslactionspotting.core.utils.default_args import get_default_args_dataset
+from oslactionspotting.core.utils.eval import search_best_epoch
+from oslactionspotting.core.utils.io import check_config
+from oslactionspotting.datasets.builder import build_dataloader, build_dataset
+from oslactionspotting.models.builder import build_model
 
 
 def parse_args():

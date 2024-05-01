@@ -1,5 +1,5 @@
 import torch
-from oslspotting.models.e2espot import E2EModel
+from oslactionspotting.models.e2espot import E2EModel
 from .learnablepooling import LiteLearnablePoolingModel
 from .contextaware import  LiteContextAwareModel
 

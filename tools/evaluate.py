@@ -10,11 +10,11 @@ import torch
 from mmengine.config import Config, DictAction
 
 
-from oslspotting.core.utils.eval import search_best_epoch
-from oslspotting.core.utils.io import check_config
-from oslspotting.models import build_model
+from oslactionspotting.core.utils.eval import search_best_epoch
+from oslactionspotting.core.utils.io import check_config
+from oslactionspotting.models import build_model
 
-from oslspotting.core import build_evaluator
+from oslactionspotting.core import build_evaluator
                 
 def parse_args():
 

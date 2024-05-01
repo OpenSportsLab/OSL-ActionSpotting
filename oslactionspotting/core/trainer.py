@@ -1,10 +1,10 @@
 from tabulate import tabulate
-from oslspotting.core.utils.default_args import get_default_args_dataset
-from oslspotting.core.utils.eval import evaluate_e2e
-from oslspotting.core.utils.io import  store_json, store_gz_json, clear_files
-from oslspotting.core.utils.score import compute_mAPs
+from oslactionspotting.core.utils.default_args import get_default_args_dataset
+from oslactionspotting.core.utils.eval import evaluate_e2e
+from oslactionspotting.core.utils.io import  store_json, store_gz_json, clear_files
+from oslactionspotting.core.utils.score import compute_mAPs
 
-from oslspotting.core.utils.lightning import CustomProgressBar, MyCallback
+from oslactionspotting.core.utils.lightning import CustomProgressBar, MyCallback
 import pytorch_lightning as pl
 
 from torch.optim.lr_scheduler import (
@@ -16,8 +16,8 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 import torch
 
-from oslspotting.datasets.builder import build_dataset
-from oslspotting.datasets.frame import DaliDataSetVideo
+from oslactionspotting.datasets.builder import build_dataset
+from oslactionspotting.datasets.frame import DaliDataSetVideo
 from abc import ABC, abstractmethod
 
 

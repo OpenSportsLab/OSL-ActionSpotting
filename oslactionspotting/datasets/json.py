@@ -17,7 +17,7 @@ from SoccerNet.Downloader import getListGames
 from SoccerNet.Downloader import SoccerNetDownloader
 from SoccerNet.Evaluation.utils import AverageMeter
 
-from oslspotting.datasets.utils import getChunks_anchors, getTimestampTargets, oneHotToShifts
+from oslactionspotting.datasets.utils import getChunks_anchors, getTimestampTargets, oneHotToShifts
 
 K_V2 = torch.FloatTensor([[-100, -98, -20, -40, -96, -5, -8, -93, -99, -31, -75, -10, -97, -75, -20, -84, -18], [-50, -49, -10, -20, -48, -3, -4, -46, -50, -15, -37, -5, -49, -38, -10, -42, -9], [50, 49, 60, 10, 48, 3, 4, 46, 50, 15, 37, 5, 49, 38, 10, 42, 9], [100, 98, 90, 20, 96, 5, 8, 93, 99, 31, 75, 10, 97, 75, 20, 84, 18]])
 
@@ -66,7 +66,7 @@ class FeaturefromJson(Dataset):
                     "annotations" : []
                 }]
             }
-            from oslspotting.core.utils.dataset import load_text
+            from oslactionspotting.core.utils.dataset import load_text
             assert os.path.isfile(self.classes) and os.path.exists(self.classes)
             self.classes = load_text(self.classes)
         

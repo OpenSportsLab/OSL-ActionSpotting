@@ -236,7 +236,7 @@ def zipResults(zip_path, target_dir, filename="results_spotting.json"):
                 fn = os.path.join(base, file)
                 zipobj.write(fn, fn[rootlen:])
 
-from oslspotting.datasets.soccernet import feats2clip
+from oslactionspotting.datasets.soccernet import feats2clip
 
 def infer_game(cfg, game_folder, model, confidence_threshold=0.5, overwrite=False):
 

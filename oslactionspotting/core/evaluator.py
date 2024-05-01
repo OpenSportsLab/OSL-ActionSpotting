@@ -1,11 +1,11 @@
 from tabulate import tabulate
-from oslspotting.core.utils.dali import get_repartition_gpu
-from oslspotting.core.utils.default_args import get_default_args_dataset
-from oslspotting.core.utils.eval import average_mAP, compute_performances_mAP, evaluate_e2e, get_closest_action_index, label2vector, non_maximum_supression, predictions2vector, store_eval_files_json
-from oslspotting.core.utils.io import load_gz_json, load_text, load_json
-from oslspotting.core.utils.lightning import CustomProgressBar
+from oslactionspotting.core.utils.dali import get_repartition_gpu
+from oslactionspotting.core.utils.default_args import get_default_args_dataset
+from oslactionspotting.core.utils.eval import average_mAP, compute_performances_mAP, evaluate_e2e, get_closest_action_index, label2vector, non_maximum_supression, predictions2vector, store_eval_files_json
+from oslactionspotting.core.utils.io import load_gz_json, load_text, load_json
+from oslactionspotting.core.utils.lightning import CustomProgressBar
 
-from oslspotting.datasets import build_dataset, build_dataloader
+from oslactionspotting.datasets import build_dataset, build_dataloader
 import logging
 from SoccerNet.Evaluation.ActionSpotting import evaluate
 

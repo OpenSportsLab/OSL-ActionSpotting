@@ -17,7 +17,7 @@ echo "Loading anaconda..."
 module load cuda/10.2.89
 module load gcc/6.4.0
 module list
-source activate oslspotting
+source activate oslactionspotting
 echo "...Anaconda env loaded"
 
 

@@ -3,8 +3,8 @@
 ## Create environment
 
 ```bash
-conda create -y -n oslspotting python=3.8
-conda activate oslspotting
+conda create -y -n oslactionspotting python=3.8
+conda activate oslactionspotting
 conda install -y pytorch=1.6 torchvision=0.7 cudatoolkit=10.1 -c pytorch
 pip install SoccerNet matplotlib scikit-learn sklearn
 pip install mmengine
@@ -22,7 +22,7 @@ srun --pty --time=4:00:00 --gres=gpu:gtx1080ti:1 bash -l
 module load cuda/10.2.89
 module load gcc/6.4.0
 module list
-source activate oslspotting
+source activate oslactionspotting
 ```
 
 ## Link datasets from scratch
@@ -44,7 +44,7 @@ srun --pty --time=4:00:00 --gres=gpu:gtx1080ti:1 bash -l
 module load cuda/10.2.89
 module load gcc/6.4.0
 module list
-source activate oslspotting
+source activate oslactionspotting
 
 # Run training code of any code
 python tools/train.py configs/learnablepooling/soccernet_netvlad++_resnetpca512.py
