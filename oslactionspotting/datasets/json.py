@@ -13,9 +13,6 @@ import torch
 import logging
 import json
 
-from SoccerNet.Downloader import getListGames
-from SoccerNet.Downloader import SoccerNetDownloader
-from SoccerNet.Evaluation.utils import AverageMeter
 
 from oslactionspotting.datasets.utils import getChunks_anchors, getTimestampTargets, oneHotToShifts
 
@@ -47,12 +44,15 @@ def feats2clip(feats, stride, clip_length, padding = "replicate_last", off=0, mo
     return feats[idx,...]
 
 class FeaturefromJson(Dataset):
-    def __init__(self, path, classes, framerate=2):
+    def __init__(self, path, features_dir,  classes, framerate=2):
         self.classes = classes
         self.path = path
         self.framerate = framerate
+        self.features_dir = features_dir
 
         self.is_json = True
+        
+        assert os.path.isfile(path) and os.path.exists(path)
         if path.endswith('.json'):
             with open(path) as f :
                 self.data_json = json.load(f)
@@ -112,13 +112,12 @@ class FeaturefromJson(Dataset):
         return label,frame,cont
     
 class FeatureClipsfromJSON(FeaturefromJson):
-    def __init__(self, path,classes,
+    def __init__(self, path, features_dir, classes,
                 framerate=2,
                 window_size=15,train=True):
-        super().__init__(path,classes,framerate)
+        super().__init__(path, features_dir, classes,framerate)
         self.window_size_frame = window_size*framerate
         self.train=train
-
         self.features_clips = list()
         self.labels_clips = list()
 
@@ -126,7 +125,7 @@ class FeatureClipsfromJSON(FeaturefromJson):
             # loop over videos
             for video in tqdm(self.data_json["videos"]):
                 # Load features
-                features = np.load(os.path.join(os.path.dirname(path), video["path_features"]))
+                features = np.load(os.path.join(features_dir, video["path_features"]))
                 features = features.reshape(-1, features.shape[-1])
                 
                 # convert video features into clip features
@@ -172,7 +171,7 @@ class FeatureClipsfromJSON(FeaturefromJson):
 
             # Load features
             if self.is_json:
-                features = np.load(os.path.join(os.path.dirname(self.path), video["path_features"]))
+                features = np.load(os.path.join(self.features_dir, video["path_features"]))
             else : 
                 features = np.load(os.path.join(video["path_features"]))
             features = features.reshape(-1, features.shape[-1])
@@ -204,11 +203,11 @@ class FeatureClipsfromJSON(FeaturefromJson):
             return len(self.data_json["videos"])
         
 class FeatureClipChunksfromJson(FeaturefromJson):
-    def __init__(self, path, 
+    def __init__(self, path, features_dir,
                  classes,
                 framerate=2,
                 chunk_size=240, receptive_field=80, chunks_per_epoch=6000,gpu=True, train=True):
-        super().__init__(path, classes, framerate)
+        super().__init__(path, features_dir, classes, framerate)
         self.chunk_size=chunk_size
         self.receptive_field=receptive_field
         self.chunks_per_epoch=chunks_per_epoch
@@ -231,7 +230,7 @@ class FeatureClipChunksfromJson(FeaturefromJson):
             # loop over videos
             for video in tqdm(self.data_json["videos"]):
                 # Load features
-                features = np.load(os.path.join(os.path.dirname(path), video["path_features"]))
+                features = np.load(os.path.join(self.features_dir, video["path_features"]))
                 
                 # Load labels
                 labels = np.zeros((features.shape[0], self.num_classes))
@@ -297,7 +296,7 @@ class FeatureClipChunksfromJson(FeaturefromJson):
 
             # Load features
             if self.is_json:
-                features = np.load(os.path.join(os.path.dirname(self.path), video["path_features"]))
+                features = np.load(os.path.join(self.features_dir, video["path_features"]))
             else:
                 features = np.load(os.path.join(video["path_features"]))
 

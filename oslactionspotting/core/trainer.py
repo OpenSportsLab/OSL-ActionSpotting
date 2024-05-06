@@ -1,8 +1,5 @@
-from tabulate import tabulate
-from oslactionspotting.core.utils.default_args import get_default_args_dataset
 from oslactionspotting.core.utils.eval import evaluate_e2e
-from oslactionspotting.core.utils.io import  store_json, store_gz_json, clear_files
-from oslactionspotting.core.utils.score import compute_mAPs
+from oslactionspotting.core.utils.io import  store_json, clear_files
 
 from oslactionspotting.core.utils.lightning import CustomProgressBar, MyCallback
 import pytorch_lightning as pl
@@ -11,13 +8,9 @@ from torch.optim.lr_scheduler import (
     ChainedScheduler, LinearLR, CosineAnnealingLR)
 import os
 
-import numpy as np
-from tqdm import tqdm
-from torch.utils.data import DataLoader
 import torch
 
 from oslactionspotting.datasets.builder import build_dataset
-from oslactionspotting.datasets.frame import DaliDataSetVideo
 from abc import ABC, abstractmethod
 
 

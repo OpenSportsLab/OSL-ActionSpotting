@@ -1,11 +1,7 @@
 from tabulate import tabulate
-from oslactionspotting.core.utils.dali import get_repartition_gpu
-from oslactionspotting.core.utils.default_args import get_default_args_dataset
-from oslactionspotting.core.utils.eval import average_mAP, compute_performances_mAP, evaluate_e2e, get_closest_action_index, label2vector, non_maximum_supression, predictions2vector, store_eval_files_json
+from oslactionspotting.core.utils.eval import compute_performances_mAP, get_closest_action_index, label2vector, non_maximum_supression, predictions2vector, store_eval_files_json
 from oslactionspotting.core.utils.io import load_gz_json, load_text, load_json
-from oslactionspotting.core.utils.lightning import CustomProgressBar
 
-from oslactionspotting.datasets import build_dataset, build_dataloader
 import logging
 from SoccerNet.Evaluation.ActionSpotting import evaluate
 
@@ -16,7 +12,6 @@ import json
 import json
 from tqdm import tqdm
 import os
-import pytorch_lightning as pl
 
 from SoccerNet.Evaluation.utils import INVERSE_EVENT_DICTIONARY_V2
 
@@ -76,7 +71,7 @@ def evaluate_pred_E2E(cfg, work_dir, pred_path,metric="loose"):
     if os.path.isfile(results) and (results.endswith('.gz') or results.endswith('.json')):
         pred = (load_gz_json if results.endswith('.gz') else load_json)(
             results)
-        nms_window = 2
+        nms_window = cfg.nms_window
         if isinstance(pred, list):
             if nms_window > 0:
                 logging.info('Applying NMS: ' +  str(nms_window))
@@ -87,7 +82,6 @@ def evaluate_pred_E2E(cfg, work_dir, pred_path,metric="loose"):
             if only_one_file : results =  os.path.join(work_dir, pred_path.split('.gz')[0].split('.json')[0], 'results_spotting.json')
             else : results = os.path.join(work_dir, pred_path.split('.gz')[0].split('.json')[0])
 
-    print(results)
 
     with open(cfg.path) as f :
         GT_data = json.load(f)
@@ -96,7 +90,6 @@ def evaluate_pred_E2E(cfg, work_dir, pred_path,metric="loose"):
     if results.endswith('.json'):
         pred_path_is_json = True
         with open(results) as f :
-            print(results)
             pred_data = json.load(f)
 
     targets_numpy = list()
@@ -114,12 +107,11 @@ def evaluate_pred_E2E(cfg, work_dir, pred_path,metric="loose"):
     for game in tqdm(videos):
 
         # fetch labels
-        labels = game["events"]
+        if "events" in game.keys():
+            labels = game["events"]
+        elif "annotations" in game.keys():
+            labels = game["annotations"]
 
-        # convert labels to dense vector
-        dense_labels = label2vector(labels, vector_size=game["num_frames"],
-            num_classes=len(classes), 
-            EVENT_DICTIONARY=EVENT_DICTIONARY)
         # # convert labels to dense vector
         # dense_labels = label2vector_e2e(labels, game["num_frames_dali"],
         #     num_classes=len(classes), 
@@ -134,8 +126,13 @@ def evaluate_pred_E2E(cfg, work_dir, pred_path,metric="loose"):
                 continue
         predictions = pred_data['predictions']
 
+        # convert labels to dense vector
+        dense_labels = label2vector(labels, vector_size=game["num_frames"] if "num_frames" in game.keys() else None,
+            num_classes=len(classes), 
+            EVENT_DICTIONARY=EVENT_DICTIONARY, framerate=pred_data['fps'] if 'fps' in pred_data.keys() else  cfg.extract_fps)
+        
         # convert predictions to vector
-        dense_predictions = predictions2vector(predictions, vector_size=game["num_frames"],
+        dense_predictions = predictions2vector(predictions, vector_size=game["num_frames"] if "num_frames" in game.keys() else None,
                                                num_classes=len(classes),
                                                EVENT_DICTIONARY=EVENT_DICTIONARY)
 
@@ -199,7 +196,6 @@ def evaluate_pred_JSON(cfg, work_dir, pred_path, metric="loose"):
         videos = [GT_data]
 
     for game in tqdm(videos):
-
         # fetch labels
         labels = game["annotations"]
 
@@ -210,7 +206,7 @@ def evaluate_pred_JSON(cfg, work_dir, pred_path, metric="loose"):
         
         if not pred_path_is_json:
             try:
-                with open(os.path.join(pred_path,os.path.splitext(game["path_video"])[0],'results_spotting.json')) as f :
+                with open(os.path.join(pred_path,os.path.splitext(game["path_features"])[0],'results_spotting.json')) as f :
                     pred_data = json.load(f)
                     # predictions = pred_data['predictions']
             except FileNotFoundError:

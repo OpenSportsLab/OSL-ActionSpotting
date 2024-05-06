@@ -1,6 +1,5 @@
-
 from oslactionspotting.datasets.frame import ActionSpotDataset, ActionSpotVideoDataset, DaliDataSet, DaliDataSetVideo
-from .soccernet import SoccerNet,SoccerNetClips,SoccerNetClipsChunks, SoccerNetGameClips, SoccerNetGameClipsChunks
+from .soccernet import SoccerNetClips,SoccerNetClipsChunks, SoccerNetGameClips, SoccerNetGameClipsChunks
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipChunksfromJson, FeatureClipsfromJSON
 import torch
@@ -52,25 +51,25 @@ def build_dataset(cfg, gpu=None,  default_args=None):
                     gpu = gpu,
                     train=True if cfg.type == "SoccerNetClipsCALF" else False)
     elif cfg.type == "FeatureClipsfromJSON":
-        dataset = FeatureClipsfromJSON(path=cfg.path, classes = cfg.classes, 
+        dataset = FeatureClipsfromJSON(path=cfg.path, features_dir = cfg.data_root, classes = cfg.classes, 
             framerate=cfg.framerate,
             window_size=cfg.window_size)
     elif cfg.type == "FeatureVideosfromJSON":
-        dataset = FeatureClipsfromJSON(path=cfg.path, classes = cfg.classes,
+        dataset = FeatureClipsfromJSON(path=cfg.path, features_dir = cfg.data_root, classes = cfg.classes,
             framerate=cfg.framerate,
             window_size=cfg.window_size, train = False)
         # dataset = FeatureVideosfromJSON(path=cfg.path, 
         #     framerate=cfg.framerate,
         #     window_size=cfg.window_size)
     elif cfg.type == "FeatureClipChunksfromJson":
-        dataset = FeatureClipChunksfromJson(path=cfg.path, classes=cfg.classes,
+        dataset = FeatureClipChunksfromJson(path=cfg.path, features_dir = cfg.data_root, classes=cfg.classes,
             framerate=cfg.framerate,
                 chunk_size=cfg.chunk_size,
                 receptive_field=cfg.receptive_field,
                 chunks_per_epoch=cfg.chunks_per_epoch,
                 gpu = gpu)
     elif cfg.type == "FeatureVideosChunksfromJson":
-        dataset = FeatureClipChunksfromJson(path=cfg.path, classes = cfg.classes,
+        dataset = FeatureClipChunksfromJson(path=cfg.path, features_dir = cfg.data_root, classes = cfg.classes,
             framerate=cfg.framerate,
                 chunk_size=cfg.chunk_size,
                 receptive_field=cfg.receptive_field,
@@ -86,13 +85,13 @@ def build_dataset(cfg, gpu=None,  default_args=None):
             default_args['classes'], 
             cfg.path,
             cfg.data_root, cfg.modality, 
-            cfg.clip_len, dataset_len if default_args['train'] else dataset_len // 4,
+            cfg.clip_len, cfg.extension, cfg.extract_fps, dataset_len if default_args['train'] else dataset_len // 4,
             is_eval= not default_args['train'], **dataset_kwargs)
     elif cfg.type == "VideoGameWithOpencvVideo":
         dataset = ActionSpotVideoDataset(
                 default_args['classes'], 
                 cfg.path,
-                cfg.data_root, cfg.modality, cfg.clip_len,
+                cfg.data_root, cfg.modality, cfg.clip_len, cfg.extension, cfg.extract_fps,
                 crop_dim=cfg.crop_dim, overlap_len=cfg.overlap_len)
     elif cfg.type == 'VideoGameWithDali':
         loader_batch_size = cfg.dataloader.batch_size // default_args["acc_grad_iter"]
@@ -110,7 +109,7 @@ def build_dataset(cfg, gpu=None,  default_args=None):
             cfg.path,
             cfg.modality, cfg.clip_len, 
             dataset_len if default_args['train'] else dataset_len // 4,
-            cfg.data_root,
+            cfg.data_root,cfg.extension,
             is_eval=False if default_args['train'] else True,
             **dataset_kwargs)
     elif cfg.type == 'VideoGameWithDaliVideo':
@@ -121,7 +120,7 @@ def build_dataset(cfg, gpu=None,  default_args=None):
             default_args['classes'], 
             cfg.path, 
             cfg.modality, cfg.clip_len, cfg.stride,
-            cfg.data_root, cfg.extension,
+            cfg.data_root, cfg.extension, cfg.extract_fps,
             crop_dim=cfg.crop_dim, overlap_len=cfg.overlap_len)
     else:
         dataset=None

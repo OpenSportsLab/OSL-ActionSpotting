@@ -24,10 +24,8 @@ TARGET_WIDTH = 398
 
 class FrameReader:
 
-    IMG_NAME = '{:06d}.jpg'
-
     def __init__(self, video_dir, modality, crop_transform, img_transform,
-                 same_transform, sample_fps = 2, infer = False):
+                 same_transform, extension, sample_fps = 2, infer = False):
         self._video_dir = video_dir
         self._is_flow = modality == 'flow'
         self._crop_transform = crop_transform
@@ -35,6 +33,7 @@ class FrameReader:
         self._same_transform = same_transform
         self._sample_fps = sample_fps
         self.infer = infer
+        self.extension = extension
 
     def read_frame_ocv(self, frame_path):
         frame_path = cv2.cvtColor(frame_path, cv2.COLOR_BGR2RGB)
@@ -55,7 +54,7 @@ class FrameReader:
         
         if self.infer: video_path = video_name
         else:
-            video_path = os.path.join(self._video_dir, video_name+".mkv")
+            video_path = os.path.join(self._video_dir, video_name + self.extension)
         vc = cv2.VideoCapture(video_path)
         fps = vc.get(cv2.CAP_PROP_FPS)
 
@@ -256,6 +255,8 @@ class ActionSpotDataset(Dataset):
             video_dir,                  # path to videos
             modality,                   # [rgb, bw, flow]
             clip_len,
+            extension,
+            extract_fps,
             dataset_len,                # Number of clips
             is_eval=True,               # Disable random augmentation
             crop_dim=None,
@@ -277,6 +278,7 @@ class ActionSpotDataset(Dataset):
         num_frames = [v['num_frames'] for v in self._labels]
         self._weights_by_length = np.array(num_frames) / np.sum(num_frames)
 
+        self.extension = extension
         self._clip_len = clip_len
         assert clip_len > 0
         self._stride = stride
@@ -313,7 +315,7 @@ class ActionSpotDataset(Dataset):
             defer_transform=self._gpu_transform is not None)
 
         self._frame_reader = FrameReader(
-            video_dir, modality, crop_transform, img_transform, same_transform, sample_fps)
+            video_dir, modality, crop_transform, img_transform, same_transform, extension, extract_fps)
 
     def load_frame_gpu(self, batch, device):
         if self._gpu_transform is None:
@@ -417,6 +419,8 @@ class ActionSpotVideoDataset(Dataset):
             video_dir,
             modality,
             clip_len,
+            extension,
+            extract_fps,
             overlap_len=0,
             crop_dim=None,
             stride=1,
@@ -432,8 +436,7 @@ class ActionSpotVideoDataset(Dataset):
             self._labels = load_json(label_file)
         else:
             self.infer = True
-            self._labels = construct_labels(label_file, False)
-            print(self._labels)
+            self._labels, _ = construct_labels(label_file, False, extract_fps)
         # self._labels = load_json(label_file)
         self._class_dict = classes
         self._video_idxs = {x['video']: i for i, x in enumerate(self._labels)}
@@ -445,13 +448,12 @@ class ActionSpotVideoDataset(Dataset):
         # No need to enforce same_transform since the transforms are
         # deterministic
         self._frame_reader = FrameReader(
-            video_dir, modality, crop_transform, img_transform, False, sample_fps, self.infer)
+            video_dir, modality, crop_transform, img_transform, False, extension, extract_fps, self.infer)
 
         self._flip = flip
         self._multi_crop = multi_crop
 
         self._clips = []
-        print(self._stride,stride)
         for l in self._labels:
             has_clip = False
             for i in range(
@@ -464,7 +466,6 @@ class ActionSpotVideoDataset(Dataset):
                 has_clip = True
                 self._clips.append((l['video'], i))
             assert has_clip, l
-        print(len(self._clips))
     def __len__(self):
         return len(self._clips)
 
@@ -555,10 +556,11 @@ class DaliDataSet(DALIGenericIterator):
             devices,
             classes,                    # dict of class names to idx
             label_file,                 # path to label json
-            modality,                   # [rgb, bw, flow]
+            modality,                   # [rgb]
             clip_len,
             dataset_len,                # Number of clips
             video_dir,
+            extension,
             is_eval=True,               # Disable random augmentation
             crop_dim=None,
             stride=12,                   # Downsample frame rate
@@ -597,8 +599,8 @@ class DaliDataSet(DALIGenericIterator):
         
         file_list_txt = ""
         for index,video in enumerate(self._labels):
-            video_path = os.path.join(video_dir, video['video'] + ".mkv")
-            for i in range(nb_clips_per_video):
+            video_path = os.path.join(video_dir, video['video'] + extension)
+            for _ in range(nb_clips_per_video):
                 random_start = random.randint(1, video['num_frames']-(clip_len+1))
                 file_list_txt += f"{video_path} {index} {random_start * stride} {(random_start+clip_len) * stride}\n"
         
@@ -790,7 +792,7 @@ class DaliDataSet(DALIGenericIterator):
     
     def edit_labels(self,label,frame_num):
         video_meta = self._labels[label.item()]
-        base_idx = frame_num.item()// self.stride
+        base_idx = frame_num.item() // self.stride
         labels = cupy.zeros(self.clip_len, np.int64)
 
         for event in video_meta['events']:
@@ -814,8 +816,8 @@ class DaliDataSet(DALIGenericIterator):
 def get_remaining(data_len,batch_size):
     return (math.ceil(data_len / batch_size) * batch_size) - data_len
 
-def construct_labels(path, dali):
-    wanted_sample_fps = 2
+def construct_labels(path, dali, extract_fps):
+    wanted_sample_fps = extract_fps
     vc = cv2.VideoCapture(path)
     fps = vc.get(cv2.CAP_PROP_FPS)
     num_frames = int(vc.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -825,22 +827,24 @@ def construct_labels(path, dali):
     sample_fps = read_fps(fps,wanted_sample_fps if wanted_sample_fps < fps else fps)
     num_frames_after = get_num_frames(num_frames,fps,wanted_sample_fps if wanted_sample_fps < fps else fps)
     input_fps = 25
-    if dali :
-        if(get_stride(fps, wanted_sample_fps if wanted_sample_fps < fps else fps) != get_stride(input_fps,wanted_sample_fps)):
-            sample_fps=fps/get_stride(input_fps,wanted_sample_fps)
-            num_frames_dali = math.ceil(num_frames/get_stride(input_fps,wanted_sample_fps))
-        else:
-            num_frames_dali = num_frames_after
+    # if dali :
+    #     if(get_stride(fps, wanted_sample_fps if wanted_sample_fps < fps else fps) != get_stride(input_fps,wanted_sample_fps)):
+    #         sample_fps=fps/get_stride(input_fps,wanted_sample_fps)
+    #         num_frames_dali = math.ceil(num_frames/get_stride(input_fps,wanted_sample_fps))
+    #     else:
+    #         num_frames_dali = num_frames_after
     return [{
                     'video': path,
-                    'num_frames': num_frames_dali if dali else num_frames_after,
+                    'num_frames': num_frames_after,
+                    # 'num_frames': num_frames_dali if dali else num_frames_after,
                     'num_frames_base': num_frames,
                     'num_events': 0,
                     'events': [],
                     'fps': sample_fps,
+                    # 'fps': sample_fps,
                     'width': 398,
                     'height': 224
-                }]
+                }], get_stride(fps, wanted_sample_fps if wanted_sample_fps < fps else fps)
 class DaliDataSetVideo(DALIGenericIterator):
 
     def __init__(
@@ -855,6 +859,7 @@ class DaliDataSetVideo(DALIGenericIterator):
             stride_dali ,
             video_dir,
             extension,
+            extract_fps,
             overlap_len=0,
             crop_dim=None,
             stride=1,
@@ -867,22 +872,20 @@ class DaliDataSetVideo(DALIGenericIterator):
             self._labels = load_json(label_file)
         else:
             self.infer = True
-            self._labels = construct_labels(label_file, True)
-            print(self._labels)
+            self._labels, stride_dali = construct_labels(label_file, True, extract_fps)
         self._class_dict = classes
         self._video_idxs = {x['video']: i for i, x in enumerate(self._labels)}
         self._clip_len = clip_len
-        self._stride = stride
         self.crop_dim = crop_dim
-
+        self._stride = stride
         self._flip = flip
         self._multi_crop = multi_crop
-
         self.batch_size = batch_size // len(devices)
         self.devices = devices
         self._clips = []
         file_list_txt = ""
         cmp=0
+        cmp2=0
         for l in self._labels:
             has_clip = False
             for i in range(
@@ -901,6 +904,9 @@ class DaliDataSetVideo(DALIGenericIterator):
                 else:
                     video_path = os.path.join(video_dir, l['video'] + extension)
                 file_list_txt += f"{video_path} {cmp} {i * stride_dali} {end}\n"
+                # if cmp2 <5:
+                #     print(file_list_txt)
+                #     cmp2+=1
                 cmp+=1
             last_video = l["video"]
             assert has_clip, l
@@ -914,7 +920,7 @@ class DaliDataSetVideo(DALIGenericIterator):
                     video_path = os.path.join(video_dir, l['video'] + extension)
             file_list_txt += f"{video_path} {cmp} {i * stride_dali} {end}\n"
             cmp+=1
-
+        # print(file_list_txt)
         tf = tempfile.NamedTemporaryFile()
         tf.write(str.encode(file_list_txt))
         tf.flush()

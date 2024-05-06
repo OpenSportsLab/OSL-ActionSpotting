@@ -20,15 +20,15 @@ def create_folders(split, work_dir, overwrite):
     return output_folder, output_results, stop_predict
 
 def timestamp_half(model,feat_half,BS):
-        timestamp_long_half = []
-        for b in range(int(np.ceil(len(feat_half)/BS))):
-            start_frame = BS*b
-            end_frame = BS*(b+1) if BS * \
-                (b+1) < len(feat_half) else len(feat_half)
-            feat = feat_half[start_frame:end_frame]
-            output = model(feat).cpu().detach().numpy()
-            timestamp_long_half.append(output)
-        return np.concatenate(timestamp_long_half)
+    timestamp_long_half = []
+    for b in range(int(np.ceil(len(feat_half)/BS))):
+        start_frame = BS*b
+        end_frame = BS*(b+1) if BS * \
+            (b+1) < len(feat_half) else len(feat_half)
+        feat = feat_half[start_frame:end_frame].cuda()
+        output = model(feat).cpu().detach().numpy()
+        timestamp_long_half.append(output)
+    return np.concatenate(timestamp_long_half)
 
 def get_spot_from_NMS(Input, window=60, thresh=0.0):
     detections_tmp = np.copy(Input)

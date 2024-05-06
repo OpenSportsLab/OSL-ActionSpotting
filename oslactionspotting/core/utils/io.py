@@ -19,8 +19,8 @@ def load_gz_json(fpath):
 def store_json(fpath, obj, pretty=False):
     kwargs = {}
     if pretty:
-        kwargs['indent'] = 2
-        kwargs['sort_keys'] = True
+        kwargs['indent'] = 4
+        kwargs['sort_keys'] = False
     with open(fpath, 'w') as fp:
         json.dump(obj, fp, **kwargs)
 

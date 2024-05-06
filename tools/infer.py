@@ -7,7 +7,7 @@ import time
 from mmengine.config import Config, DictAction
 import numpy as np
 import torch
-from oslactionspotting.apis.inference import build_inferer
+from oslactionspotting.apis import build_inferer
 from oslactionspotting.core.utils.dali import get_repartition_gpu
 from oslactionspotting.core.utils.default_args import get_default_args_dataset
 from oslactionspotting.core.utils.eval import search_best_epoch
@@ -131,6 +131,7 @@ def main():
 
     results = inferer.infer(dataset_infer)
     
+    # logging.info(f'Predictions saved to {cfg.dataset.test.results if cfg.}')
     # # print results only if not done on full split
     # if cfg.runner.type == 'runner_e2e':
     #     print(f"Found {len(results[0]['events'])} actions!")

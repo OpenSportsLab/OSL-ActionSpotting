@@ -144,7 +144,6 @@ def process_frame_predictions(
                         'score': scores[tmp, j].item()
                         # 'score': scores[i, j].item()
                     })
-
         pred_events.append({
             'video': video, 'events': events,
             'fps': fps_dict[video]})
@@ -240,7 +239,7 @@ def evaluate_e2e(model, dali, dataset, split, classes, save_pred, calc_stats=Tru
             scores, support = pred_dict[clip['video'][0]]
 
             start = clip['start'][0].item()
-            start=start-1
+            # start=start-1
             _, pred_scores = model.predict(clip['frame'][0])
             if start < 0:
                 pred_scores = pred_scores[:, -start:, :]
@@ -275,7 +274,7 @@ def evaluate_e2e(model, dali, dataset, split, classes, save_pred, calc_stats=Tru
         avg_mAP = np.mean(mAPs[1:])
 
     if save_pred is not None:
-        store_json(save_pred + '.json', pred_events)
+        store_json(save_pred + '.json', pred_events, pretty= True)
         store_gz_json(save_pred + '.recall.json.gz', pred_events_high_recall)
         # if save_scores:
         #     store_gz_json(save_pred + '.score.json.gz', pred_scores)
@@ -285,11 +284,13 @@ def evaluate_e2e(model, dali, dataset, split, classes, save_pred, calc_stats=Tru
 def store_eval_files_json(raw_pred, eval_dir):
     only_one_file = False
     video_pred = defaultdict(list)
+    video_fps = defaultdict(list)
     for obj in raw_pred:
         if os.path.isfile(obj['video']):
             video = obj["video"]
         else: 
             video, quality = obj['video'].rsplit('_', 1)
+        video_fps[video] = obj["fps"]
         for event in obj['events']:
             video_pred[video].append({
                 'frame': str(event['frame']),
@@ -307,13 +308,14 @@ def store_eval_files_json(raw_pred, eval_dir):
             video_out_dir = os.path.join(eval_dir, video)
         os.makedirs(video_out_dir, exist_ok= True)
         store_json(os.path.join(video_out_dir, 'results_spotting.json'), {
-            'Url': video, 'predictions': pred
+            'Url': video, 'predictions': pred, 'fps' : video_fps[video]
         }, pretty=True)
     return only_one_file
         
 def label2vector_e2e(labels, vector_size, num_classes=17, framerate=2, version=2, EVENT_DICTIONARY={}):
 
     # vector_size = 90*60*framerate
+    vector_size = 90*60*framerate if vector_size is None else vector_size
 
     dense_labels = np.zeros((vector_size, num_classes))
 
@@ -335,7 +337,7 @@ def label2vector_e2e(labels, vector_size, num_classes=17, framerate=2, version=2
 
 def predictions2vector_e2e(predictions, vector_size, num_classes=17, version=2, framerate=2, EVENT_DICTIONARY={}):
 
-    # vector_size = 90*60*framerate
+    vector_size = 90*60*framerate if vector_size is None else vector_size
 
     dense_predictions = np.zeros((vector_size, num_classes))-1
 
@@ -354,8 +356,8 @@ def predictions2vector_e2e(predictions, vector_size, num_classes=17, version=2, 
 
     return dense_predictions 
 def label2vector(labels, num_classes=17, framerate=2, version=2, EVENT_DICTIONARY={}, vector_size = None):
-
-    vector_size = 90*60*framerate if vector_size is None else vector_size
+    
+    vector_size = int(90*60*framerate if vector_size is None else vector_size)
 
     dense_labels = np.zeros((vector_size, num_classes))
 
@@ -382,8 +384,13 @@ def label2vector(labels, num_classes=17, framerate=2, version=2, EVENT_DICTIONAR
 
         label = EVENT_DICTIONARY[event]
 
+        value = 1
+        if "visibility" in annotation.keys():
+            if annotation["visibility"] == "not shown":
+                value = -1
+
         frame = min(frame, vector_size-1)
-        dense_labels[frame][label] = 1
+        dense_labels[frame][label] = value
 
 
     return dense_labels
@@ -625,23 +632,23 @@ def delta_curve(targets, closests, detections,  framerate, deltas=np.arange(5)*1
         mAP.append(tmp_mAP)
         mAP_per_class.append(tmp_mAP_per_class)
         # TODO: compute visible/undshown from another JSON file containing only the visible/unshown annotations
-        # tmp_mAP_visible, tmp_mAP_per_class_visible = compute_mAP(precision_visible, recall_visible)
-        # mAP_visible.append(tmp_mAP_visible)
-        # mAP_per_class_visible.append(tmp_mAP_per_class_visible)
-        # tmp_mAP_unshown, tmp_mAP_per_class_unshown = compute_mAP(precision_unshown, recall_unshown)
-        # mAP_unshown.append(tmp_mAP_unshown)
-        # mAP_per_class_unshown.append(tmp_mAP_per_class_unshown)
+        tmp_mAP_visible, tmp_mAP_per_class_visible = compute_mAP(precision_visible, recall_visible)
+        mAP_visible.append(tmp_mAP_visible)
+        mAP_per_class_visible.append(tmp_mAP_per_class_visible)
+        tmp_mAP_unshown, tmp_mAP_per_class_unshown = compute_mAP(precision_unshown, recall_unshown)
+        mAP_unshown.append(tmp_mAP_unshown)
+        mAP_per_class_unshown.append(tmp_mAP_per_class_unshown)
 
-    return mAP, mAP_per_class
+    return mAP, mAP_per_class, mAP_visible, mAP_per_class_visible, mAP_unshown, mAP_per_class_unshown
 
 
 def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*1 + 1):
 
 
-    mAP, mAP_per_class = delta_curve(targets, closests, detections, framerate, deltas)
+    mAP, mAP_per_class, mAP_visible, mAP_per_class_visible, mAP_unshown, mAP_per_class_unshown = delta_curve(targets, closests, detections, framerate, deltas)
 
     if len(mAP) == 1:
-        return mAP[0], mAP_per_class[0], mAP_visible[0], mAP_per_class_visible[0], mAP_unshown[0], mAP_per_class_unshown[0]
+        return mAP[0], mAP_per_class[0] , mAP_visible[0], mAP_per_class_visible[0], mAP_unshown[0], mAP_per_class_unshown[0]
     
     # Compute the average mAP
     integral = 0.0
@@ -649,16 +656,16 @@ def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*
         integral += (mAP[i]+mAP[i+1])/2
     a_mAP = integral/((len(mAP)-1))
 
-    # integral_visible = 0.0
-    # for i in np.arange(len(mAP_visible)-1):
-    #     integral_visible += (mAP_visible[i]+mAP_visible[i+1])/2
-    # a_mAP_visible = integral_visible/((len(mAP_visible)-1))
+    integral_visible = 0.0
+    for i in np.arange(len(mAP_visible)-1):
+        integral_visible += (mAP_visible[i]+mAP_visible[i+1])/2
+    a_mAP_visible = integral_visible/((len(mAP_visible)-1))
 
-    # integral_unshown = 0.0
-    # for i in np.arange(len(mAP_unshown)-1):
-    #     integral_unshown += (mAP_unshown[i]+mAP_unshown[i+1])/2
-    # a_mAP_unshown = integral_unshown/((len(mAP_unshown)-1))
-    # a_mAP_unshown = a_mAP_unshown*17/13
+    integral_unshown = 0.0
+    for i in np.arange(len(mAP_unshown)-1):
+        integral_unshown += (mAP_unshown[i]+mAP_unshown[i+1])/2
+    a_mAP_unshown = integral_unshown/((len(mAP_unshown)-1))
+    a_mAP_unshown = a_mAP_unshown*17/13
 
     a_mAP_per_class = list()
     for c in np.arange(len(mAP_per_class[0])):
@@ -667,21 +674,21 @@ def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*
             integral_per_class += (mAP_per_class[i][c]+mAP_per_class[i+1][c])/2
         a_mAP_per_class.append(integral_per_class/((len(mAP_per_class)-1)))
 
-    # a_mAP_per_class_visible = list()
-    # for c in np.arange(len(mAP_per_class_visible[0])):
-    #     integral_per_class_visible = 0.0
-    #     for i in np.arange(len(mAP_per_class_visible)-1):
-    #         integral_per_class_visible += (mAP_per_class_visible[i][c]+mAP_per_class_visible[i+1][c])/2
-    #     a_mAP_per_class_visible.append(integral_per_class_visible/((len(mAP_per_class_visible)-1)))
+    a_mAP_per_class_visible = list()
+    for c in np.arange(len(mAP_per_class_visible[0])):
+        integral_per_class_visible = 0.0
+        for i in np.arange(len(mAP_per_class_visible)-1):
+            integral_per_class_visible += (mAP_per_class_visible[i][c]+mAP_per_class_visible[i+1][c])/2
+        a_mAP_per_class_visible.append(integral_per_class_visible/((len(mAP_per_class_visible)-1)))
 
-    # a_mAP_per_class_unshown = list()
-    # for c in np.arange(len(mAP_per_class_unshown[0])):
-    #     integral_per_class_unshown = 0.0
-    #     for i in np.arange(len(mAP_per_class_unshown)-1):
-    #         integral_per_class_unshown += (mAP_per_class_unshown[i][c]+mAP_per_class_unshown[i+1][c])/2
-    #     a_mAP_per_class_unshown.append(integral_per_class_unshown/((len(mAP_per_class_unshown)-1)))
+    a_mAP_per_class_unshown = list()
+    for c in np.arange(len(mAP_per_class_unshown[0])):
+        integral_per_class_unshown = 0.0
+        for i in np.arange(len(mAP_per_class_unshown)-1):
+            integral_per_class_unshown += (mAP_per_class_unshown[i][c]+mAP_per_class_unshown[i+1][c])/2
+        a_mAP_per_class_unshown.append(integral_per_class_unshown/((len(mAP_per_class_unshown)-1)))
 
-    return a_mAP, a_mAP_per_class #, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown
+    return a_mAP, a_mAP_per_class , a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown
 
 
 
@@ -717,13 +724,17 @@ def compute_performances_mAP(metric, targets_numpy, detections_numpy, closests_n
     elif metric == "at5": deltas=np.array([5]) 
 
     # Compute the performances
-    a_mAP, a_mAP_per_class = average_mAP(targets_numpy, 
+    a_mAP, a_mAP_per_class, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown = average_mAP(targets_numpy, 
     detections_numpy, closests_numpy,
     framerate=2, deltas=deltas)
     
     results = {
         "a_mAP": a_mAP,
         "a_mAP_per_class": a_mAP_per_class,
+        "a_mAP_visible": a_mAP_visible,
+        "a_mAP_per_class_visible": a_mAP_per_class_visible,
+        "a_mAP_unshown": a_mAP_unshown,
+        "a_mAP_per_class_unshown": a_mAP_per_class_unshown,
     }
 
     rows = []
@@ -732,13 +743,17 @@ def compute_performances_mAP(metric, targets_numpy, detections_numpy, closests_n
         rows.append((
             label,
             '{:0.2f}'.format(results['a_mAP_per_class'][i] * 100),
+            '{:0.2f}'.format(results['a_mAP_per_class_visible'][i] * 100),
+            '{:0.2f}'.format(results['a_mAP_per_class_unshown'][i] * 100)
         ))
     rows.append((
         'Average mAP',
         '{:0.2f}'.format(results['a_mAP'] * 100),
+        '{:0.2f}'.format(results['a_mAP_visible'] * 100),
+        '{:0.2f}'.format(results['a_mAP_unshown'] * 100)
     ))
 
     logging.info("Best Performance at end of training ")
     logging.info('Metric: ' +  metric)
-    print(tabulate(rows, headers=['', 'Any']))
+    print(tabulate(rows, headers=['', 'Any', 'Visible', 'Unseen']))
     return results
