@@ -8,8 +8,8 @@ import numpy as np
 from tabulate import tabulate
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from OSLActionSpotting.core.utils.io import load_json, store_gz_json, store_json
-from OSLActionSpotting.core.utils.score import compute_mAPs
+from oslactionspotting.core.utils.io import load_json, store_gz_json, store_json
+from oslactionspotting.core.utils.score import compute_mAPs
 
 
 class ErrorStat:

@@ -1,7 +1,7 @@
-from OSLActionSpotting.core.utils.eval import evaluate_e2e
-from OSLActionSpotting.core.utils.io import  store_json, clear_files
+from oslactionspotting.core.utils.eval import evaluate_e2e
+from oslactionspotting.core.utils.io import  store_json, clear_files
 
-from OSLActionSpotting.core.utils.lightning import CustomProgressBar, MyCallback
+from oslactionspotting.core.utils.lightning import CustomProgressBar, MyCallback
 import pytorch_lightning as pl
 
 from torch.optim.lr_scheduler import (
@@ -10,7 +10,7 @@ import os
 
 import torch
 
-from OSLActionSpotting.datasets.builder import build_dataset
+from oslactionspotting.datasets.builder import build_dataset
 from abc import ABC, abstractmethod
 
 

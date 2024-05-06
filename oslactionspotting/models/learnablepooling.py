@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from OSLActionSpotting.models.litebase import LiteBaseModel
-from OSLActionSpotting.models.utils import create_folders, get_json_data, get_prediction_data, get_spot_from_NMS, zipResults, timestamp_half
+from oslactionspotting.models.litebase import LiteBaseModel
+from oslactionspotting.models.utils import create_folders, get_json_data, get_prediction_data, get_spot_from_NMS, zipResults, timestamp_half
 
 from .heads import build_head
 from .backbones import build_backbone

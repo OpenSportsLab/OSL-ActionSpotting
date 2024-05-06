@@ -8,14 +8,14 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import torch
 from mmengine.config import Config, DictAction
-from OSLActionSpotting.core.utils.dali import get_repartition_gpu
-from OSLActionSpotting.core.utils.default_args import get_default_args_dataset, get_default_args_model, get_default_args_trainer
+from oslactionspotting.core.utils.dali import get_repartition_gpu
+from oslactionspotting.core.utils.default_args import get_default_args_dataset, get_default_args_model, get_default_args_trainer
 
 
-from OSLActionSpotting.core.utils.io import check_config
-from OSLActionSpotting.datasets import build_dataset, build_dataloader
-from OSLActionSpotting.models import build_model
-from OSLActionSpotting.core import build_trainer 
+from oslactionspotting.core.utils.io import check_config
+from oslactionspotting.datasets import build_dataset, build_dataloader
+from oslactionspotting.models import build_model
+from oslactionspotting.core import build_trainer 
         
 def parse_args():
 

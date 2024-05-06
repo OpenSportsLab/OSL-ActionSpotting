@@ -1,6 +1,6 @@
 import os
 
-from OSLActionSpotting.core.utils.io import load_text
+from oslactionspotting.core.utils.io import load_text
 
 
 DATASETS = [

@@ -1,6 +1,6 @@
-from OSLActionSpotting.models.backbones import build_backbone
-from OSLActionSpotting.models.common import step, BaseRGBModel
-from OSLActionSpotting.models.heads import build_head
+from oslactionspotting.models.backbones import build_backbone
+from oslactionspotting.models.common import step, BaseRGBModel
+from oslactionspotting.models.heads import build_head
 from contextlib import nullcontext
 import torch
 from tqdm import tqdm

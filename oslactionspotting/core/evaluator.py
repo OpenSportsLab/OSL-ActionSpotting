@@ -1,6 +1,6 @@
 from tabulate import tabulate
-from OSLActionSpotting.core.utils.eval import compute_performances_mAP, get_closest_action_index, label2vector, non_maximum_supression, predictions2vector, store_eval_files_json
-from OSLActionSpotting.core.utils.io import load_gz_json, load_text, load_json
+from oslactionspotting.core.utils.eval import compute_performances_mAP, get_closest_action_index, label2vector, non_maximum_supression, predictions2vector, store_eval_files_json
+from oslactionspotting.core.utils.io import load_gz_json, load_text, load_json
 
 import logging
 from SoccerNet.Evaluation.ActionSpotting import evaluate

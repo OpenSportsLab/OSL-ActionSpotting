@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 import timm
 
-from OSLActionSpotting.models.shift import make_temporal_shift
+from oslactionspotting.models.shift import make_temporal_shift
 
 def build_backbone(cfg, default_args=None):
     """Build a backbone from config dict.

@@ -13,11 +13,11 @@ from mmengine.config import Config, DictAction
 import json
 
 
-from OSLActionSpotting.core.utils.dali import get_repartition_gpu
-from OSLActionSpotting.core.utils.eval import evaluate_e2e
-from OSLActionSpotting.core.utils.lightning import CustomProgressBar
-from OSLActionSpotting.datasets.builder import build_dataloader
-from OSLActionSpotting.models import build_model
+from oslactionspotting.core.utils.dali import get_repartition_gpu
+from oslactionspotting.core.utils.eval import evaluate_e2e
+from oslactionspotting.core.utils.lightning import CustomProgressBar
+from oslactionspotting.datasets.builder import build_dataloader
+from oslactionspotting.models import build_model
 import pytorch_lightning as pl
 
 # from OSLActionSpotting.core.runner import infer_features, infer_game, infer_video

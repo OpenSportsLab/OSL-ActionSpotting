@@ -10,8 +10,8 @@ import torch
 from mmengine.config import Config, DictAction
 
 
-from OSLActionSpotting.core.utils.io import check_config
-from OSLActionSpotting.core import build_evaluator
+from oslactionspotting.core.utils.io import check_config
+from oslactionspotting.core import build_evaluator
                 
 def parse_args():
 

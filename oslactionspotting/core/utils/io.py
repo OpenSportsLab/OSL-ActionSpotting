@@ -63,7 +63,7 @@ def clear_files(dir_name, re_str, exclude=[]):
                 os.remove(file_path)
 
 def check_config(cfg):
-    from OSLActionSpotting.core.utils.dataset import load_classes
+    from oslactionspotting.core.utils.dataset import load_classes
     # check if cuda available
     has_gpu=torch.cuda.is_available()
     if 'GPU' in cfg.training.keys():
