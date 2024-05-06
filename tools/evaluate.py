@@ -10,19 +10,14 @@ import torch
 from mmengine.config import Config, DictAction
 
 
-from oslspotting.core.utils.eval import search_best_epoch
-from oslspotting.core.utils.io import check_config
-from oslspotting.models import build_model
-
-from oslspotting.core import build_evaluator
+from OSLActionSpotting.core.utils.io import check_config
+from OSLActionSpotting.core import build_evaluator
                 
 def parse_args():
 
     parser = ArgumentParser(description='context aware loss function', formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("config", metavar="FILE", type=str, help="path to config file")
 
-    parser.add_argument("--eval_only", action="store_true", help="to only evaluate without infer")
-    parser.add_argument("--split", default='test', choices=['train','val','test','challenge'], help="The split that is processed")
     # not that important
     parser.add_argument("--seed", type=int, default=42, help="random seed")
     # parser.add_argument("--id", type=int, default=0, help="repeat experiment id")

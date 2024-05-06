@@ -7,13 +7,13 @@ import time
 from mmengine.config import Config, DictAction
 import numpy as np
 import torch
-from oslspotting.apis.inference import build_inferer
-from oslspotting.core.utils.dali import get_repartition_gpu
-from oslspotting.core.utils.default_args import get_default_args_dataset
-from oslspotting.core.utils.eval import search_best_epoch
-from oslspotting.core.utils.io import check_config
-from oslspotting.datasets.builder import build_dataloader, build_dataset
-from oslspotting.models.builder import build_model
+from OSLActionSpotting.apis import build_inferer
+from OSLActionSpotting.core.utils.dali import get_repartition_gpu
+from OSLActionSpotting.core.utils.default_args import get_default_args_dataset
+from OSLActionSpotting.core.utils.eval import search_best_epoch
+from OSLActionSpotting.core.utils.io import check_config
+from OSLActionSpotting.datasets.builder import build_dataloader, build_dataset
+from OSLActionSpotting.models.builder import build_model
 
 
 def parse_args():
@@ -131,6 +131,7 @@ def main():
 
     results = inferer.infer(dataset_infer)
     
+    # logging.info(f'Predictions saved to {cfg.dataset.test.results if cfg.}')
     # # print results only if not done on full split
     # if cfg.runner.type == 'runner_e2e':
     #     print(f"Found {len(results[0]['events'])} actions!")

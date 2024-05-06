@@ -123,8 +123,10 @@ def main(label_dir, video_dir, out_dir, input_fps, wanted_sample_fps, dali):
                         half_events.append({
                             'frame': int(adj_frame),
                             'label': label['label'],
-                            'comment': '{}; {}'.format(
-                                label['team'], label['visibility'])
+                            'team' : label['team'],
+                            'visibility' : label['visibility']
+                            # 'comment': '{}; {}'.format(
+                            #     label['team'], label['visibility'])
                         })
 
                         if adj_frame >= num_frames_after:
