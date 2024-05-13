@@ -11,7 +11,8 @@ with open('README.md') as readme_file:
 
 setup(
     name='oslactionspotting',         # How you named your package folder (MyLib)
-    packages=['oslactionspotting'],   # Chose the same as "name"
+    packages= find_packages(),
+    # packages=['oslactionspotting'],   # Chose the same as "name"
     # Start with a small number and increase it with every change you make
     version=__version__,
     # Chose a license from here: https://help.github.com/articles/licensing-a-repository
