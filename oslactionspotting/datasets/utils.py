@@ -1,5 +1,22 @@
 import numpy as np
 import torch
+import math
+
+def get_stride(src_fps, sample_fps):
+        sample_fps = sample_fps
+        if sample_fps <= 0:
+            stride = 1
+        else:
+            stride = int(src_fps / sample_fps)
+        return stride
+
+def read_fps(fps,sample_fps):
+    stride = get_stride(fps,sample_fps)
+    est_out_fps = fps / stride
+    return est_out_fps
+
+def get_num_frames(num_frames,fps, sample_fps):
+    return math.ceil(num_frames/get_stride(fps,sample_fps))
 
 def rulesToCombineShifts(shift_from_last_event, shift_until_next_event, params):
     
@@ -53,9 +70,6 @@ def oneHotToShifts(onehot, params):
         Shifts[:,i] = shifts
     
     return Shifts
-
-import random
-
 
 def getNegativeIndexes(labels, params, chunk_size):
 

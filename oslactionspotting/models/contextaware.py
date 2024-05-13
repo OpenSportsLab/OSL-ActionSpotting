@@ -1,7 +1,3 @@
-
-import __future__
-from typing import Any
-
 import numpy as np
 
 import torch
@@ -13,7 +9,6 @@ from oslactionspotting.models.litebase import LiteBaseModel
 import os
 
 from oslactionspotting.datasets.utils import timestamps2long, batch2long
-from SoccerNet.Downloader import getListGames
 
 from oslactionspotting.models.utils import NMS, create_folders, get_json_data, predictions2json, predictions2json_runnerjson, zipResults
 

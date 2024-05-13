@@ -6,10 +6,10 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from oslspotting.core.runner import timestamp_half
 
-from oslspotting.models.litebase import LiteBaseModel
-from oslspotting.models.utils import create_folders, get_json_data, get_prediction_data, get_spot_from_NMS, zipResults
+
+from oslactionspotting.models.litebase import LiteBaseModel
+from oslactionspotting.models.utils import create_folders, get_json_data, get_prediction_data, get_spot_from_NMS, timestamp_half, zipResults
 
 from .heads import build_head
 from .backbones import build_backbone

@@ -2,7 +2,6 @@ import os
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import signal
 import logging
-from datetime import datetime
 import time
 from mmengine.config import Config, DictAction
 import numpy as np
@@ -12,7 +11,7 @@ from oslactionspotting.core.utils.dali import get_repartition_gpu
 from oslactionspotting.core.utils.default_args import get_default_args_dataset
 from oslactionspotting.core.utils.eval import search_best_epoch
 from oslactionspotting.core.utils.io import check_config
-from oslactionspotting.datasets.builder import build_dataloader, build_dataset
+from oslactionspotting.datasets.builder import build_dataset
 from oslactionspotting.models.builder import build_model
 
 

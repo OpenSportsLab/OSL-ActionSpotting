@@ -1,6 +1,5 @@
 import torch
 import torch
-from tqdm import tqdm
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F

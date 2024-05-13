@@ -1,32 +1,9 @@
 import os
-import logging
-from datetime import datetime
-import time
-import numpy as np
-from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
-import torch
-
-
-import json
-
-
-from oslspotting.core.utils.dali import get_repartition_gpu
-from oslspotting.core.utils.eval import evaluate_e2e
-from oslspotting.core.utils.lightning import CustomProgressBar
-from oslspotting.datasets.builder import build_dataloader
-from oslspotting.models import build_model
+from oslactionspotting.core.utils.eval import evaluate_e2e
+from oslactionspotting.core.utils.lightning import CustomProgressBar
+from oslactionspotting.datasets.builder import build_dataloader
 import pytorch_lightning as pl
-
-from oslspotting.core.runner import infer_features, infer_game, infer_video
-
-
-from pathlib import Path
-from typing import Optional, Union
-
-import numpy as np
-import torch
-import torch.nn as nn
 
 def build_inferer(cfg, model):
     """Build a inferer from config dict.

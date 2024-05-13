@@ -10,8 +10,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from oslactionspotting.core.utils.io import load_json
-from tools.parsing_jsons.parse_actionball import get_stride
-from tools.parsing_jsons.parse_soccernet import get_num_frames, read_fps
+from .utils import get_stride, get_num_frames, read_fps
 from .transform import RandomGaussianNoise, RandomHorizontalFlipFLow, \
     RandomOffsetFlow, SeedableRandomSquareCrop, ThreeCrop
 
