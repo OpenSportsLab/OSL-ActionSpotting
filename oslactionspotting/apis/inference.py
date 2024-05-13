@@ -6,8 +6,6 @@ import numpy as np
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import torch
-import mmengine
-from mmengine.config import Config, DictAction
 
 
 import json

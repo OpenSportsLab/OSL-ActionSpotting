@@ -3,8 +3,6 @@ from .soccernet import SoccerNetClips,SoccerNetClipsChunks, SoccerNetGameClips, 
 # from .folder import FolderClips, FolderGames
 from .json import FeatureClipChunksfromJson, FeatureClipsfromJSON
 import torch
-from mmengine.config import Config, DictAction
-import random
 def build_dataset(cfg, gpu=None,  default_args=None):
     """Build a dataset from config dict.
 

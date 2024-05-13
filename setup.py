@@ -37,7 +37,12 @@ setup(
         'mmengine',
         'torch',
         'torchvision',
-        'pytorch-lightning'
+        'pytorch-lightning',
+        'numpy',
+        'opencv-python',
+        'moviepy',
+        'tabulate',
+        'timm'
         # 'scikit-video',
         # 'matplotlib',
         # 'google-measurement-protocol',
