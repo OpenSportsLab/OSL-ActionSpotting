@@ -50,7 +50,7 @@ If you think this repo is helpful, please cite us:
 @misc{name,
     title={},
     author={},
-    howpublished = {\url{https://github.com/SoccerNet/sn-spotting-pip}},
+    howpublished = {\url{https://github.com/OpenSportsLab/OSL-ActionSpotting}},
     year={2024}
 }
 ```
