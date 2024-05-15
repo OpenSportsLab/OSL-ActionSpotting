@@ -108,7 +108,7 @@ def main():
     dataset_Train = build_dataset(cfg.dataset.train,cfg.training.GPU, get_default_args_dataset('train', cfg, cfg.runner.type == "runner_e2e", dali))
     dataset_Val = build_dataset(cfg.dataset.val,cfg.training.GPU, get_default_args_dataset('val', cfg, cfg.runner.type == "runner_e2e", dali))
     dataset_Val_Frames = None
-    if cfg.runner.type == "runner_e2e" and 'criterion' in cfg.training.keys() and cfg.training.criterion == 'map':
+    if cfg.runner.type == "runner_e2e" and 'criterion_val' in cfg.training.keys() and cfg.training.criterion_val == 'map':
         dataset_Val_Frames = build_dataset(cfg.dataset.val_data_frames,None,get_default_args_dataset('val_data_frames', cfg, True, dali))
     
     # Build Dataloaders

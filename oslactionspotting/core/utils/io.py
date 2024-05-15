@@ -99,6 +99,8 @@ def check_config(cfg):
         assert cfg.model.head.type in ['', 'gru', 'deeper_gru', 'mstcn', 'asformer']
         assert cfg.dataset.batch_size % cfg.training.acc_grad_iter == 0
         assert cfg.training.criterion in ['map', 'loss']
+        assert cfg.training.num_epochs == cfg.training.scheduler.num_epochs
+        assert cfg.training.acc_grad_iter == cfg.training.scheduler.acc_grad_iter
         if cfg.training.start_val_epoch is None:
             cfg.training.start_val_epoch = cfg.training.num_epochs - cfg.training.base_num_val_epochs
         if cfg.dataset.crop_dim <= 0:
@@ -114,3 +116,19 @@ def check_config(cfg):
                 cfg.dataset['val_data_frames'][key] = value
                 cfg.dataset['test'][key] = value
                 cfg.dataset['challenge'][key] = value
+
+def whether_infer_split(cfg):
+        if cfg.type == "SoccerNetGames" or cfg.type == "SoccerNetClipsTestingCALF" :
+            if cfg.split == None :
+                return False
+            else : return True
+        elif cfg.type == "FeatureVideosfromJSON" or cfg.type == "FeatureVideosChunksfromJson":
+            if cfg.path.endswith('.json'):
+                return True
+            else : return False
+        elif cfg.type == "VideoGameWithOpencvVideo" or cfg.type == 'VideoGameWithDaliVideo':
+            if cfg.path.endswith('.json'):
+                return True
+            else : return False
+        else :
+            raise ValueError

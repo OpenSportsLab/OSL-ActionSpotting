@@ -1,4 +1,6 @@
-from oslactionspotting.core.utils.eval import evaluate_e2e
+from oslactionspotting.core.optimizer import build_optimizer
+from oslactionspotting.core.scheduler import build_scheduler
+from oslactionspotting.core.utils.eval import infer_and_process_predictions_e2e
 from oslactionspotting.core.utils.io import  store_json, clear_files
 
 from oslactionspotting.core.utils.lightning import CustomProgressBar, MyCallback
@@ -16,27 +18,29 @@ from abc import ABC, abstractmethod
 
 def build_trainer(cfg, model = None, default_args=None):
     if cfg.type == "trainer_e2e":
-        optimizer, scaler = model.get_optimizer({'lr': cfg.learning_rate})
+        optimizer, scaler = build_optimizer(list(model.parameters()), cfg.optimizer)
+        lr_scheduler = build_scheduler(optimizer, cfg.scheduler, default_args)
+        # optimizer, scaler = model.get_optimizer({'lr': cfg.learning_rate})
 
-        # Warmup schedule
-        num_steps_per_epoch = default_args["len_train_loader"] // cfg.acc_grad_iter
-        num_epochs, lr_scheduler = get_lr_scheduler(
-            cfg, optimizer, num_steps_per_epoch)
+        # # Warmup schedule
+        # num_steps_per_epoch = default_args["len_train_loader"] // cfg.acc_grad_iter
+        # num_epochs, lr_scheduler = get_lr_scheduler(
+        #     cfg, optimizer, num_steps_per_epoch)
         trainer = Trainer_e2e(cfg,model,optimizer,scaler,lr_scheduler, default_args['work_dir'], default_args['dali'], default_args['repartitions'], default_args['cfg_test'], default_args['cfg_challenge'], default_args['cfg_val_data_frames'])
     else:
         call=MyCallback()
         trainer = pl.Trainer(max_epochs=cfg.max_epochs,devices=[cfg.GPU],callbacks=[call,CustomProgressBar(refresh_rate=1)],num_sanity_val_steps=0)
     return trainer
 
-def get_lr_scheduler(args, optimizer, num_steps_per_epoch):
-    cosine_epochs = args.num_epochs - args.warm_up_epochs
-    print('Using Linear Warmup ({}) + Cosine Annealing LR ({})'.format(
-        args.warm_up_epochs, cosine_epochs))
-    return args.num_epochs, ChainedScheduler([
-        LinearLR(optimizer, start_factor=0.01, end_factor=1.0,
-                 total_iters=args.warm_up_epochs * num_steps_per_epoch),
-        CosineAnnealingLR(optimizer,
-            num_steps_per_epoch * cosine_epochs)])
+# def get_lr_scheduler(args, optimizer, num_steps_per_epoch):
+#     cosine_epochs = args.num_epochs - args.warm_up_epochs
+#     print('Using Linear Warmup ({}) + Cosine Annealing LR ({})'.format(
+#         args.warm_up_epochs, cosine_epochs))
+#     return args.num_epochs, ChainedScheduler([
+#         LinearLR(optimizer, start_factor=0.01, end_factor=1.0,
+#                  total_iters=args.warm_up_epochs * num_steps_per_epoch),
+#         CosineAnnealingLR(optimizer,
+#             num_steps_per_epoch * cosine_epochs)])
 
 class Trainer(ABC):
     def __init__(self):
@@ -61,7 +65,7 @@ class Trainer_e2e(Trainer):
                  cfg_val_data_frames = None):
         self.losses = []
         self.best_epoch = 0
-        self.best_criterion = 0 if args.criterion == 'map' else float('inf')
+        self.best_criterion_val = 0 if args.criterion_val == 'map' else float('inf')
 
         self.num_epochs = args.num_epochs
         self.epoch = 0
@@ -74,7 +78,7 @@ class Trainer_e2e(Trainer):
         self.acc_grad_iter = args.acc_grad_iter
 
         self.start_val_epoch = args.start_val_epoch
-        self.criterion = args.criterion
+        self.criterion_val = args.criterion_val
         self.save_dir = work_dir
         self.dali = dali
         self.inference_batch_size = args.inference_batch_size
@@ -96,26 +100,26 @@ class Trainer_e2e(Trainer):
                 epoch, train_loss, val_loss))
                         
             val_mAP = 0
-            if self.criterion == 'loss':
-                if val_loss < self.best_criterion:
-                    self.best_criterion = val_loss
+            if self.criterion_val == 'loss':
+                if val_loss < self.best_criterion_val:
+                    self.best_criterion_val = val_loss
                     self.best_epoch = epoch
                     print('New best epoch!')
-            elif self.criterion == 'map':
+            elif self.criterion_val == 'map':
                 if epoch >= self.start_val_epoch:
                     pred_file = None
                     if self.save_dir is not None:
                         pred_file = os.path.join(
                             self.save_dir, 'pred-val.{}'.format(epoch))
                         os.makedirs(self.save_dir, exist_ok=True)
-                    val_mAP = evaluate_e2e(self.model, self.dali,  val_data_frames, 'VAL', classes, 
+                    val_mAP = infer_and_process_predictions_e2e(self.model, self.dali,  val_data_frames, 'VAL', classes, 
                                            pred_file, save_scores=False , dataloader_params= self.cfg_val_data_frames.dataloader)
-                    if self.criterion == 'map' and val_mAP > self.best_criterion:
-                        self.best_criterion = val_mAP
+                    if val_mAP > self.best_criterion_val:
+                        self.best_criterion_val = val_mAP
                         self.best_epoch = epoch
                         print('New best epoch!')
             else:
-                print('Unknown criterion:', self.criterion)
+                print('Unknown criterion:', self.criterion_val)
 
             self.losses.append({
             'epoch': epoch, 'train': train_loss, 'val': val_loss,
@@ -141,7 +145,7 @@ class Trainer_e2e(Trainer):
         if self.dali:
             train_loader.delete()
             val_loader.delete()
-            if self.criterion == 'map':
+            if self.criterion_val == 'map':
                 val_data_frames.delete()
 
         if self.save_dir is not None:
@@ -149,7 +153,7 @@ class Trainer_e2e(Trainer):
                 self.save_dir, 'checkpoint_{:03d}.pt'.format(self.best_epoch))))
 
             # Evaluate on VAL if not already done
-            eval_splits = ['val'] if self.criterion != 'map' else []
+            eval_splits = ['val'] if self.criterion_val != 'map' else []
 
             # Evaluate on hold out splits
             eval_splits += ['test', 'challenge']
@@ -183,7 +187,7 @@ class Trainer_e2e(Trainer):
                         pred_file = os.path.join(
                             self.save_dir, 'pred-{}.{}'.format(split, self.best_epoch))
 
-                    evaluate_e2e(self.model, self.dali, split_data, split.upper(), classes, pred_file,
+                    infer_and_process_predictions_e2e(self.model, self.dali, split_data, split.upper(), classes, pred_file,
                             calc_stats=split != 'challenge', dataloader_params= cfg_tmp.dataloader)
                     
                     if self.dali:

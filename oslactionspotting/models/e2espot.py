@@ -1,3 +1,4 @@
+from oslactionspotting.core.loss.builder import build_criterion
 from oslactionspotting.models.backbones import build_backbone
 from oslactionspotting.models.common import step, BaseRGBModel
 from oslactionspotting.models.heads import build_head
@@ -40,7 +41,7 @@ class E2EModel(BaseRGBModel):
             print('  Temporal:',
                 sum(p.numel() for p in self.head._pred_fine.parameters()))
 
-    def __init__(self, num_classes, backbone, head, clip_len,
+    def __init__(self, cfg, num_classes, backbone, head, clip_len,
                  modality, device='cuda', multi_gpu=False):
         
         last_gpu_index = torch.cuda.device_count() - 1
@@ -51,7 +52,7 @@ class E2EModel(BaseRGBModel):
         self._model = E2EModel.Impl(
             num_classes, backbone, head, clip_len, modality)
         self._model.print_stats()
-
+        self.criterion = build_criterion(cfg.training.criterion)
         if multi_gpu:
             self._model = nn.DataParallel(self._model)
             self._model.to(device)
@@ -66,6 +67,7 @@ class E2EModel(BaseRGBModel):
 
     def epoch(self, loader, dali, optimizer=None, scaler=None, lr_scheduler=None,
               acc_grad_iter=1, fg_weight=5):
+        
         if optimizer is None:
             self._model.eval()
         else:
@@ -108,9 +110,10 @@ class E2EModel(BaseRGBModel):
                     # label=label.to(self.device)
 
                     for i in range(pred.shape[0]):
-                        loss += F.cross_entropy(
-                            pred[i].reshape(-1, self._num_classes), label,
-                            **ce_kwargs)
+                        loss += self.criterion(label, pred[i].reshape(-1, self._num_classes), **ce_kwargs)
+                        # loss += F.cross_entropy(
+                        #     pred[i].reshape(-1, self._num_classes), label,
+                        #     **ce_kwargs)
 
                 if optimizer is not None:
                     step(optimizer, scaler, loss / acc_grad_iter,
