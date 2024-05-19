@@ -6,6 +6,7 @@ import gzip
 
 import torch
 
+
 def load_json(fpath):
     with open(fpath) as fp:
         return json.load(fp)
@@ -30,17 +31,16 @@ def store_gz_json(fpath, obj):
         json.dump(obj, fp)
 
 
-def load_pickle(fpath):
-    with open(fpath, 'rb') as fp:
-        return pickle.load(fp)
-
-
-def store_pickle(fpath, obj):
-    with open(fpath, 'wb') as fp:
-        pickle.dump(obj, fp)
-
-
 def load_text(fpath):
+    """Load text from a given file.
+
+    Args:
+        fpath (string): The path of the file.
+
+    Returns:
+        lines (List): List in which element is a line of the file.
+
+    """
     lines = []
     with open(fpath, 'r') as fp:
         for l in fp:
@@ -50,11 +50,6 @@ def load_text(fpath):
     return lines
 
 
-def store_text(fpath, s):
-    with open(fpath, 'w') as fp:
-        fp.write(s)
-
-
 def clear_files(dir_name, re_str, exclude=[]):
     for file_name in os.listdir(dir_name):
         if re.match(re_str, file_name):
@@ -62,53 +57,63 @@ def clear_files(dir_name, re_str, exclude=[]):
                 file_path = os.path.join(dir_name, file_name)
                 os.remove(file_path)
 
+
 def check_config(cfg):
+    """Check for incoherences, missing elements in dict config.
+    The checks are different regarding the methods.
+
+    Args:
+        cfg (dict): Config dictionnary.
+
+    """
     from oslactionspotting.core.utils.dataset import load_classes
     # check if cuda available
-    has_gpu=torch.cuda.is_available()
+    has_gpu = torch.cuda.is_available()
     if 'GPU' in cfg.training.keys():
         if cfg.training.GPU >= 0:
             if not has_gpu:
                 cfg.training.GPU = -1
-    else :
+    else:
         cfg.training.GPU = 1
     if cfg.runner.type == "runner_e2e":
         assert cfg.dataset.modality in ['rgb']
         assert cfg.model.backbone.type in [
-                # From torchvision
-                'rn18',
-                'rn18_tsm',
-                'rn18_gsm',
-                'rn50',
-                'rn50_tsm',
-                'rn50_gsm',
+            # From torchvision
+            'rn18',
+            'rn18_tsm',
+            'rn18_gsm',
+            'rn50',
+            'rn50_tsm',
+            'rn50_gsm',
 
-                # From timm (following its naming conventions)
-                'rny002',
-                'rny002_tsm',
-                'rny002_gsm',
-                'rny008',
-                'rny008_tsm',
-                'rny008_gsm',
+            # From timm (following its naming conventions)
+            'rny002',
+            'rny002_tsm',
+            'rny002_gsm',
+            'rny008',
+            'rny008_tsm',
+            'rny008_gsm',
 
-                # From timm
-                'convnextt',
-                'convnextt_tsm',
-                'convnextt_gsm'
-            ]
-        assert cfg.model.head.type in ['', 'gru', 'deeper_gru', 'mstcn', 'asformer']
+            # From timm
+            'convnextt',
+            'convnextt_tsm',
+            'convnextt_gsm'
+        ]
+        assert cfg.model.head.type in [
+            '', 'gru', 'deeper_gru', 'mstcn', 'asformer']
         assert cfg.dataset.batch_size % cfg.training.acc_grad_iter == 0
-        assert cfg.training.criterion in ['map', 'loss']
+        assert cfg.training.criterion_val in ['map', 'loss']
         assert cfg.training.num_epochs == cfg.training.scheduler.num_epochs
         assert cfg.training.acc_grad_iter == cfg.training.scheduler.acc_grad_iter
         if cfg.training.start_val_epoch is None:
-            cfg.training.start_val_epoch = cfg.training.num_epochs - cfg.training.base_num_val_epochs
+            cfg.training.start_val_epoch = cfg.training.num_epochs - \
+                cfg.training.base_num_val_epochs
         if cfg.dataset.crop_dim <= 0:
             cfg.dataset.crop_dim = None
         assert os.path.isfile(cfg.classes) and os.path.exists(cfg.classes)
         cfg.classes = load_classes(cfg.classes)
-        for key,value in cfg.dataset.items():
-            if key in ['train','val','val_data_frames','test','challenge']:
+        for key, value in cfg.dataset.items():
+            if key in ['train', 'val', 'val_data_frames', 'test', 'challenge']:
                 pass
             else:
                 cfg.dataset['train'][key] = value
@@ -117,18 +122,30 @@ def check_config(cfg):
                 cfg.dataset['test'][key] = value
                 cfg.dataset['challenge'][key] = value
 
+
 def whether_infer_split(cfg):
-        if cfg.type == "SoccerNetGames" or cfg.type == "SoccerNetClipsTestingCALF" :
-            if cfg.split == None :
-                return False
-            else : return True
-        elif cfg.type == "FeatureVideosfromJSON" or cfg.type == "FeatureVideosChunksfromJson":
-            if cfg.path.endswith('.json'):
-                return True
-            else : return False
-        elif cfg.type == "VideoGameWithOpencvVideo" or cfg.type == 'VideoGameWithDaliVideo':
-            if cfg.path.endswith('.json'):
-                return True
-            else : return False
-        else :
-            raise ValueError
+    """Given a config dict, check whether we want to infer a split or a single element (can be a game, video or feature file)/
+
+    Args:
+        cfg (dict): Config dict.
+
+    Returns:
+        bool : True if we infer split, false otherwise. Raises an error if the input is not expected.
+    """
+    if cfg.type == "SoccerNetGames" or cfg.type == "SoccerNetClipsTestingCALF":
+        if cfg.split == None:
+            return False
+        else:
+            return True
+    elif cfg.type == "FeatureVideosfromJSON" or cfg.type == "FeatureVideosChunksfromJson":
+        if cfg.path.endswith('.json'):
+            return True
+        else:
+            return False
+    elif cfg.type == "VideoGameWithOpencvVideo" or cfg.type == 'VideoGameWithDaliVideo':
+        if cfg.path.endswith('.json'):
+            return True
+        else:
+            return False
+    else:
+        raise ValueError

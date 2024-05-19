@@ -11,7 +11,7 @@ from .impl.gsm import _GSM
 class GatedShift(nn.Module):
     def __init__(self, net, n_segment, n_div):
         super(GatedShift, self).__init__()
-        
+
         if isinstance(net, torchvision.models.resnet.BasicBlock):
             channels = net.conv1.in_channels
         elif isinstance(net, torchvision.ops.misc.ConvNormActivation):
@@ -27,13 +27,12 @@ class GatedShift(nn.Module):
         self.gsm = _GSM(self.fold_dim, n_segment)
         self.net = net
         self.n_segment = n_segment
-        print('=> Using GSM, fold dim: {} / {}'.format(
-            self.fold_dim, channels))
+        print("=> Using GSM, fold dim: {} / {}".format(self.fold_dim, channels))
 
     def forward(self, x):
         y = torch.zeros_like(x)
-        y[:, :self.fold_dim, :, :] = self.gsm(x[:, :self.fold_dim, :, :])
-        y[:, self.fold_dim:, :, :] = x[:, self.fold_dim:, :, :]
+        y[:, : self.fold_dim, :, :] = self.gsm(x[:, : self.fold_dim, :, :])
+        y[:, self.fold_dim :, :, :] = x[:, self.fold_dim :, :, :]
         return self.net(y)
 
 
@@ -50,11 +49,11 @@ def make_temporal_shift(net, clip_len, is_gsm=False):
         n_round = 1
         if len(list(net.layer3.children())) >= 23:
             n_round = 2
-            print('=> Using n_round {} to insert temporal shift'.format(n_round))
+            print("=> Using n_round {} to insert temporal shift".format(n_round))
 
         def make_block_temporal(stage):
             blocks = list(stage.children())
-            print('=> Processing stage with {} blocks residual'.format(len(blocks)))
+            print("=> Processing stage with {} blocks residual".format(len(blocks)))
             for i, b in enumerate(blocks):
                 if i % n_round == 0:
                     blocks[i].conv1 = _build_shift(b.conv1)
@@ -73,8 +72,7 @@ def make_temporal_shift(net, clip_len, is_gsm=False):
 
         def make_block_temporal(stage):
             blocks = list(stage.children())
-            print('=> Processing stage with {} blocks residual'.format(
-                len(blocks)))
+            print("=> Processing stage with {} blocks residual".format(len(blocks)))
             for i, b in enumerate(blocks):
                 if i % n_round == 0:
                     blocks[i].conv1 = _build_shift(b.conv1)
@@ -92,8 +90,7 @@ def make_temporal_shift(net, clip_len, is_gsm=False):
 
         def make_block_temporal(stage):
             blocks = list(stage.blocks)
-            print('=> Processing stage with {} blocks residual'.format(
-                len(blocks)))
+            print("=> Processing stage with {} blocks residual".format(len(blocks)))
 
             for i, b in enumerate(blocks):
                 if i % n_round == 0:
@@ -106,4 +103,4 @@ def make_temporal_shift(net, clip_len, is_gsm=False):
         make_block_temporal(net.stages[3])
 
     else:
-        raise NotImplementedError('Unsupported architecture')
+        raise NotImplementedError("Unsupported architecture")

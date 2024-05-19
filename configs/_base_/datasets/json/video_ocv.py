@@ -63,6 +63,7 @@ dataset = dict(
         stride = 12,
         split=["test"],
         results = "results_spotting_test_ocv",
+        nms_window = 2,
         metric = "loose",
         overlap_len = 50,
         dataloader=dict(

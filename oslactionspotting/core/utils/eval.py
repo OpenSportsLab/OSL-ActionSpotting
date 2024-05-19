@@ -10,7 +10,7 @@ from tabulate import tabulate
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from oslactionspotting.core.utils.io import load_json, store_gz_json, store_json
-from oslactionspotting.core.utils.score import compute_mAPs
+from oslactionspotting.core.utils.score import compute_mAPs_E2E
 
 
 class ErrorStat:
@@ -333,7 +333,7 @@ def infer_and_process_predictions_e2e(model, dali, dataset, split, classes, save
                        floatfmt='0.2f'))
         print()
 
-        mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall)
+        mAPs, _ = compute_mAPs_E2E(dataset.labels, pred_events_high_recall)
         avg_mAP = np.mean(mAPs[1:])
 
     if save_pred is not None:

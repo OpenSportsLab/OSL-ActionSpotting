@@ -30,8 +30,9 @@ class ABCModel:
 class BaseRGBModel(ABCModel):
 
     def get_optimizer(self, opt_args):
-        return torch.optim.AdamW(self._get_params(), **opt_args), \
-            torch.cuda.amp.GradScaler() if self.device == 'cuda' else None
+        return torch.optim.AdamW(self._get_params(), **opt_args), (
+            torch.cuda.amp.GradScaler() if self.device == "cuda" else None
+        )
 
     """ Assume there is a self._model """
 
@@ -51,6 +52,18 @@ class BaseRGBModel(ABCModel):
 
 
 def step(optimizer, scaler, loss, lr_scheduler=None, backward_only=False):
+    """
+    Perform a backward pass, and optionally update the model parameters and learning rate scheduler.
+
+    Args:
+        optimizer (torch.optim.Optimizer): The optimizer to update model parameters.
+        scaler (torch.cuda.amp.GradScaler): The gradient scaler for mixed precision training.
+        loss (torch.Tensor): The computed loss to backpropagate.
+        lr_scheduler : The learning rate scheduler.
+            Default: None.
+        backward_only (bool): If True, only perform the backward pass.
+            Default: False.
+    """
     if scaler is None:
         loss.backward()
     else:
@@ -72,12 +85,17 @@ class SingleStageGRU(nn.Module):
     def __init__(self, in_dim, hidden_dim, out_dim, num_layers=5):
         super(SingleStageGRU, self).__init__()
         self.backbone = nn.GRU(
-            in_dim, hidden_dim, num_layers=num_layers, batch_first=True,
-            bidirectional=True)
+            in_dim,
+            hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=True,
+        )
         self.fc_out = nn.Sequential(
             nn.BatchNorm1d(2 * hidden_dim),
             nn.Dropout(),
-            nn.Linear(2 * hidden_dim, out_dim))
+            nn.Linear(2 * hidden_dim, out_dim),
+        )
 
     def forward(self, x):
         batch_size, clip_len, _ = x.shape
@@ -92,8 +110,8 @@ class SingleStageTCN(nn.Module):
         def __init__(self, dilation, in_channels, out_channels):
             super(SingleStageTCN.DilatedResidualLayer, self).__init__()
             self.conv_dilated = nn.Conv1d(
-                in_channels, out_channels, 3, padding=dilation,
-                dilation=dilation)
+                in_channels, out_channels, 3, padding=dilation, dilation=dilation
+            )
             self.conv_1x1 = nn.Conv1d(out_channels, out_channels, 1)
             self.dropout = nn.Dropout()
 
@@ -106,11 +124,14 @@ class SingleStageTCN(nn.Module):
     def __init__(self, in_dim, hidden_dim, out_dim, num_layers, dilate):
         super(SingleStageTCN, self).__init__()
         self.conv_1x1 = nn.Conv1d(in_dim, hidden_dim, 1)
-        self.layers = nn.ModuleList([
-            SingleStageTCN.DilatedResidualLayer(
-                2 ** i if dilate else 1, hidden_dim, hidden_dim)
-            for i in range(num_layers)
-        ])
+        self.layers = nn.ModuleList(
+            [
+                SingleStageTCN.DilatedResidualLayer(
+                    2**i if dilate else 1, hidden_dim, hidden_dim
+                )
+                for i in range(num_layers)
+            ]
+        )
         self.conv_out = nn.Conv1d(hidden_dim, out_dim, 1)
 
     def forward(self, x, m=None):

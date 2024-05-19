@@ -30,10 +30,8 @@ class RandomOffsetFlow(nn.Module):
         if torch.rand(1)[0] < self.p:
             shape = img.shape
             view = img.view((-1,) + shape[-3:])
-            view[:, 1, :, :] += (
-                torch.rand(1, device=img.device)[0] * 2 - 1) * self.x
-            view[:, 0, :, :] += (
-                torch.rand(1, device=img.device)[0] * 2 - 1) * self.y
+            view[:, 1, :, :] += (torch.rand(1, device=img.device)[0] * 2 - 1) * self.x
+            view[:, 0, :, :] += (torch.rand(1, device=img.device)[0] * 2 - 1) * self.y
         return img
 
 
@@ -42,7 +40,7 @@ class RandomGaussianNoise(nn.Module):
     def __init__(self, p=0.5, s=0.1):
         super().__init__()
         self.p = p
-        self.std = s ** 0.5
+        self.std = s**0.5
 
     def forward(self, img):
         v = torch.rand(1)[0]
