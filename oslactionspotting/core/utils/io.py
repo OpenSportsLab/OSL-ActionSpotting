@@ -6,6 +6,8 @@ import gzip
 
 import torch
 
+from oslactionspotting.core.utils.dali import get_repartition_gpu
+
 
 def load_json(fpath):
     with open(fpath) as fp:
@@ -76,6 +78,9 @@ def check_config(cfg):
     else:
         cfg.training.GPU = 1
     if cfg.runner.type == "runner_e2e":
+        assert "dali" in cfg.keys()
+        if cfg.dali == True:
+            cfg.repartitions = get_repartition_gpu()
         assert cfg.dataset.modality in ['rgb']
         assert cfg.model.backbone.type in [
             # From torchvision
@@ -101,24 +106,30 @@ def check_config(cfg):
         ]
         assert cfg.model.head.type in [
             '', 'gru', 'deeper_gru', 'mstcn', 'asformer']
-        assert cfg.dataset.batch_size % cfg.training.acc_grad_iter == 0
-        assert cfg.training.criterion_val in ['map', 'loss']
+        # assert cfg.dataset.batch_size % cfg.training.acc_grad_iter == 0
+        assert cfg.dataset.train.dataloader.batch_size % cfg.training.acc_grad_iter == 0
+        assert cfg.training.criterion_valid in ['map', 'loss']
         assert cfg.training.num_epochs == cfg.training.scheduler.num_epochs
         assert cfg.training.acc_grad_iter == cfg.training.scheduler.acc_grad_iter
-        if cfg.training.start_val_epoch is None:
-            cfg.training.start_val_epoch = cfg.training.num_epochs - \
-                cfg.training.base_num_val_epochs
+        if cfg.training.start_valid_epoch is None:
+            cfg.training.start_valid_epoch = cfg.training.num_epochs - \
+                cfg.training.base_num_valid_epochs
         if cfg.dataset.crop_dim <= 0:
             cfg.dataset.crop_dim = None
-        assert os.path.isfile(cfg.classes) and os.path.exists(cfg.classes)
-        cfg.classes = load_classes(cfg.classes)
+        
+        if cfg.dataset.test.path != None and os.path.isfile(cfg.dataset.test.path) and cfg.dataset.test.path.endswith(".json") and "labels" in load_json(cfg.dataset.test.path).keys():
+            classes = load_json(cfg.dataset.test.path)["labels"]
+        else:
+            assert isinstance(cfg.classes, list) or os.path.isfile(cfg.classes)
+            classes = cfg.classes
+        cfg.classes = load_classes(classes)
         for key, value in cfg.dataset.items():
-            if key in ['train', 'val', 'val_data_frames', 'test', 'challenge']:
+            if key in ['train', 'valid', 'valid_data_frames', 'test', 'challenge']:
                 pass
             else:
                 cfg.dataset['train'][key] = value
-                cfg.dataset['val'][key] = value
-                cfg.dataset['val_data_frames'][key] = value
+                cfg.dataset['valid'][key] = value
+                cfg.dataset['valid_data_frames'][key] = value
                 cfg.dataset['test'][key] = value
                 cfg.dataset['challenge'][key] = value
 

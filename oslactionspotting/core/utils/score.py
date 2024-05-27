@@ -1,3 +1,4 @@
+import os
 import sys
 from collections import defaultdict
 from tabulate import tabulate
@@ -36,7 +37,7 @@ def get_predictions(pred, label=None):
     for x in pred:
         for e in x["events"]:
             if label is None or e["label"] == label:
-                flat_pred.append((x["video"], e["frame"], e["score"]))
+                flat_pred.append((x["video"], e["frame"], e["confidence"]))
     flat_pred.sort(key=lambda x: x[-1], reverse=True)
     return flat_pred
 
@@ -126,7 +127,8 @@ def compute_mAPs_E2E(truth, pred, tolerances=[0, 1, 2, 4], plot_pr=False):
         plot_pr (bool): Whether to plot or not the precision recall curve.
             Default: False.
     """
-    assert {v["video"] for v in truth} == {
+
+    assert {os.path.splitext(v["path"])[0] for v in truth} == {
         v["video"] for v in pred
     }, "Video set mismatch!"
 

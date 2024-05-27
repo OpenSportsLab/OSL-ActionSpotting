@@ -38,8 +38,8 @@ def timestamp(model, feat, BS):
     for b in range(int(np.ceil(len(feat) / BS))):
         start_frame = BS * b
         end_frame = BS * (b + 1) if BS * (b + 1) < len(feat) else len(feat)
-        feat = feat[start_frame:end_frame].cuda()
-        output = model(feat).cpu().detach().numpy()
+        feat_tmp = feat[start_frame:end_frame].cuda()
+        output = model(feat_tmp).cpu().detach().numpy()
         timestamp_long.append(output)
     return np.concatenate(timestamp_long)
 
@@ -48,7 +48,7 @@ def get_spot_from_NMS(Input, window=60, thresh=0.0):
     detections_tmp = np.copy(Input)
     indexes = []
     MaxValues = []
-    while np.max(detections_tmp) >= thresh:
+    while(np.max(detections_tmp) >= thresh):
 
         # Get the max remaining index and value
         max_value = np.max(detections_tmp)
@@ -57,10 +57,10 @@ def get_spot_from_NMS(Input, window=60, thresh=0.0):
         indexes.append(max_index)
         # detections_NMS[max_index,i] = max_value
 
-        nms_from = int(np.maximum(-(window / 2) + max_index, 0))
-        nms_to = int(np.minimum(max_index + int(window / 2), len(detections_tmp)))
+        nms_from = int(np.maximum(-(window/2)+max_index,0))
+        nms_to = int(np.minimum(max_index+int(window/2), len(detections_tmp)))
         detections_tmp[nms_from:nms_to] = -1
-
+    
     return np.transpose([indexes, MaxValues])
 
 
@@ -113,10 +113,11 @@ def get_prediction_data(
     """
     seconds = int((frame_index // framerate) % 60)
     minutes = int((frame_index // framerate) // 60)
-
+    # print(frame_index,framerate)
     prediction_data = dict()
     if runner == "runner_JSON":
         prediction_data["gameTime"] = f"{minutes:02.0f}:{seconds:02.0f}"
+        # print(f"{minutes:02.0f}:{seconds:02.0f}")
     else:
         prediction_data["half"] = str(1 if half_1 else 2) if calf else str(half + 1)
         prediction_data["gameTime"] = (
@@ -132,8 +133,8 @@ def get_prediction_data(
             if version == 2
             else INVERSE_EVENT_DICTIONARY_V1[l]
         )
-    prediction_data["position"] = str(int((frame_index / framerate) * 1000))
-    prediction_data["confidence"] = str(confidence)
+    prediction_data["position"] = int((frame_index / framerate) * 1000)
+    prediction_data["confidence"] = confidence
 
     return prediction_data
 

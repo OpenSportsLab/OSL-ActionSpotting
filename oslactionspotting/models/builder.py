@@ -63,6 +63,8 @@ def build_model(cfg, verbose=True, default_args=None):
                     new_state_dict["backbone." + key] = checkpoint[key]
                 elif key.startswith("_pred_fine"):
                     new_state_dict["head." + key] = checkpoint[key]
+                else:
+                    new_state_dict[key] = checkpoint[key]
             model.load(new_state_dict)
             # model.load(checkpoint)
     else:

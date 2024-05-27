@@ -10,7 +10,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from oslactionspotting.core.utils.io import load_json
-from .utils import get_stride, get_num_frames, read_fps
+from .utils import annotationstoe2eformat, get_stride, get_num_frames, read_fps
 from .transform import (
     RandomGaussianNoise,
     RandomHorizontalFlipFLow,
@@ -31,35 +31,26 @@ class FrameReader:
     """Class used to read a video and create a clip of frames by applying some transformations.
 
     Args:
-        video_dir (string): Path where the videos are located.
         modality (string): Modality of the frames.
         crop_transform : Transformations that apply to frame for cropping.
         img_transform : Transformations that apply to frame like GaussianBlur and Normalization.
         same_transform (bool): Whether to apply same trasnforms to every frame of a same clip.
-        extension (string): Extension of the videos.
         sample_fps (int): Fps at which we want to extract frames from the video.
-        infer (bool): Whether to infer a single video or a split in json.
     """
 
     def __init__(
         self,
-        video_dir,
         modality,
         crop_transform,
         img_transform,
         same_transform,
-        extension,
         sample_fps=2,
-        infer=False,
     ):
-        self._video_dir = video_dir
         self._is_flow = modality == "flow"
         self._crop_transform = crop_transform
         self._img_transform = img_transform
         self._same_transform = same_transform
         self._sample_fps = sample_fps
-        self.infer = infer
-        self.extension = extension
 
     def adapt_frame_ocv(self, frame):
         """Apply some modifications to the frame to have the expected shape and format.
@@ -100,11 +91,11 @@ class FrameReader:
                 stride_extract = int(src_fps / self._sample_fps)
             return stride_extract
 
-        if self.infer:
-            video_path = video_name
-        else:
-            video_path = os.path.join(self._video_dir, video_name + self.extension)
-        vc = cv2.VideoCapture(video_path)
+        # if self.infer:
+        #     video_path = video_name
+        # else:
+        #     video_path = os.path.join(self._video_dir, video_name + self.extension)
+        vc = cv2.VideoCapture(video_name)
         fps = vc.get(cv2.CAP_PROP_FPS)
 
         oh = TARGET_HEIGHT
@@ -346,11 +337,11 @@ class ActionSpotDataset(Dataset):
 
     Args:
         classes (dict): dict of class names to idx.
-        label_file (string): path to label json.
-        video_dir (string): path to folder where videos are located.
+        label_file (list[string]|string): Path to label json files. Can be a single file or a list or a json files.
+        video_dir (list[string]|string): Path to folders where videos are located. Can be a single folder or a list of folders. Must match the number of json files.
         modality (string): [rgb] Modality of the frame.
         clip_len (int): Length of a clip of frames.
-        extension (string): Extension of the videos.
+        input_fps (int): Fps of the input videos.
         extract_fps (int): Fps at which we want to extract frames.
         dataset_len (int): Number of clips.
         is_eval (bool): Disable random augmentation
@@ -376,7 +367,7 @@ class ActionSpotDataset(Dataset):
         video_dir,
         modality,
         clip_len,
-        extension,
+        input_fps,
         extract_fps,
         dataset_len,
         is_eval=True,
@@ -389,14 +380,16 @@ class ActionSpotDataset(Dataset):
         fg_upsample=-1,
     ):
         self._src_file = label_file
-        self._labels = load_json(label_file)
+        self._labels = annotationstoe2eformat(
+            label_file, video_dir, input_fps, extract_fps, False
+        )
+        # self._labels = load_json(label_file)
         self._class_dict = classes
         self._video_idxs = {x["video"]: i for i, x in enumerate(self._labels)}
         # Sample videos weighted by their length
         num_frames = [v["num_frames"] for v in self._labels]
         self._weights_by_length = np.array(num_frames) / np.sum(num_frames)
 
-        self.extension = extension
         self._clip_len = clip_len
         assert clip_len > 0
         self._stride = 1
@@ -437,12 +430,10 @@ class ActionSpotDataset(Dataset):
         )
 
         self._frame_reader = FrameReader(
-            video_dir,
             modality,
             crop_transform,
             img_transform,
             same_transform,
-            extension,
             extract_fps,
         )
 
@@ -586,12 +577,6 @@ class DatasetVideoSharedMethods:
             frame = event["frame"]
             if frame < num_frames:
                 labels[frame // self._stride] = self._class_dict[event["label"]]
-            else:
-                print(
-                    "Warning: {} >= {} is past the end {}".format(
-                        frame, num_frames, meta["video"]
-                    )
-                )
         return labels
 
     @property
@@ -607,7 +592,12 @@ class DatasetVideoSharedMethods:
         #      v['fps'] / self._stride) for v in self._labels]
         return sorted(
             [
-                (v["video"], v["num_frames"] // self._stride, v["fps"] / self._stride)
+                (
+                    v["path"],
+                    # os.path.splitext(v["path"])[0],
+                    v["num_frames"] // self._stride,
+                    v["fps"] / self._stride,
+                )
                 for v in self._labels
             ]
         )
@@ -653,7 +643,7 @@ class ActionSpotVideoDataset(Dataset, DatasetVideoSharedMethods):
         video_dir (string): path to folder where videos are located.
         modality (string): [rgb] Modality of the frame.
         clip_len (int): Length of a clip of frames.
-        extension (string): Extension of the videos.
+        input_fps (int): Fps of the input videos.
         extract_fps (int): Fps at which we want to extract frames.
         overlap_len (int): The number of overlapping frames between consecutive clips.
         crop_dim (int): The dimension for cropping frames.
@@ -675,7 +665,7 @@ class ActionSpotVideoDataset(Dataset, DatasetVideoSharedMethods):
         video_dir,
         modality,
         clip_len,
-        extension,
+        input_fps,
         extract_fps,
         overlap_len=0,
         crop_dim=None,
@@ -683,18 +673,18 @@ class ActionSpotVideoDataset(Dataset, DatasetVideoSharedMethods):
         flip=False,
         multi_crop=False,
         skip_partial_end=True,
-        sample_fps=2,
     ):
         self._src_file = label_file
-        self.infer = False
         if label_file.endswith(".json"):
-            self._labels = load_json(label_file)
+            self._labels = annotationstoe2eformat(
+                label_file, video_dir, input_fps, extract_fps, False
+            )
+            # self._labels = load_json(label_file)
         else:
-            self.infer = True
             self._labels, _ = construct_labels(label_file, extract_fps)
         # self._labels = load_json(label_file)
         self._class_dict = classes
-        self._video_idxs = {x["video"]: i for i, x in enumerate(self._labels)}
+        self._video_idxs = {x["path"]: i for i, x in enumerate(self._labels)}
         self._clip_len = clip_len
         stride = 1
         self._stride = stride
@@ -709,14 +699,11 @@ class ActionSpotVideoDataset(Dataset, DatasetVideoSharedMethods):
         # No need to enforce same_transform since the transforms are
         # deterministic
         self._frame_reader = FrameReader(
-            video_dir,
             modality,
             crop_transform,
             img_transform,
             False,
-            extension,
             extract_fps,
-            self.infer,
         )
 
         self._flip = flip
@@ -733,7 +720,7 @@ class ActionSpotVideoDataset(Dataset, DatasetVideoSharedMethods):
                 (clip_len - overlap_len) * self._stride,
             ):
                 has_clip = True
-                self._clips.append((l["video"], i))
+                self._clips.append((l["path"], l["video"], i))
             assert has_clip, l
 
     def __len__(self):
@@ -748,7 +735,7 @@ class ActionSpotVideoDataset(Dataset, DatasetVideoSharedMethods):
         Returns:
             dict :{"video","start","frame"}.
         """
-        video_name, start = self._clips[idx]
+        video_path, video_name, start = self._clips[idx]
         frames = self._frame_reader.load_frames_ocv(
             video_name, start, start + self._clip_len * self._stride, pad=True
         )
@@ -757,7 +744,7 @@ class ActionSpotVideoDataset(Dataset, DatasetVideoSharedMethods):
         if self._flip:
             frames = torch.stack((frames, frames.flip(-1)), dim=0)
 
-        return {"video": video_name, "start": start // self._stride, "frame": frames}
+        return {"video": video_path, "start": start // self._stride, "frame": frames}
 
     # def get_labels(self, video):
     #     """Get labels of a video.
@@ -882,17 +869,16 @@ class DaliDataSet(DALIGenericIterator):
         output_map (List[string]): List of strings which maps consecutive outputs of DALI pipelines to user specified name. Outputs will be returned from iterator as dictionary of those names. Each name should be distinct.
         devices (list[int]): List of indexes of gpu to use.
         classes (dict): dict of class names to idx.
-        label_file (string): path to label json.
+        label_file (list[string]|string): Paths to label jsons. Can be a single json file or a list of json files.
         clip_len (int): Length of a clip of frames.
         dataset_len (int): Number of clips.
-        video_dir (string): path to folder where videos are located.
-        extension (string): Extension of the videos.
+        video_dir (list[string]|string): Paths to folder where videos are located. Can be a single folder file or a list of folders. Must match the number of json files.
+        input_fps (int): Fps of the input videos.
+        extract_fps (int): Fps at which we extract the frames.
         is_eval (bool): Disable random augmentation
             Default: True.
         crop_dim (int): The dimension for cropping frames.
             Default: None.
-        stride (int): Stride at which we process the frames.
-            Default: 12.
         dilate_len (int): Dilate ground truth labels.
             Default: 0.
         mixup (bool): Whether to mixup clips of two videos or not.
@@ -911,15 +897,18 @@ class DaliDataSet(DALIGenericIterator):
         clip_len,
         dataset_len,
         video_dir,
-        extension,
+        input_fps,
+        extract_fps,
         is_eval=True,
         crop_dim=None,
-        stride=12,
         dilate_len=0,
         mixup=False,
     ):
         self._src_file = label_file
-        self._labels = load_json(label_file)
+        # self._labels = load_json(label_file)
+        self._labels = annotationstoe2eformat(
+            label_file, video_dir, input_fps, extract_fps, True
+        )
         self._class_dict = classes
         self.original_batch_size = batch_size
 
@@ -939,7 +928,8 @@ class DaliDataSet(DALIGenericIterator):
         self.crop_dim = crop_dim
         self.dilate_len = dilate_len
         self.clip_len = clip_len
-        self.stride = stride
+
+        self._stride = get_stride(input_fps, extract_fps)
 
         if is_eval:
             nb_clips_per_video = math.ceil(dataset_len / len(self._labels)) * epochs
@@ -951,10 +941,11 @@ class DaliDataSet(DALIGenericIterator):
 
         file_list_txt = ""
         for index, video in enumerate(self._labels):
-            video_path = os.path.join(video_dir, video["video"] + extension)
+            video_path = video["video"]
+            # video_path = os.path.join(video_dir, video["video"] + extension)
             for _ in range(nb_clips_per_video):
                 random_start = random.randint(1, video["num_frames"] - (clip_len + 1))
-                file_list_txt += f"{video_path} {index} {random_start * stride} {(random_start+clip_len) * stride}\n"
+                file_list_txt += f"{video_path} {index} {random_start * self._stride} {(random_start+clip_len) * self._stride}\n"
 
         tf = tempfile.NamedTemporaryFile()
         tf.write(str.encode(file_list_txt))
@@ -964,7 +955,7 @@ class DaliDataSet(DALIGenericIterator):
             self.video_pipe(
                 batch_size=self.batch_size_per_pipe[index],
                 sequence_length=clip_len,
-                stride_dali=stride,
+                stride_dali=self._stride,
                 step=-1,
                 num_threads=8,
                 device_id=i,
@@ -1094,33 +1085,6 @@ class DaliDataSet(DALIGenericIterator):
                     ret[key] = torch.cat((tensor, mix[key]))
         return ret
 
-    # def get_deferred_rgb_transform(self):
-    #     img_transforms = [
-    #         # Jittering separately is faster (low variance)
-    #         transforms.RandomApply(
-    #             nn.ModuleList([transforms.ColorJitter(hue=0.2)]), p=0.25
-    #         ),
-    #         transforms.RandomApply(
-    #             nn.ModuleList([transforms.ColorJitter(saturation=(0.7, 1.2))]), p=0.25
-    #         ),
-    #         transforms.RandomApply(
-    #             nn.ModuleList([transforms.ColorJitter(brightness=(0.7, 1.2))]), p=0.25
-    #         ),
-    #         transforms.RandomApply(
-    #             nn.ModuleList([transforms.ColorJitter(contrast=(0.7, 1.2))]), p=0.25
-    #         ),
-    #         # Jittering together is slower (high variance)
-    #         # transforms.RandomApply(
-    #         #     nn.ModuleList([
-    #         #         transforms.ColorJitter(
-    #         #             brightness=(0.7, 1.2), contrast=(0.7, 1.2),
-    #         #             saturation=(0.7, 1.2), hue=0.2)
-    #         #     ]), 0.8),
-    #         transforms.RandomApply(nn.ModuleList([transforms.GaussianBlur(5)]), p=0.25),
-    #         transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-    #     ]
-    #     return torch.jit.script(nn.Sequential(*img_transforms))
-
     def load_frame_deferred(self, gpu_transform, batch):
         """Load frames on the device and applying some transforms.
 
@@ -1225,7 +1189,7 @@ class DaliDataSet(DALIGenericIterator):
             labels (cupy.array): the list of labels (corresponding to events) corresponding with the extracted frames.
         """
         video_meta = self._labels[label.item()]
-        base_idx = frame_num.item() // self.stride
+        base_idx = frame_num.item() // self._stride
         labels = cupy.zeros(self.clip_len, np.int64)
 
         for event in video_meta["events"]:
@@ -1285,6 +1249,7 @@ def construct_labels(path, extract_fps):
     return [
         {
             "video": path,
+            "path": path,
             "num_frames": num_frames_after,
             "num_frames_base": num_frames,
             "num_events": 0,
@@ -1308,9 +1273,8 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         classes (dict): dict of class names to idx.
         label_file (string): Can be path to label json or path of a video.
         clip_len (int): Length of a clip of frames.
-        stride_dali (int): The stride we use to process frames.
         video_dir (string): path to folder where videos are located.
-        extension (string): Extension of the videos.
+        input_fps (int): Fps of the input videos.
         extract_fps (int): The fps at which we extract frames. This variable is used if dataset is a single video.
         overlap_len (int): The number of overlapping frames between consecutive clips.
             Default: 0.
@@ -1331,9 +1295,8 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         label_file,
         modality,
         clip_len,
-        stride_dali,
         video_dir,
-        extension,
+        input_fps,
         extract_fps,
         overlap_len=0,
         crop_dim=None,
@@ -1341,14 +1304,19 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         multi_crop=False,
     ):
         self._src_file = label_file
-        self.infer = False
+        # self.infer = False
         if label_file.endswith(".json"):
-            self._labels = load_json(label_file)
+            self._labels = annotationstoe2eformat(
+                label_file, video_dir, input_fps, extract_fps, True
+            )
+            stride_dali = get_stride(input_fps, extract_fps)
+            # self._labels = load_json(label_file)
         else:
-            self.infer = True
+            # self.infer = True
             self._labels, stride_dali = construct_labels(label_file, extract_fps)
+        # self._labels = self._labels[:3]
         self._class_dict = classes
-        self._video_idxs = {x["video"]: i for i, x in enumerate(self._labels)}
+        self._video_idxs = {x["path"]: i for i, x in enumerate(self._labels)}
         self._clip_len = clip_len
         self.crop_dim = crop_dim
         stride = 1
@@ -1360,7 +1328,6 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         self._clips = []
         file_list_txt = ""
         cmp = 0
-        cmp2 = 0
         for l in self._labels:
             has_clip = False
             for i in range(
@@ -1375,26 +1342,29 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
                 else:
                     end = (i + clip_len) * stride_dali
                 has_clip = True
-                self._clips.append((l["video"], i))
-                if self.infer:
-                    video_path = l["video"]
-                else:
-                    video_path = os.path.join(video_dir, l["video"] + extension)
+                self._clips.append((l["path"], l["video"], i))
+                # if self.infer:
+                #     video_path = l["video"]
+                # else:
+                #     video_path = os.path.join(video_dir, l["video"] + extension)
+                video_path = l["video"]
                 file_list_txt += f"{video_path} {cmp} {i * stride_dali} {end}\n"
                 # if cmp2 <5:
                 #     print(file_list_txt)
                 #     cmp2+=1
                 cmp += 1
             last_video = l["video"]
+            last_path = l["path"]
             assert has_clip, l
 
         x = get_remaining(len(self._clips), batch_size)
         for _ in range(x):
-            self._clips.append((last_video, i))
-            if self.infer:
-                video_path = l["video"]
-            else:
-                video_path = os.path.join(video_dir, l["video"] + extension)
+            self._clips.append((last_path, last_video, i))
+            # if self.infer:
+            #     video_path = l["video"]
+            # else:
+            #     video_path = os.path.join(video_dir, l["video"] + extension)
+            video_path = l["video"]
             file_list_txt += f"{video_path} {cmp} {i * stride_dali} {end}\n"
             cmp += 1
         # print(file_list_txt)
@@ -1431,8 +1401,8 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         cmp = 0
         for j in range(len(out)):
             for i in range(out[j]["label"].shape[0]):
-                video_name, start = self._clips[out[j]["label"][i]]
-                video_names.append(video_name)
+                video_path, video_name, start = self._clips[out[j]["label"][i]]
+                video_names.append(video_path)
                 starts[cmp] = start
                 cmp += 1
         return {
@@ -1486,6 +1456,7 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
             skip_vfr_check=True,
         )
 
+        # video = fn.resize(size=(224,398))
         video = fn.crop_mirror_normalize(
             video,
             dtype=types.FLOAT,
@@ -1495,79 +1466,5 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
             mean=[IMAGENET_MEAN[i] * 255.0 for i in range(len(IMAGENET_MEAN))],
             std=[IMAGENET_STD[i] * 255.0 for i in range(len(IMAGENET_STD))],
         )
+
         return video, label
-
-    # def get_labels(self, video):
-    #     """Get labels of a video.
-
-    #     Args:
-    #         video (string): Name of the video.
-
-    #     Returns:
-    #         labels (np.array): Array of length being the number of frame with elements being the index of the class.
-    #     """
-    #     meta = self._labels[self._video_idxs[video]]
-    #     num_frames = meta["num_frames"]
-    #     num_labels = num_frames // self._stride
-    #     if num_frames % self._stride != 0:
-    #         num_labels += 1
-    #     labels = np.zeros(num_labels, np.int64)
-    #     for event in meta["events"]:
-    #         frame = event["frame"]
-    #         if frame < num_frames:
-    #             labels[frame // self._stride] = self._class_dict[event["label"]]
-    #         else:
-    #             print(
-    #                 "Warning: {} >= {} is past the end {}".format(
-    #                     frame, num_frames, meta["video"]
-    #                 )
-    #             )
-    #     return labels
-
-    # @property
-    # def augment(self):
-    #     """Whether flip or multi cropping have been applied to frames or not."""
-    #     return self._flip or self._multi_crop
-
-    # @property
-    # def videos(self):
-    #     """Return a list containing metadatas of videos sorted by their names."""
-    #     # return [
-    #     #     (v['video'], v['num_frames_dali'] // self._stride,
-    #     #      v['fps'] / self._stride) for v in self._labels]
-    #     return sorted(
-    #         [
-    #             (v["video"], v["num_frames"] // self._stride, v["fps"] / self._stride)
-    #             for v in self._labels
-    #         ]
-    #     )
-
-    # @property
-    # def labels(self):
-    #     """Return the metadatas containing in the json file."""
-    #     assert self._stride > 0
-    #     if self._stride == 1:
-    #         return self._labels
-    #     else:
-    #         labels = []
-    #         for x in self._labels:
-    #             x_copy = copy.deepcopy(x)
-    #             x_copy["fps"] /= self._stride
-    #             x_copy["num_frames"] //= self._stride
-    #             for e in x_copy["events"]:
-    #                 e["frame"] //= self._stride
-    #             labels.append(x_copy)
-    #         return labels
-
-    # def print_info(self):
-    #     num_frames = sum([x["num_frames"] for x in self._labels])
-    #     num_events = sum([len(x["events"]) for x in self._labels])
-    #     print(
-    #         "{} : {} videos, {} frames ({} stride), {:0.5f}% non-bg".format(
-    #             self._src_file,
-    #             len(self._labels),
-    #             num_frames,
-    #             self._stride,
-    #             num_events / num_frames * 100,
-    #         )
-    #     )

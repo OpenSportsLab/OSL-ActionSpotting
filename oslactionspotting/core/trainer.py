@@ -1,3 +1,4 @@
+import logging
 from oslactionspotting.core.optimizer import build_optimizer
 from oslactionspotting.core.scheduler import build_scheduler
 from oslactionspotting.core.utils.eval import infer_and_process_predictions_e2e
@@ -29,9 +30,12 @@ def build_trainer(cfg, model=None, default_args=None):
         evaluator: The constructed trainer.
     """
     if cfg.type == "trainer_e2e":
-        print(type(model))
-        print(type(model._model))
+        
+        logging.info('Build optimizer')
         optimizer, scaler = build_optimizer(model._get_params(), cfg.optimizer)
+        logging.info(optimizer)
+        logging.info(scaler)
+        logging.info('Build scheduler')
         lr_scheduler = build_scheduler(optimizer, cfg.scheduler, default_args)
         # optimizer, scaler = model.get_optimizer({'lr': cfg.learning_rate})
 
@@ -50,10 +54,10 @@ def build_trainer(cfg, model=None, default_args=None):
             default_args["repartitions"],
             default_args["cfg_test"],
             default_args["cfg_challenge"],
-            default_args["cfg_val_data_frames"],
+            default_args["cfg_valid_data_frames"],
         )
     else:
-        trainer = Trainer_pl(cfg)
+        trainer = Trainer_pl(cfg, default_args["work_dir"])
         # call = MyCallback()
         # trainer = pl.Trainer(
         #     max_epochs=cfg.max_epochs,
@@ -83,8 +87,16 @@ class Trainer(ABC):
     def train(self):
         pass
 
+
 class Trainer_pl(Trainer):
-    def __init__(self, cfg):
+    """Trainer class used for models that rely on lightning modules.
+
+    Args:
+        cfg (dict): Dict config. It should contain the key 'max_epochs' and the key 'GPU'.
+    """
+
+    def __init__(self, cfg, work_dir):
+        self.work_dir = work_dir
         call = MyCallback()
         self.trainer = pl.Trainer(
             max_epochs=cfg.max_epochs,
@@ -92,10 +104,41 @@ class Trainer_pl(Trainer):
             callbacks=[call, CustomProgressBar(refresh_rate=1)],
             num_sanity_val_steps=0,
         )
+
     def train(self, **kwargs):
         self.trainer.fit(**kwargs)
-        
+
+        best_model = kwargs["model"].best_state
+
+        logging.info("Done training")
+        logging.info("Best epoch: {}".format(best_model.get("epoch")))
+        torch.save(best_model, os.path.join(self.work_dir, "model.pth.tar"))
+
+        logging.info("Model saved")
+        logging.info(os.path.join(self.work_dir, "model.pth.tar"))
+
+
 class Trainer_e2e(Trainer):
+    """Trainer class used for the e2e model.
+
+    Args:
+        args (dict): Dict of config.
+        model.
+        optimizer (torch.optim.Optimizer): The optimizer to update model parameters. Set to None if validation epoch.
+        scaler (torch.cuda.amp.GradScaler): The gradient scaler for mixed precision training.
+        lr_scheduler : The learning rate scheduler.
+        work_dir (string): The folder in which the different files will be saved.
+        dali (bool): Whether videos are processed with dali or opencv.
+        repartitions (List[int]): List of gpus used data processing.
+            Default: None.
+        cfg_test (dict): Dict of config for the inference (testing purpose) and evaluation of the test split. Occurs once training is done.
+            Default: None.
+        cfg_challenge (dict): Dict of config for the inference (testing purpose) of the challenge split. Occurs once training is done.
+            Default: None.
+        cfg_valid_data_frames (dict): Dict of config for the inference (testing purpose) and evaluation of the valid split. Occurs through the epochs after a certain number of epochs only if the criterion for the valid split is 'map'.
+            Default: None.
+    """
+
     def __init__(
         self,
         args,
@@ -108,11 +151,11 @@ class Trainer_e2e(Trainer):
         repartitions=None,
         cfg_test=None,
         cfg_challenge=None,
-        cfg_val_data_frames=None,
+        cfg_valid_data_frames=None,
     ):
         self.losses = []
         self.best_epoch = 0
-        self.best_criterion_val = 0 if args.criterion_val == "map" else float("inf")
+        self.best_criterion_valid = 0 if args.criterion_valid == "map" else float("inf")
 
         self.num_epochs = args.num_epochs
         self.epoch = 0
@@ -124,20 +167,32 @@ class Trainer_e2e(Trainer):
 
         self.acc_grad_iter = args.acc_grad_iter
 
-        self.start_val_epoch = args.start_val_epoch
-        self.criterion_val = args.criterion_val
+        self.start_valid_epoch = args.start_valid_epoch
+        self.criterion_valid = args.criterion_valid
         self.save_dir = work_dir
         self.dali = dali
-        self.inference_batch_size = args.inference_batch_size
-        # self.base_num_workers = args.base_num_workers
 
         self.repartitions = repartitions
         self.cfg_test = cfg_test
         self.cfg_challenge = cfg_challenge
-        self.cfg_val_data_frames = cfg_val_data_frames
+        self.cfg_valid_data_frames = cfg_valid_data_frames
 
-    def train(self, train_loader, val_loader, val_data_frames, classes):
+    def train(self, train_loader, valid_loader, classes):
+        """
+        Args:
+            train_loader : Data loader for the train split.
+            valid_loader : Data loader for the valid split.
+            classes (dict): Dictionnary with classes associated to indexes.
+        """
+        if self.criterion_valid == "map":
+            dataset_Valid_Frames = build_dataset(
+                self.cfg_valid_data_frames,
+                None,
+                {"repartitions": self.repartitions, "classes": classes},
+            )
         for epoch in range(self.epoch, self.num_epochs):
+            # train_loss = 0.0
+            # valid_loss = 0.0
             train_loss = self.model.epoch(
                 train_loader,
                 self.dali,
@@ -146,52 +201,53 @@ class Trainer_e2e(Trainer):
                 lr_scheduler=self.lr_scheduler,
                 acc_grad_iter=self.acc_grad_iter,
             )
-
-            val_loss = self.model.epoch(
-                val_loader, self.dali, acc_grad_iter=self.acc_grad_iter
+            
+            valid_loss = self.model.epoch(
+                valid_loader, self.dali, acc_grad_iter=self.acc_grad_iter
             )
             print(
-                "[Epoch {}] Train loss: {:0.5f} Val loss: {:0.5f}".format(
-                    epoch, train_loss, val_loss
+                "[Epoch {}] Train loss: {:0.5f} Valid loss: {:0.5f}".format(
+                    epoch, train_loss, valid_loss
                 )
             )
 
-            val_mAP = 0
-            if self.criterion_val == "loss":
-                if val_loss < self.best_criterion_val:
-                    self.best_criterion_val = val_loss
+            valid_mAP = 0
+            # self.start_valid_epoch = 0
+            if self.criterion_valid == "loss":
+                if valid_loss < self.best_criterion_valid:
+                    self.best_criterion_valid = valid_loss
                     self.best_epoch = epoch
                     print("New best epoch!")
-            elif self.criterion_val == "map":
-                if epoch >= self.start_val_epoch:
+            elif self.criterion_valid == "map":
+                if epoch >= self.start_valid_epoch:
                     pred_file = None
                     if self.save_dir is not None:
                         pred_file = os.path.join(
-                            self.save_dir, "pred-val.{}".format(epoch)
+                            self.save_dir, "pred-valid.{}".format(epoch)
                         )
                         os.makedirs(self.save_dir, exist_ok=True)
-                    val_mAP = infer_and_process_predictions_e2e(
+                    valid_mAP = infer_and_process_predictions_e2e(
                         self.model,
                         self.dali,
-                        val_data_frames,
-                        "VAL",
+                        dataset_Valid_Frames,
+                        "VALID",
                         classes,
                         pred_file,
-                        dataloader_params=self.cfg_val_data_frames.dataloader,
+                        dataloader_params=self.cfg_valid_data_frames.dataloader,
                     )
-                    if val_mAP > self.best_criterion_val:
-                        self.best_criterion_val = val_mAP
+                    if valid_mAP > self.best_criterion_valid:
+                        self.best_criterion_valid = valid_mAP
                         self.best_epoch = epoch
                         print("New best epoch!")
             else:
-                print("Unknown criterion:", self.criterion_val)
+                print("Unknown criterion:", self.criterion_valid)
 
             self.losses.append(
                 {
                     "epoch": epoch,
                     "train": train_loss,
-                    "val": val_loss,
-                    "val_mAP": val_mAP,
+                    "valid": valid_loss,
+                    "valid_mAP": valid_mAP,
                 }
             )
             if self.save_dir is not None:
@@ -203,6 +259,10 @@ class Trainer_e2e(Trainer):
                     self.model.state_dict(),
                     os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(epoch)),
                 )
+
+                logging.info("Checkpoint saved")
+                logging.info(os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(epoch)))
+
                 clear_files(self.save_dir, r"optim_\d+\.pt")
                 torch.save(
                     {
@@ -212,14 +272,16 @@ class Trainer_e2e(Trainer):
                     },
                     os.path.join(self.save_dir, "optim_{:03d}.pt".format(epoch)),
                 )
-
-        print("Best epoch: {}\n".format(self.best_epoch))
+                logging.info("Optim saved")
+                logging.info(os.path.join(self.save_dir, "optim_{:03d}.pt".format(epoch)))
+            # break
+        logging.info("Best epoch: {}".format(self.best_epoch))
 
         if self.dali:
             train_loader.delete()
-            val_loader.delete()
-            if self.criterion_val == "map":
-                val_data_frames.delete()
+            valid_loader.delete()
+            if self.criterion_valid == "map":
+                dataset_Valid_Frames.delete()
 
         if self.save_dir is not None:
             self.model.load(
@@ -230,38 +292,29 @@ class Trainer_e2e(Trainer):
                 )
             )
 
-            # Evaluate on VAL if not already done
-            eval_splits = ["val"] if self.criterion_val != "map" else []
+            logging.info("Checkpoint of best epoch loaded")
+            logging.info(os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(self.best_epoch)))
+
+            # Evaluate on valid if not already done
+            eval_splits = ["valid"] if self.criterion_valid != "map" else []
 
             # Evaluate on hold out splits
             eval_splits += ["test", "challenge"]
             for split in eval_splits:
-                if split == "val":
-                    cfg_tmp = self.cfg_val_data_frames
+                if split == "valid":
+                    cfg_tmp = self.cfg_valid_data_frames
                 if split == "test":
                     cfg_tmp = self.cfg_test
                 elif split == "challenge":
                     cfg_tmp = self.cfg_challenge
                 split_path = os.path.join(cfg_tmp.path)
-                # split_path = os.path.join(self.labels_dir,
-                #     '{}.json'.format(split))
+
                 if os.path.exists(split_path):
-                    cfg_tmp.overlap_len = cfg_tmp.clip_len // 2
                     split_data = build_dataset(
                         cfg_tmp,
                         None,
                         {"repartitions": self.repartitions, "classes": classes},
                     )
-                    # split_data = DaliDataSetVideo(
-                    #     cfg_tmp.dataloader.batch_size,cfg_tmp.output_map,self.repartitions[0],
-                    #     classes, cfg_tmp.label_file,
-                    #     cfg_tmp.modality, cfg_tmp.clip_len, cfg_tmp.stride, cfg_tmp.data_root,
-                    #     crop_dim=cfg_tmp.crop_dim, overlap_len=cfg_tmp.clip_len // 2)
-                    # else:
-                    #     split_data = ActionSpotVideoDataset(
-                    #     classes, split_path, args.frame_dir, args.modality,
-                    #     args.clip_len, overlap_len=args.clip_len // 2,
-                    #     crop_dim=args.crop_dim)
                     split_data.print_info()
 
                     pred_file = None
@@ -283,3 +336,6 @@ class Trainer_e2e(Trainer):
 
                     if self.dali:
                         split_data.delete()
+
+        logging.info("Done training")
+        logging.info(self.best_epoch)

@@ -24,7 +24,7 @@ dataset = dict(
             shuffle=True,
             pin_memory=True,
         )),
-    val=dict(
+    valid=dict(
         type="SoccerNetClips",
         features="ResNET_TF2_PCA512.npy",
         version=2,

@@ -8,10 +8,10 @@ work_dir = "outputs/learnablepooling/soccernet_avgpool_resnetpca512"
 
 dataset = dict(
     train=dict(features="ResNET_TF2_PCA512.npy"),
-    val=dict(features="ResNET_TF2_PCA512.npy"),
+    valid=dict(features="ResNET_TF2_PCA512.npy"),
     test=dict(features="ResNET_TF2_PCA512.npy")
 )
-
+log_level = 'INFO'  # The level of logging
 model = dict(
     neck=dict(type='AvgPool', output_dim=512, nb_frames=20*2),
     head=dict(input_dim=512)

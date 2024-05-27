@@ -26,7 +26,7 @@ dataset = dict(
             shuffle=True,
             pin_memory=True,
         )),
-    val=dict(
+    valid=dict(
         type="SoccerNetClipsCALF",
         features="ResNET_TF2_PCA512.npy",
         version=2,

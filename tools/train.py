@@ -8,7 +8,6 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import torch
 from mmengine.config import Config, DictAction
-from oslactionspotting.core.utils.dali import get_repartition_gpu
 from oslactionspotting.core.utils.default_args import (
     get_default_args_dataset,
     get_default_args_model,
@@ -26,7 +25,7 @@ from oslactionspotting.core import build_trainer
 def parse_args():
 
     parser = ArgumentParser(
-        description="context aware loss function",
+        description="Training script using config files.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("config", metavar="FILE", type=str, help="path to config file")
@@ -45,9 +44,6 @@ def parse_args():
     )
 
     # # parser.add_argument('--logging_dir',       required=False, type=str,   default="log", help='Where to log' )
-    parser.add_argument(
-        "--loglevel", required=False, type=str, default="INFO", help="logging level"
-    )
 
     # read args
     args = parser.parse_args()
@@ -73,20 +69,22 @@ def main():
         print("\nScript aborted by user.")
         raise SystemExit
 
-    # Set up the signal handler for KeyboardInterrupt
+    # Set up the signal handler for KeyboardInterrupt because of pytorch lightning
     signal.signal(signal.SIGINT, signal_handler)
 
     # Create Work directory
     os.makedirs(cfg.work_dir, exist_ok=True)
 
     # Define logging
-    numeric_level = getattr(logging, args.loglevel.upper(), None)
+    numeric_level = getattr(logging, cfg.log_level.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError("Invalid log level: %s" % args.loglevel)
+        raise ValueError("Invalid log level: %s" % cfg.log_level)
 
-    # Define output folder
+    #Create logs folder
+    os.makedirs(os.path.join(cfg.work_dir, "logs"), exist_ok=True)
+    # Define logs folder
     log_path = os.path.join(
-        cfg.work_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S.log")
+        cfg.work_dir, "logs", datetime.now().strftime("%Y-%m-%d_%H-%M-%S.log")
     )
     logging.basicConfig(
         level=numeric_level,
@@ -97,11 +95,6 @@ def main():
     # Check configs files
     logging.info("Checking configs files")
     check_config(cfg)
-
-    dali = False
-    if "dali" in cfg.keys() and cfg.dali == True:
-        dali = True
-        cfg.repartitions = get_repartition_gpu()
 
     # Dump configuration file
     cfg.dump(os.path.join(cfg.work_dir, "config.py"))
@@ -116,7 +109,7 @@ def main():
     model = build_model(
         cfg,
         verbose=False if cfg.runner.type == "runner_e2e" else True,
-        default_args=get_default_args_model(cfg, cfg.runner.type == "runner_e2e"),
+        default_args=get_default_args_model(cfg),
     )
     # Build Datasets
     logging.info("Build Datasets")
@@ -124,50 +117,36 @@ def main():
     dataset_Train = build_dataset(
         cfg.dataset.train,
         cfg.training.GPU,
-        get_default_args_dataset("train", cfg, cfg.runner.type == "runner_e2e", dali),
+        get_default_args_dataset("train", cfg),
     )
-    dataset_Val = build_dataset(
-        cfg.dataset.val,
+    dataset_Valid = build_dataset(
+        cfg.dataset.valid,
         cfg.training.GPU,
-        get_default_args_dataset("val", cfg, cfg.runner.type == "runner_e2e", dali),
+        get_default_args_dataset("valid", cfg),
     )
-    dataset_Val_Frames = None
-    if (
-        cfg.runner.type == "runner_e2e"
-        and "criterion_val" in cfg.training.keys()
-        and cfg.training.criterion_val == "map"
-    ):
-        dataset_Val_Frames = build_dataset(
-            cfg.dataset.val_data_frames,
-            None,
-            get_default_args_dataset("val_data_frames", cfg, True, dali),
-        )
 
     # Build Dataloaders
     logging.info("Build Dataloaders")
 
     train_loader = build_dataloader(
-        dataset_Train, cfg.dataset.train.dataloader, cfg.training.GPU, dali
+        dataset_Train,
+        cfg.dataset.train.dataloader,
+        cfg.training.GPU,
+        getattr(cfg, "dali", False),
     )
-    val_loader = build_dataloader(
-        dataset_Val, cfg.dataset.val.dataloader, cfg.training.GPU, dali
+    valid_loader = build_dataloader(
+        dataset_Valid,
+        cfg.dataset.valid.dataloader,
+        cfg.training.GPU,
+        getattr(cfg, "dali", False),
     )
-    if dataset_Val_Frames is not None:
-        val_frames_loader = build_dataloader(
-            dataset_Val_Frames,
-            cfg.dataset.val_data_frames.dataloader,
-            cfg.training.GPU,
-            dali,
-        )
 
     # Build Trainer
     logging.info("Build Trainer")
     trainer = build_trainer(
         cfg.training,
         model,
-        get_default_args_trainer(
-            cfg, cfg.runner.type == "runner_e2e", dali, len(train_loader)
-        ),
+        get_default_args_trainer(cfg, len(train_loader)),
     )
 
     # Start training`
@@ -177,26 +156,11 @@ def main():
         **get_default_args_train(
             model,
             train_loader,
-            val_loader,
-            dataset_Val_Frames,
+            valid_loader,
             cfg.classes,
-            cfg.training.type != "trainer_e2e",
+            cfg.training.type,
         )
     )
-    # if cfg.training.type == "trainer_e2e":
-    #     trainer.train(train_loader,val_loader,dataset_Val_Frames,cfg.classes)
-    # else:
-    #     trainer.fit(model,train_loader,val_loader)
-
-    if cfg.training.type != "trainer_e2e":
-        best_model = model.best_state
-
-        logging.info("Done training")
-        print(best_model.get("epoch"))
-        torch.save(best_model, os.path.join(cfg.work_dir, "model.pth.tar"))
-
-        logging.info("Model saved")
-        logging.info(os.path.join(cfg.work_dir, "model.pth.tar"))
 
     logging.info(f"Total Execution Time is {time.time()-start} seconds")
     # return

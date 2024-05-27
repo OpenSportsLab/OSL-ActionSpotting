@@ -1,5 +1,6 @@
 import __future__
 import json
+import logging
 from typing import Any
 
 import torch
@@ -118,6 +119,8 @@ class LiteLearnablePoolingModel(LiteBaseModel):
 
         self.model = LearnablePoolingModel(weights, backbone, neck, head, post_proc)
 
+        self.confidence_threshold = 0.0
+
         self.overwrite = True
 
         self.cfg = cfg
@@ -146,7 +149,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         """Validation step that defines the validation loop."""
         val_loss, size = self._common_step(batch, batch_idx)
         self.log_dict(
-            {"val_loss": val_loss}, on_step=False, on_epoch=True, prog_bar=True
+            {"valid_loss": val_loss}, on_step=False, on_epoch=True, prog_bar=True
         )
         self.losses.update(val_loss.item(), size)
         return val_loss
@@ -155,8 +158,10 @@ class LiteLearnablePoolingModel(LiteBaseModel):
         """Operations to make before starting to infer."""
         self.stop_predict = False
         if self.infer_split:
-            self.output_folder, self.output_results, self.stop_predict = check_if_should_predict(
-                self.cfg.dataset.test.results, self.cfg.work_dir, self.overwrite
+            self.output_folder, self.output_results, self.stop_predict = (
+                check_if_should_predict(
+                    self.cfg.dataset.test.results, self.cfg.work_dir, self.overwrite
+                )
             )
 
             if self.runner == "runner_JSON":
@@ -175,6 +180,22 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                     zip_path=self.output_results,
                     target_dir=os.path.join(self.cfg.work_dir, self.output_folder),
                     filename="results_spotting.json",
+                )
+                logging.info("Predictions saved")
+                logging.info(
+                    os.path.join(
+                        self.cfg.work_dir,
+                        self.output_folder,
+                    )
+                )
+                logging.info("Predictions saved")
+                logging.info(self.output_results)
+            else:
+                logging.info("Predictions saved")
+                logging.info(
+                    os.path.join(
+                        self.cfg.work_dir, f"{self.cfg.dataset.test.results}.json"
+                    )
                 )
 
     def predict_step(self, batch, batch_idx):
@@ -223,9 +244,8 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                         for spot in spots:
                             frame_index = int(spot[0])
                             confidence = spot[1]
-                            if confidence < self.confidence_threshold:
+                            if confidence < 0.5:
                                 continue
-
                             json_data["predictions"].append(
                                 get_prediction_data(
                                     False,
@@ -277,7 +297,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                 # Compute the output for batches of frames
                 BS = 256
                 timestamp_long = timestamp(self.model, features, BS)
-
+                
                 timestamp_long = timestamp_long[:, 1:]
 
                 self.spotting_predictions.append(timestamp_long)
@@ -297,9 +317,10 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                     for spot in spots:
                         frame_index = int(spot[0])
                         confidence = spot[1]
+                        
                         if confidence < self.confidence_threshold:
                             continue
-
+                        
                         json_data["predictions"].append(
                             get_prediction_data(
                                 False,

@@ -9,6 +9,8 @@ from oslactionspotting import __version__, __authors__, __author_email__, __gith
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
+print(find_packages())
+
 setup(
     name='oslactionspotting',         # How you named your package folder (MyLib)
     packages= find_packages(),
@@ -35,8 +37,6 @@ setup(
         'matplotlib',
         'scikit-learn',
         'mmengine',
-        'torch',
-        'torchvision',
         'pytorch-lightning',
         'numpy',
         'opencv-python',
@@ -44,7 +44,6 @@ setup(
         'tabulate',
         'timm'
         # 'scikit-video',
-        # 'matplotlib',
         # 'google-measurement-protocol',
         # 'pycocoevalcap',
     ],

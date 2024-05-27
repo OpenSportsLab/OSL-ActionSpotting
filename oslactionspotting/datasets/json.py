@@ -89,7 +89,7 @@ class FeaturefromJson(Dataset):
             self.data_json = []
             self.classes = []
             for single_path in path:
-                assert os.path.isfile(single_path) and os.path.exists(single_path)
+                assert os.path.isfile(single_path)
                 with open(single_path) as f:
                     tmp = json.load(f)
                     self.data_json.append(tmp)
@@ -99,7 +99,7 @@ class FeaturefromJson(Dataset):
 
         else:
             self.features_dir = [features_dir]
-            assert os.path.isfile(path) and os.path.exists(path)
+            assert os.path.isfile(path)
             if path.endswith(".json"):
                 with open(path) as f:
                     tmp = json.load(f)
@@ -118,10 +118,11 @@ class FeaturefromJson(Dataset):
                         ]
                     }
                 ]
+                assert isinstance(self.classes, list) or os.path.isfile(self.classes)
+                
                 from oslactionspotting.core.utils.dataset import load_text
-
-                assert os.path.isfile(self.classes) and os.path.exists(self.classes)
-                self.classes = load_text(self.classes)
+                if not isinstance(self.classes,list):
+                    self.classes = load_text(self.classes)
 
         self.num_classes = len(self.classes)
         self.event_dictionary = {cls: i_cls for i_cls, cls in enumerate(self.classes)}
@@ -191,6 +192,10 @@ class FeatureClipsfromJSON(FeaturefromJson):
 
         if self.train:
             for i, single_data_json in enumerate(self.data_json):
+                if isinstance(path,list):
+                    logging.info('Processing '+ path[i])
+                else:
+                    logging.info('Processing '+ path)
                 # loop over videos
                 for video in tqdm(single_data_json["videos"]):
                     # for video in tqdm(self.data_json["videos"]):
@@ -348,6 +353,10 @@ class FeatureClipChunksfromJson(FeaturefromJson):
             game_counter = 0
             # loop over videos
             for i, single_data_json in enumerate(self.data_json):
+                if isinstance(path,list):
+                    logging.info('Processing '+ path[i])
+                else:
+                    logging.info('Processing '+ path)
                 # loop over videos
                 for video in tqdm(single_data_json["videos"]):
                     # for video in tqdm(self.data_json["videos"]):

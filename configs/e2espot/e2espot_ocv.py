@@ -6,4 +6,13 @@ _base_ = [
 
 work_dir = "outputs/e2e/rny008_gsm_150"
 
+log_level = 'INFO'  # The level of logging
+
 dali = False
+
+visualizer = dict(
+    threshold=0.0,
+    annotation_range=5000,  # ms
+    seconds_to_skip=30,
+    scale=1.5,
+)

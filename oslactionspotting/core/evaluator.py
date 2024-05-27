@@ -1,4 +1,5 @@
 from tabulate import tabulate
+from oslactionspotting.core.utils.dataset import load_classes
 from oslactionspotting.core.utils.eval import (
     compute_performances_mAP,
     get_closest_action_index,
@@ -114,6 +115,8 @@ def evaluate_pred_E2E(cfg, work_dir, pred_path, metric="loose"):
                 results = os.path.join(
                     work_dir, pred_path.split(".gz")[0].split(".json")[0]
                 )
+    if cfg.path == None:
+        return
     with open(cfg.path) as f:
         GT_data = json.load(f)
 
@@ -126,29 +129,42 @@ def evaluate_pred_E2E(cfg, work_dir, pred_path, metric="loose"):
     targets_numpy = list()
     detections_numpy = list()
     closests_numpy = list()
-    classes = load_text(cfg.classes)
+
+    if "labels" in GT_data.keys():
+        classes = GT_data["labels"]
+    else:
+        assert isinstance(cfg.classes, list) or os.path.isfile(cfg.classes)
+        if os.path.isfile(cfg.classes):
+            classes = load_text(cfg.classes)
+        else:
+            classes = cfg.classes
+    classes = sorted(classes)
+    # classes = load_classes(classes)
+    # classes = load_text(cfg.classes)
     EVENT_DICTIONARY = {x: i for i, x in enumerate(classes)}
     INVERSE_EVENT_DICTIONARY = {i: x for i, x in enumerate(classes)}
 
-    if isinstance(GT_data, list):
-        videos = GT_data
+    # if isinstance(GT_data, list):
+    #     videos = GT_data
+    # else:
+    #     videos = [GT_data]
+
+    if "videos" in GT_data.keys():
+        videos = GT_data["videos"]
     else:
         videos = [GT_data]
 
     for game in tqdm(videos):
 
         # fetch labels
-        if "events" in game.keys():
-            labels = game["events"]
-        elif "annotations" in game.keys():
-            labels = game["annotations"]
+        labels = game["annotations"]
 
         if not pred_path_is_json:
             try:
                 with open(
                     os.path.join(
                         results,
-                        game["video"].rsplit("_", 1)[0],
+                        os.path.splitext(game["path"])[0],
                         "results_spotting.json",
                     )
                 ) as f:
@@ -231,7 +247,10 @@ def evaluate_pred_JSON(cfg, work_dir, pred_path, metric="loose"):
         }
         num_classes = len(GT_data["labels"])
     else:
-        classes = load_text(cfg.classes)
+        if isinstance(cfg.classes,list):
+            classes = cfg.classes
+        else:
+            classes = load_text(cfg.classes)
         EVENT_DICTIONARY = {x: i for i, x in enumerate(classes)}
         INVERSE_EVENT_DICTIONARY = {i: x for i, x in enumerate(classes)}
         num_classes = len(classes)

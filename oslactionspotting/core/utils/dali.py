@@ -6,6 +6,8 @@ def get_repartition_gpu():
     """
     x = torch.cuda.device_count()
     print("Number of gpus:", x)
+    if x==1:
+        return [0],[0]
     if x == 2:
         return [0, 1], [0, 1]
     elif x == 3:

@@ -1,3 +1,4 @@
+import logging
 import pytorch_lightning as pl
 
 import time
@@ -19,8 +20,9 @@ class LiteBaseModel(pl.LightningModule):
         super().__init__()
 
         if cfg_train:
+            logging.info('Build criterion')
             self.criterion = build_criterion(cfg_train.criterion)
-
+            logging.info(self.criterion)
             self.cfg_train = cfg_train
 
             self.best_loss = 9e99
@@ -42,7 +44,10 @@ class LiteBaseModel(pl.LightningModule):
         return self.best_state
 
     def configure_optimizers(self):
+        logging.info('Build optimizer')
         self.optimizer = build_optimizer(self.parameters(), self.cfg_train.optimizer)
+        logging.info(self.optimizer)
+        logging.info('Build Scheduler')
         self.scheduler = build_scheduler(self.optimizer, self.cfg_train.scheduler)
         return self.optimizer
 

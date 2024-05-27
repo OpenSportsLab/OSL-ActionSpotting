@@ -111,22 +111,19 @@ def build_dataset(cfg, gpu=None, default_args=None):
         )
     elif cfg.type == "VideoGameWithOpencv":
         dataset_len = cfg.epoch_num_frames // cfg.clip_len
-        dataset_kwargs = {
-            "crop_dim": cfg.crop_dim,
-            "dilate_len": cfg.dilate_len,
-            "mixup": cfg.mixup,
-        }
         dataset = ActionSpotDataset(
             default_args["classes"],
             cfg.path,
             cfg.data_root,
             cfg.modality,
             cfg.clip_len,
-            cfg.extension,
+            cfg.input_fps,
             cfg.extract_fps,
             dataset_len if default_args["train"] else dataset_len // 4,
             is_eval=not default_args["train"],
-            **dataset_kwargs
+            crop_dim=cfg.crop_dim,
+            dilate_len=cfg.dilate_len,
+            mixup=cfg.mixup,
         )
     elif cfg.type == "VideoGameWithOpencvVideo":
         dataset = ActionSpotVideoDataset(
@@ -135,20 +132,14 @@ def build_dataset(cfg, gpu=None, default_args=None):
             cfg.data_root,
             cfg.modality,
             cfg.clip_len,
-            cfg.extension,
+            cfg.input_fps,
             cfg.extract_fps,
             crop_dim=cfg.crop_dim,
-            overlap_len=cfg.overlap_len,
+            overlap_len=getattr(cfg, 'overlap_len', cfg.clip_len //2),
         )
     elif cfg.type == "VideoGameWithDali":
         loader_batch_size = cfg.dataloader.batch_size // default_args["acc_grad_iter"]
         dataset_len = cfg.epoch_num_frames // cfg.clip_len
-        dataset_kwargs = {
-            "crop_dim": cfg.crop_dim,
-            "dilate_len": cfg.dilate_len,
-            "mixup": cfg.mixup,
-            "stride": cfg.stride,
-        }
         dataset = DaliDataSet(
             default_args["num_epochs"],
             loader_batch_size,
@@ -164,9 +155,12 @@ def build_dataset(cfg, gpu=None, default_args=None):
             cfg.clip_len,
             dataset_len if default_args["train"] else dataset_len // 4,
             cfg.data_root,
-            cfg.extension,
+            cfg.input_fps,
+            cfg.extract_fps,
             is_eval=False if default_args["train"] else True,
-            **dataset_kwargs
+            crop_dim=cfg.crop_dim,
+            dilate_len=cfg.dilate_len,
+            mixup=cfg.mixup,
         )
     elif cfg.type == "VideoGameWithDaliVideo":
         dataset = DaliDataSetVideo(
@@ -177,9 +171,8 @@ def build_dataset(cfg, gpu=None, default_args=None):
             cfg.path,
             cfg.modality,
             cfg.clip_len,
-            cfg.stride,
             cfg.data_root,
-            cfg.extension,
+            cfg.input_fps,
             cfg.extract_fps,
             crop_dim=cfg.crop_dim,
             overlap_len=cfg.overlap_len,

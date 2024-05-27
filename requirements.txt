@@ -1,9 +1,11 @@
 typer[All]
-tqdm
 SoccerNet
 matplotlib
 scikit-learn
+pytorch-lightning
+opencv-python
+moviepy
+tqdm
+tabulate
+timm
 mmengine
-torch
-torchvision
-pytorch_lightning

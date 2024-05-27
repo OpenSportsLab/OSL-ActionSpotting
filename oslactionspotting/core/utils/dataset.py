@@ -3,16 +3,18 @@ import os
 from oslactionspotting.core.utils.io import load_text
 
 
-def load_classes(file_name):
-    """Load classes from a given file.
+def load_classes(input):
+    """Load classes from either list or txt file.
 
     Args: 
-        file_name (string): Path of the file that contains one class per line.
+        input (string): Path of the file that contains one class per line or list of classes.
 
     Returns:
         Dictionnary with classes associated to indexes.
     """
-    return {x: i + 1 for i, x in enumerate(load_text(file_name))}
+    if isinstance(input, list):
+        return {x: i + 1 for i, x in enumerate(sorted(input))}
+    return {x: i + 1 for i, x in enumerate(load_text(input))}
 
 
 # def read_fps(video_frame_dir):

@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 
 import torch
@@ -158,7 +159,7 @@ class LiteContextAwareModel(LiteBaseModel):
         """Validation step that defines the val loop."""
         val_loss, size = self._common_step(batch, batch_idx)
         self.log_dict(
-            {"val_loss": val_loss}, on_step=False, on_epoch=True, prog_bar=True
+            {"valid_loss": val_loss}, on_step=False, on_epoch=True, prog_bar=True
         )
         self.losses.update(val_loss.item(), size)
         return val_loss
@@ -282,6 +283,22 @@ class LiteContextAwareModel(LiteBaseModel):
                     zip_path=self.output_results,
                     target_dir=os.path.join(self.cfg.work_dir, self.output_folder),
                     filename="results_spotting.json",
+                )
+                logging.info("Predictions saved")
+                logging.info(
+                    os.path.join(
+                        self.cfg.work_dir,
+                        self.output_folder,
+                    )
+                )
+                logging.info("Predictions saved")
+                logging.info(self.output_results)
+            else:
+                logging.info("Predictions saved")
+                logging.info(
+                    os.path.join(
+                        self.cfg.work_dir, f"{self.cfg.dataset.test.results}.json"
+                    )
                 )
 
     def predict_step(self, batch):

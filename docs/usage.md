@@ -57,7 +57,7 @@ python tools/train.py \
         data_root=/datasets/SoccerNet \
         dataset.train.data_root=/datasets/SoccerNet \
         dataset.test.data_root=/datasets/SoccerNet \
-        dataset.val.data_root=/datasets/SoccerNet
+        dataset.valid.data_root=/datasets/SoccerNet
 ```
 
 ## Inference and Evaluation
@@ -82,5 +82,5 @@ python tools/evaluate.py \
         data_root=/datasets/SoccerNet \
         dataset.train.data_root=/datasets/SoccerNet \
         dataset.test.data_root=/datasets/SoccerNet \
-        dataset.val.data_root=/datasets/SoccerNet
+        dataset.valid.data_root=/datasets/SoccerNet
 ```

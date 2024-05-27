@@ -14,8 +14,7 @@ from oslactionspotting.core.utils.score import compute_mAPs_E2E
 
 
 class ErrorStat:
-    """Class to have error statistics
-    """
+    """Class to have error statistics"""
 
     def __init__(self):
         self._total = 0
@@ -29,12 +28,11 @@ class ErrorStat:
         return self._err / self._total
 
     def get_acc(self):
-        return 1. - self._get()
+        return 1.0 - self._get()
 
 
 class ForegroundF1:
-    """Class to have f1 scores
-    """
+    """Class to have f1 scores"""
 
     def __init__(self):
         self._tp = defaultdict(int)
@@ -73,7 +71,7 @@ class ForegroundF1:
 
 
 def process_frame_predictions(
-        dali, dataset, classes, pred_dict, high_recall_score_threshold=0.01
+    dali, dataset, classes, pred_dict, high_recall_score_threshold=0.01
 ):
     """Process predictions by computing statistics, creating dictionnaries
     with predictions and their associated informations
@@ -84,7 +82,7 @@ def process_frame_predictions(
         classes (Dict): Classes associated with indexes.
         pred_dict (Dict): Mapping between clip and a tuple of scores and support.
         high_recall_score_threshold (float):
-            Default: 0.01. 
+            Default: 0.01.
 
     Returns:
         err (ErrorStat).
@@ -129,25 +127,27 @@ def process_frame_predictions(
         for i in range(pred.shape[0]):
 
             if dali:
-                f1.update(label[i+1], pred[i])
+                f1.update(label[i + 1], pred[i])
             else:
                 f1.update(label[i], pred[i])
             if pred[i] != 0:
                 if dali:
-                    tmp = i+1
+                    tmp = i + 1
                 else:
                     tmp = i
-                seconds = int((tmp//fps_dict[video]) % 60)
-                minutes = int((tmp//fps_dict[video])//60)
-                events.append({
-                    'label': classes_inv[pred[i]],
-                    'position': int((tmp * 1000) / fps_dict[video]),
-                    'gameTime': f"{minutes:02.0f}:{seconds:02.0f}",
-                    # 'frame': i,
-                    'frame': tmp,
-                    'score': scores[tmp, pred[i]].item()
-                    # 'score': scores[i, pred[i]].item()
-                })
+                seconds = int((tmp // fps_dict[video]) % 60)
+                minutes = int((tmp // fps_dict[video]) // 60)
+                events.append(
+                    {
+                        "label": classes_inv[pred[i]],
+                        "position": int((tmp * 1000) / fps_dict[video]),
+                        "gameTime": f"{minutes:02.0f}:{seconds:02.0f}",
+                        # 'frame': i,
+                        "frame": tmp,
+                        "confidence": scores[tmp, pred[i]].item(),
+                        # 'score': scores[i, pred[i]].item()
+                    }
+                )
 
             for j in classes_inv:
                 if dali:
@@ -156,23 +156,23 @@ def process_frame_predictions(
                     tmp = i
                 if scores[tmp, j] >= high_recall_score_threshold:
                     # if scores[i, j] >= high_recall_score_threshold:
-                    seconds = int((tmp//fps_dict[video]) % 60)
-                    minutes = int((tmp//fps_dict[video])//60)
-                    events_high_recall.append({
-                        'label': classes_inv[j],
-                        'position': int((tmp * 1000) / fps_dict[video]),
-                        'gameTime': f"{minutes:02.0f}:{seconds:02.0f}",
-                        'frame': tmp,
-                        # 'frame': i,
-                        'score': scores[tmp, j].item()
-                        # 'score': scores[i, j].item()
-                    })
-        pred_events.append({
-            'video': video, 'events': events,
-            'fps': fps_dict[video]})
-        pred_events_high_recall.append({
-            'video': video, 'events': events_high_recall,
-            'fps': fps_dict[video]})
+                    seconds = int((tmp // fps_dict[video]) % 60)
+                    minutes = int((tmp // fps_dict[video]) // 60)
+                    events_high_recall.append(
+                        {
+                            "label": classes_inv[j],
+                            "position": int((tmp * 1000) / fps_dict[video]),
+                            "gameTime": f"{minutes:02.0f}:{seconds:02.0f}",
+                            "frame": tmp,
+                            # 'frame': i,
+                            "confidence": scores[tmp, j].item(),
+                            # 'score': scores[i, j].item()
+                        }
+                    )
+        pred_events.append({"video": video, "events": events, "fps": fps_dict[video]})
+        pred_events_high_recall.append(
+            {"video": video, "events": events_high_recall, "fps": fps_dict[video]}
+        )
 
     return err, f1, pred_events, pred_events_high_recall, pred_scores
 
@@ -190,27 +190,27 @@ def non_maximum_supression(pred, window):
     new_pred = []
     for video_pred in pred:
         events_by_label = defaultdict(list)
-        for e in video_pred['events']:
-            events_by_label[e['label']].append(e)
+        for e in video_pred["events"]:
+            events_by_label[e["label"]].append(e)
 
         events = []
         for v in events_by_label.values():
             for e1 in v:
                 for e2 in v:
                     if (
-                            e1['frame'] != e2['frame']
-                            and abs(e1['frame'] - e2['frame']) <= window
-                            and e1['score'] < e2['score']
+                        e1["frame"] != e2["frame"]
+                        and abs(e1["frame"] - e2["frame"]) <= window
+                        and e1["confidence"] < e2["confidence"]
                     ):
                         # Found another prediction in the window that has a
                         # higher score
                         break
                 else:
                     events.append(e1)
-        events.sort(key=lambda x: x['frame'])
+        events.sort(key=lambda x: x["frame"])
         new_video_pred = copy.deepcopy(video_pred)
-        new_video_pred['events'] = events
-        new_video_pred['num_events'] = len(events)
+        new_video_pred["events"] = events
+        new_video_pred["num_events"] = len(events)
         new_pred.append(new_video_pred)
     return new_pred
 
@@ -223,17 +223,17 @@ def search_best_epoch(work_dir):
     Returns:
         epoch/epoch_mAP (int): The best epoch.
     """
-    loss = load_json(os.path.join(work_dir, 'loss.json'))
-    val_mAP = 0
-    val = float('inf')
+    loss = load_json(os.path.join(work_dir, "loss.json"))
+    valid_mAP = 0
+    valid = float("inf")
     epoch = -1
     epoch_mAP = -1
     for epoch_loss in loss:
-        if epoch_loss["val_mAP"] > val_mAP:
-            val_mAP = epoch_loss["val_mAP"]
+        if epoch_loss["valid_mAP"] > valid_mAP:
+            valid_mAP = epoch_loss["valid_mAP"]
             epoch_mAP = epoch_loss["epoch"]
-        if epoch_loss["val"] < val:
-            val = epoch_loss["val"]
+        if epoch_loss["valid"] < valid:
+            valid = epoch_loss["valid"]
             epoch = epoch_loss["epoch"]
     if epoch_mAP != -1:
         return epoch_mAP
@@ -241,8 +241,17 @@ def search_best_epoch(work_dir):
         return epoch
 
 
-def infer_and_process_predictions_e2e(model, dali, dataset, split, classes, save_pred, calc_stats=True,
-                                      dataloader_params=None, return_pred=False):
+def infer_and_process_predictions_e2e(
+    model,
+    dali,
+    dataset,
+    split,
+    classes,
+    save_pred,
+    calc_stats=True,
+    dataloader_params=None,
+    return_pred=False,
+):
     """Infer prediction of actions from clips, process these predictions.
 
     Args:
@@ -255,7 +264,7 @@ def infer_and_process_predictions_e2e(model, dali, dataset, split, classes, save
         calc_stats (bool) : display stats or not.
             Default: True.
         dataloader_params (dict): Parameters for the dataloader.
-            Default: None. 
+            Default: None.
         return_pred (bool): Return dict of predictions or not.
             Default: False
 
@@ -268,77 +277,86 @@ def infer_and_process_predictions_e2e(model, dali, dataset, split, classes, save
     for video, video_len, _ in dataset.videos:
         pred_dict[video] = (
             np.zeros((video_len, len(classes) + 1), np.float32),
-            np.zeros(video_len, np.int32))
+            np.zeros(video_len, np.int32),
+        )
 
     batch_size = dataloader_params.batch_size
 
-    for clip in tqdm(dataset if dali else
-                     DataLoader(
-            dataset, num_workers=dataloader_params.num_workers,
+    for clip in tqdm(
+        dataset
+        if dali
+        else DataLoader(
+            dataset,
+            num_workers=dataloader_params.num_workers,
             pin_memory=dataloader_params.pin_memory,
-            batch_size=batch_size
-                         )
-                     ):
+            batch_size=batch_size,
+        )
+    ):
         if batch_size > 1:
             # Batched by dataloader
-            _, batch_pred_scores = model.predict(clip['frame'])
-            for i in range(clip['frame'].shape[0]):
-                video = clip['video'][i]
+            _, batch_pred_scores = model.predict(clip["frame"])
+            for i in range(clip["frame"].shape[0]):
+                video = clip["video"][i]
                 scores, support = pred_dict[video]
                 pred_scores = batch_pred_scores[i]
-                start = clip['start'][i].item()
+                start = clip["start"][i].item()
                 if start < 0:
                     pred_scores = pred_scores[-start:, :]
                     start = 0
                 end = start + pred_scores.shape[0]
                 if end >= scores.shape[0]:
                     end = scores.shape[0]
-                    pred_scores = pred_scores[:end - start, :]
+                    pred_scores = pred_scores[: end - start, :]
                 scores[start:end, :] += pred_scores
                 support[start:end] += 1
 
         else:
             # Batched by dataset
-            scores, support = pred_dict[clip['video'][0]]
+            scores, support = pred_dict[clip["video"][0]]
 
-            start = clip['start'][0].item()
+            start = clip["start"][0].item()
             # start=start-1
-            _, pred_scores = model.predict(clip['frame'][0])
+            _, pred_scores = model.predict(clip["frame"][0])
             if start < 0:
                 pred_scores = pred_scores[:, -start:, :]
                 start = 0
             end = start + pred_scores.shape[1]
             if end >= scores.shape[0]:
                 end = scores.shape[0]
-                pred_scores = pred_scores[:, :end - start, :]
+                pred_scores = pred_scores[:, : end - start, :]
 
             scores[start:end, :] += np.sum(pred_scores, axis=0)
             support[start:end] += pred_scores.shape[0]
 
-    err, f1, pred_events, pred_events_high_recall, pred_scores = \
+    err, f1, pred_events, pred_events_high_recall, pred_scores = (
         process_frame_predictions(dali, dataset, classes, pred_dict)
+    )
 
     avg_mAP = None
     if calc_stats:
-        print('=== Results on {} (w/o NMS) ==='.format(split))
-        print('Error (frame-level): {:0.2f}\n'.format(err.get() * 100))
+        print("=== Results on {} (w/o NMS) ===".format(split))
+        print("Error (frame-level): {:0.2f}\n".format(err.get() * 100))
 
         def get_f1_tab_row(str_k):
-            k = classes[str_k] if str_k != 'any' else None
+            k = classes[str_k] if str_k != "any" else None
             return [str_k, f1.get(k) * 100, *f1.tp_fp_fn(k)]
-        rows = [get_f1_tab_row('any')]
+
+        rows = [get_f1_tab_row("any")]
         for c in sorted(classes):
             rows.append(get_f1_tab_row(c))
-        print(tabulate(rows, headers=['Exact frame', 'F1', 'TP', 'FP', 'FN'],
-                       floatfmt='0.2f'))
+        print(
+            tabulate(
+                rows, headers=["Exact frame", "F1", "TP", "FP", "FN"], floatfmt="0.2f"
+            )
+        )
         print()
 
         mAPs, _ = compute_mAPs_E2E(dataset.labels, pred_events_high_recall)
         avg_mAP = np.mean(mAPs[1:])
 
     if save_pred is not None:
-        store_json(save_pred + '.json', pred_events, pretty=True)
-        store_gz_json(save_pred + '.recall.json.gz', pred_events_high_recall)
+        store_json(save_pred + ".json", pred_events, pretty=True)
+        store_gz_json(save_pred + ".recall.json.gz", pred_events_high_recall)
         # if save_scores:
         #     store_gz_json(save_pred + '.score.json.gz', pred_scores)
     if return_pred:
@@ -360,30 +378,34 @@ def store_eval_files_json(raw_pred, eval_dir):
     video_pred = defaultdict(list)
     video_fps = defaultdict(list)
     for obj in raw_pred:
-        if os.path.isfile(obj['video']):
-            video = obj["video"]
-        else:
-            video, quality = obj['video'].rsplit('_', 1)
+        video = obj["video"]
         video_fps[video] = obj["fps"]
-        for event in obj['events']:
-            video_pred[video].append({
-                'frame': str(event['frame']),
-                'label': event['label'],
-                'confidence': str(event['score'])
-            })
+        for event in obj["events"]:
+            video_pred[video].append(
+                {
+                    "frame": event["frame"],
+                    "label": event["label"],
+                    "confidence": event["confidence"],
+                    "position": event["position"],
+                    "gameTime": event["gameTime"]
+                }
+            )
 
     for video, pred in video_pred.items():
         # if video.startswith('/'):
         #     video = video[1:]
-        if os.path.isfile(video):
+        if len(raw_pred)==1:
             video_out_dir = eval_dir
             only_one_file = True
-        else:
-            video_out_dir = os.path.join(eval_dir, video)
+        else: 
+            video_out_dir = os.path.join(eval_dir, os.path.splitext(video)[0])
         os.makedirs(video_out_dir, exist_ok=True)
-        store_json(os.path.join(video_out_dir, 'results_spotting.json'), {
-            'Url': video, 'predictions': pred, 'fps': video_fps[video]
-        }, pretty=True)
+        store_json(
+            os.path.join(video_out_dir, "results_spotting.json"),
+            {"Url": video, "predictions": pred, "fps": video_fps[video]},
+            pretty=True,
+        )
+    logging.info("Stored to {}".format(eval_dir))
     return only_one_file
 
 
@@ -432,7 +454,9 @@ def store_eval_files_json(raw_pred, eval_dir):
 #     return dense_predictions
 
 
-def label2vector(labels, num_classes=17, framerate=2, EVENT_DICTIONARY={}, vector_size=None):
+def label2vector(
+    labels, num_classes=17, framerate=2, EVENT_DICTIONARY={}, vector_size=None
+):
     """Transform list of dict containing ground truth labels into a 2D array.
     Args:
         labels (List[dict]): List of groundtruth labels for a video.
@@ -451,7 +475,7 @@ def label2vector(labels, num_classes=17, framerate=2, EVENT_DICTIONARY={}, vecto
             is unshown, 1 is the event is visible and 0 otherwise, meaning that the event do not occur for this frame.
 
     """
-    vector_size = int(90*60*framerate if vector_size is None else vector_size)
+    vector_size = int(90 * 60 * framerate if vector_size is None else vector_size)
 
     dense_labels = np.zeros((vector_size, num_classes))
 
@@ -468,7 +492,7 @@ def label2vector(labels, num_classes=17, framerate=2, EVENT_DICTIONARY={}, vecto
             seconds = int(time[-2::])
             # annotation at millisecond precision
             if "position" in annotation:
-                frame = int(framerate * (int(annotation["position"])/1000))
+                frame = int(framerate * (int(annotation["position"]) / 1000))
             # annotation at second precision
             else:
                 frame = framerate * (seconds + 60 * minutes)
@@ -480,13 +504,15 @@ def label2vector(labels, num_classes=17, framerate=2, EVENT_DICTIONARY={}, vecto
             if annotation["visibility"] == "not shown":
                 value = -1
 
-        frame = min(frame, vector_size-1)
+        frame = min(frame, vector_size - 1)
         dense_labels[frame][label] = value
 
     return dense_labels
 
 
-def predictions2vector(predictions, num_classes=17, framerate=2, EVENT_DICTIONARY={}, vector_size=None):
+def predictions2vector(
+    predictions, num_classes=17, framerate=2, EVENT_DICTIONARY={}, vector_size=None
+):
     """Transform list of dict containing predictions into a 2D array.
     Args:
         predictions (List[dict]): List of predictions for a video.
@@ -504,9 +530,9 @@ def predictions2vector(predictions, num_classes=17, framerate=2, EVENT_DICTIONAR
             The first index is the frame number and the second one is the class. The value is the score of the class.
 
     """
-    vector_size = 90*60*framerate if vector_size is None else vector_size
+    vector_size = 90 * 60 * framerate if vector_size is None else vector_size
 
-    dense_predictions = np.zeros((vector_size, num_classes))-1
+    dense_predictions = np.zeros((vector_size, num_classes)) - 1
 
     for annotation in predictions:
 
@@ -519,17 +545,17 @@ def predictions2vector(predictions, num_classes=17, framerate=2, EVENT_DICTIONAR
 
             # half = int(annotation["half"])
 
-            frame = int(framerate * (time/1000))
+            frame = int(framerate * (time / 1000))
 
         label = EVENT_DICTIONARY[event]
 
-        frame = min(frame, vector_size-1)
+        frame = min(frame, vector_size - 1)
         dense_predictions[frame][label] = annotation["confidence"]
 
     return dense_predictions
 
 
-np.seterr(divide='ignore', invalid='ignore')
+np.seterr(divide="ignore", invalid="ignore")
 
 
 class AverageMeter(object):
@@ -598,7 +624,11 @@ def compute_class_scores(target, closest, detection, delta):
             if pred_index > gt_index + delta:
                 break
 
-            if abs(pred_index-gt_index) <= delta/2 and pred_score > max_score and pred_index not in remove_indexes:
+            if (
+                abs(pred_index - gt_index) <= delta / 2
+                and pred_score > max_score
+                and pred_index not in remove_indexes
+            ):
                 max_score = pred_score
                 max_index = pred_index
                 selected_game_index = game_index
@@ -656,10 +686,12 @@ def compute_precision_recall_curve(targets, closests, detections, delta):
 
         # Get the confidence scores and their corresponding TP or FP characteristics for each game
         for target, closest, detection in zip(targets, closests, detections):
-            tmp_detections, tmp_n_gt_labels_visible, tmp_n_gt_labels_unshown = compute_class_scores(
-                target[:, c], closest[:, c], detection[:, c], delta)
-            total_detections = np.append(
-                total_detections, tmp_detections, axis=0)
+            tmp_detections, tmp_n_gt_labels_visible, tmp_n_gt_labels_unshown = (
+                compute_class_scores(
+                    target[:, c], closest[:, c], detection[:, c], delta
+                )
+            )
+            total_detections = np.append(total_detections, tmp_detections, axis=0)
             n_gt_labels_visible = n_gt_labels_visible + tmp_n_gt_labels_visible
             n_gt_labels_unshown = n_gt_labels_unshown + tmp_n_gt_labels_unshown
 
@@ -673,27 +705,31 @@ def compute_precision_recall_curve(targets, closests, detections, delta):
         # Get only the visible or unshown actions
         total_detections_visible = np.copy(total_detections)
         total_detections_unshown = np.copy(total_detections)
-        total_detections_visible[np.where(
-            total_detections_visible[:, 2] <= 0.5)[0], 0] = -1
-        total_detections_unshown[np.where(
-            total_detections_unshown[:, 2] >= -0.5)[0], 0] = -1
+        total_detections_visible[
+            np.where(total_detections_visible[:, 2] <= 0.5)[0], 0
+        ] = -1
+        total_detections_unshown[
+            np.where(total_detections_unshown[:, 2] >= -0.5)[0], 0
+        ] = -1
 
         # Get the precision and recall for each confidence threshold
         for threshold in thresholds:
             pred_indexes = np.where(total_detections[:, 0] >= threshold)[0]
             pred_indexes_visible = np.where(
-                total_detections_visible[:, 0] >= threshold)[0]
+                total_detections_visible[:, 0] >= threshold
+            )[0]
             pred_indexes_unshown = np.where(
-                total_detections_unshown[:, 0] >= threshold)[0]
+                total_detections_unshown[:, 0] >= threshold
+            )[0]
             TP = np.sum(total_detections[pred_indexes, 1])
             TP_visible = np.sum(total_detections[pred_indexes_visible, 1])
             TP_unshown = np.sum(total_detections[pred_indexes_unshown, 1])
-            p = np.nan_to_num(TP/len(pred_indexes))
-            r = np.nan_to_num(TP/(n_gt_labels_visible + n_gt_labels_unshown))
-            p_visible = np.nan_to_num(TP_visible/len(pred_indexes_visible))
-            r_visible = np.nan_to_num(TP_visible/n_gt_labels_visible)
-            p_unshown = np.nan_to_num(TP_unshown/len(pred_indexes_unshown))
-            r_unshown = np.nan_to_num(TP_unshown/n_gt_labels_unshown)
+            p = np.nan_to_num(TP / len(pred_indexes))
+            r = np.nan_to_num(TP / (n_gt_labels_visible + n_gt_labels_unshown))
+            p_visible = np.nan_to_num(TP_visible / len(pred_indexes_visible))
+            r_visible = np.nan_to_num(TP_visible / n_gt_labels_visible)
+            p_unshown = np.nan_to_num(TP_unshown / len(pred_indexes_unshown))
+            r_unshown = np.nan_to_num(TP_unshown / n_gt_labels_unshown)
             precision[-1].append(p)
             recall[-1].append(r)
             precision_visible[-1].append(p_visible)
@@ -726,7 +762,14 @@ def compute_precision_recall_curve(targets, closests, detections, delta):
         precision_unshown[:, i] = precision_unshown[index_sort, i]
         recall_unshown[:, i] = recall_unshown[index_sort, i]
 
-    return precision, recall, precision_visible, recall_visible, precision_unshown, recall_unshown
+    return (
+        precision,
+        recall,
+        precision_visible,
+        recall_visible,
+        precision_unshown,
+        recall_unshown,
+    )
 
 
 def compute_mAP(precision, recall):
@@ -742,13 +785,13 @@ def compute_mAP(precision, recall):
 
     """
     # Array for storing the AP per class
-    AP = np.array([0.0]*precision.shape[-1])
+    AP = np.array([0.0] * precision.shape[-1])
 
     # Loop for all classes
     for i in np.arange(precision.shape[-1]):
 
         # 11 point interpolation
-        for j in np.arange(11)/10:
+        for j in np.arange(11) / 10:
 
             index_recall = np.where(recall[:, i] >= j)[0]
 
@@ -760,16 +803,17 @@ def compute_mAP(precision, recall):
 
             AP[i] += max_value_precision
 
-    mAP_per_class = AP/11
+    mAP_per_class = AP / 11
 
     return np.mean(mAP_per_class), mAP_per_class
+
 
 # Tight: (SNv3): np.arange(5)*1 + 1
 # Loose: (SNv1/v2): np.arange(12)*5 + 5
 
 
-def delta_curve(targets, closests, detections,  framerate, deltas=np.arange(5)*1 + 1):
-    """Compute lists of mAP for each tolerance. 
+def delta_curve(targets, closests, detections, framerate, deltas=np.arange(5) * 1 + 1):
+    """Compute lists of mAP for each tolerance.
 
     Args:
         targets (List(np.array(vector_size,num_classes)): List of ground truth targets of shape (number of videos, number of frames,number of classes).
@@ -793,29 +837,46 @@ def delta_curve(targets, closests, detections,  framerate, deltas=np.arange(5)*1
     mAP_unshown = list()
     mAP_per_class_unshown = list()
 
-    for delta in tqdm(deltas*framerate):
+    for delta in tqdm(deltas * framerate):
 
-        precision, recall, precision_visible, recall_visible, precision_unshown, recall_unshown = compute_precision_recall_curve(
-            targets, closests, detections, delta)
+        (
+            precision,
+            recall,
+            precision_visible,
+            recall_visible,
+            precision_unshown,
+            recall_unshown,
+        ) = compute_precision_recall_curve(targets, closests, detections, delta)
 
         tmp_mAP, tmp_mAP_per_class = compute_mAP(precision, recall)
         mAP.append(tmp_mAP)
         mAP_per_class.append(tmp_mAP_per_class)
         # TODO: compute visible/undshown from another JSON file containing only the visible/unshown annotations
         tmp_mAP_visible, tmp_mAP_per_class_visible = compute_mAP(
-            precision_visible, recall_visible)
+            precision_visible, recall_visible
+        )
         mAP_visible.append(tmp_mAP_visible)
         mAP_per_class_visible.append(tmp_mAP_per_class_visible)
         tmp_mAP_unshown, tmp_mAP_per_class_unshown = compute_mAP(
-            precision_unshown, recall_unshown)
+            precision_unshown, recall_unshown
+        )
         mAP_unshown.append(tmp_mAP_unshown)
         mAP_per_class_unshown.append(tmp_mAP_per_class_unshown)
 
-    return mAP, mAP_per_class, mAP_visible, mAP_per_class_visible, mAP_unshown, mAP_per_class_unshown
+    return (
+        mAP,
+        mAP_per_class,
+        mAP_visible,
+        mAP_per_class_visible,
+        mAP_unshown,
+        mAP_per_class_unshown,
+    )
 
 
-def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*1 + 1):
-    """Compute average mAP. 
+def average_mAP(
+    targets, detections, closests, framerate=2, deltas=np.arange(5) * 1 + 1
+):
+    """Compute average mAP.
 
     Args:
         targets (List(np.array(vector_size,num_classes)): List of ground truth targets of shape (number of videos, number of frames,number of classes).
@@ -834,55 +895,79 @@ def average_mAP(targets, detections, closests, framerate=2, deltas=np.arange(5)*
         a_mAP_per_class_unshown: List of average mAP only for the unshown events.
 
     """
-    mAP, mAP_per_class, mAP_visible, mAP_per_class_visible, mAP_unshown, mAP_per_class_unshown = delta_curve(
-        targets, closests, detections, framerate, deltas)
+    (
+        mAP,
+        mAP_per_class,
+        mAP_visible,
+        mAP_per_class_visible,
+        mAP_unshown,
+        mAP_per_class_unshown,
+    ) = delta_curve(targets, closests, detections, framerate, deltas)
 
     if len(mAP) == 1:
-        return mAP[0], mAP_per_class[0], mAP_visible[0], mAP_per_class_visible[0], mAP_unshown[0], mAP_per_class_unshown[0]
+        return (
+            mAP[0],
+            mAP_per_class[0],
+            mAP_visible[0],
+            mAP_per_class_visible[0],
+            mAP_unshown[0],
+            mAP_per_class_unshown[0],
+        )
 
     # Compute the average mAP
     integral = 0.0
-    for i in np.arange(len(mAP)-1):
-        integral += (mAP[i]+mAP[i+1])/2
-    a_mAP = integral/((len(mAP)-1))
+    for i in np.arange(len(mAP) - 1):
+        integral += (mAP[i] + mAP[i + 1]) / 2
+    a_mAP = integral / ((len(mAP) - 1))
 
     integral_visible = 0.0
-    for i in np.arange(len(mAP_visible)-1):
-        integral_visible += (mAP_visible[i]+mAP_visible[i+1])/2
-    a_mAP_visible = integral_visible/((len(mAP_visible)-1))
+    for i in np.arange(len(mAP_visible) - 1):
+        integral_visible += (mAP_visible[i] + mAP_visible[i + 1]) / 2
+    a_mAP_visible = integral_visible / ((len(mAP_visible) - 1))
 
     integral_unshown = 0.0
-    for i in np.arange(len(mAP_unshown)-1):
-        integral_unshown += (mAP_unshown[i]+mAP_unshown[i+1])/2
-    a_mAP_unshown = integral_unshown/((len(mAP_unshown)-1))
-    a_mAP_unshown = a_mAP_unshown*17/13
+    for i in np.arange(len(mAP_unshown) - 1):
+        integral_unshown += (mAP_unshown[i] + mAP_unshown[i + 1]) / 2
+    a_mAP_unshown = integral_unshown / ((len(mAP_unshown) - 1))
+    a_mAP_unshown = a_mAP_unshown * 17 / 13
 
     a_mAP_per_class = list()
     for c in np.arange(len(mAP_per_class[0])):
         integral_per_class = 0.0
-        for i in np.arange(len(mAP_per_class)-1):
-            integral_per_class += (mAP_per_class[i][c]+mAP_per_class[i+1][c])/2
-        a_mAP_per_class.append(integral_per_class/((len(mAP_per_class)-1)))
+        for i in np.arange(len(mAP_per_class) - 1):
+            integral_per_class += (mAP_per_class[i][c] + mAP_per_class[i + 1][c]) / 2
+        a_mAP_per_class.append(integral_per_class / ((len(mAP_per_class) - 1)))
 
     a_mAP_per_class_visible = list()
     for c in np.arange(len(mAP_per_class_visible[0])):
         integral_per_class_visible = 0.0
-        for i in np.arange(len(mAP_per_class_visible)-1):
+        for i in np.arange(len(mAP_per_class_visible) - 1):
             integral_per_class_visible += (
-                mAP_per_class_visible[i][c]+mAP_per_class_visible[i+1][c])/2
+                mAP_per_class_visible[i][c] + mAP_per_class_visible[i + 1][c]
+            ) / 2
         a_mAP_per_class_visible.append(
-            integral_per_class_visible/((len(mAP_per_class_visible)-1)))
+            integral_per_class_visible / ((len(mAP_per_class_visible) - 1))
+        )
 
     a_mAP_per_class_unshown = list()
     for c in np.arange(len(mAP_per_class_unshown[0])):
         integral_per_class_unshown = 0.0
-        for i in np.arange(len(mAP_per_class_unshown)-1):
+        for i in np.arange(len(mAP_per_class_unshown) - 1):
             integral_per_class_unshown += (
-                mAP_per_class_unshown[i][c]+mAP_per_class_unshown[i+1][c])/2
+                mAP_per_class_unshown[i][c] + mAP_per_class_unshown[i + 1][c]
+            ) / 2
         a_mAP_per_class_unshown.append(
-            integral_per_class_unshown/((len(mAP_per_class_unshown)-1)))
+            integral_per_class_unshown / ((len(mAP_per_class_unshown) - 1))
+        )
 
-    return a_mAP, a_mAP_per_class, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown
+    return (
+        a_mAP,
+        a_mAP_per_class,
+        a_mAP_visible,
+        a_mAP_per_class_visible,
+        a_mAP_unshown,
+        a_mAP_per_class_unshown,
+    )
 
 
 def LoadJsonFromZip(zippedFile, JsonPath):
@@ -901,7 +986,7 @@ def get_closest_action_index(dense_labels, closest_numpy):
         If action occurs at index 10, the previous index at which the actions occured is 6 and the next one is 12,
         the action will then be assigned from index 8 to 11.
 
-    Args: 
+    Args:
         dense_labels: Vector of groundtruth labels.
         closest_numpy: Empty vector that stores the labels at the closest indexes.
 
@@ -913,15 +998,17 @@ def get_closest_action_index(dense_labels, closest_numpy):
         if len(indexes) == 0:
             continue
         indexes.insert(0, -indexes[0])
-        indexes.append(2*closest_numpy.shape[0])
-        for i in np.arange(len(indexes)-2)+1:
-            start = max(0, (indexes[i-1]+indexes[i])//2)
-            stop = min(closest_numpy.shape[0], (indexes[i]+indexes[i+1])//2)
+        indexes.append(2 * closest_numpy.shape[0])
+        for i in np.arange(len(indexes) - 2) + 1:
+            start = max(0, (indexes[i - 1] + indexes[i]) // 2)
+            stop = min(closest_numpy.shape[0], (indexes[i] + indexes[i + 1]) // 2)
             closest_numpy[start:stop, c] = dense_labels[indexes[i], c]
     return closest_numpy
 
 
-def compute_performances_mAP(metric, targets_numpy, detections_numpy, closests_numpy, INVERSE_EVENT_DICTIONARY):
+def compute_performances_mAP(
+    metric, targets_numpy, detections_numpy, closests_numpy, INVERSE_EVENT_DICTIONARY
+):
     """Compute the different mAP and display them.
 
     Args:
@@ -935,9 +1022,9 @@ def compute_performances_mAP(metric, targets_numpy, detections_numpy, closests_n
         results (dict): Dictionnary containing the different mAP computed.
     """
     if metric == "loose":
-        deltas = np.arange(12)*5 + 5
+        deltas = np.arange(12) * 5 + 5
     elif metric == "tight":
-        deltas = np.arange(5)*1 + 1
+        deltas = np.arange(5) * 1 + 1
     elif metric == "at1":
         deltas = np.array([1])
     elif metric == "at2":
@@ -950,9 +1037,16 @@ def compute_performances_mAP(metric, targets_numpy, detections_numpy, closests_n
         deltas = np.array([5])
 
     # Compute the performances
-    a_mAP, a_mAP_per_class, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown = average_mAP(targets_numpy,
-                                                                                                                         detections_numpy, closests_numpy,
-                                                                                                                         framerate=2, deltas=deltas)
+    (
+        a_mAP,
+        a_mAP_per_class,
+        a_mAP_visible,
+        a_mAP_per_class_visible,
+        a_mAP_unshown,
+        a_mAP_per_class_unshown,
+    ) = average_mAP(
+        targets_numpy, detections_numpy, closests_numpy, framerate=2, deltas=deltas
+    )
 
     results = {
         "a_mAP": a_mAP,
@@ -964,22 +1058,27 @@ def compute_performances_mAP(metric, targets_numpy, detections_numpy, closests_n
     }
 
     rows = []
-    for i in range(len(results['a_mAP_per_class'])):
+    for i in range(len(results["a_mAP_per_class"])):
         label = INVERSE_EVENT_DICTIONARY[i]
-        rows.append((
-            label,
-            '{:0.2f}'.format(results['a_mAP_per_class'][i] * 100),
-            '{:0.2f}'.format(results['a_mAP_per_class_visible'][i] * 100),
-            '{:0.2f}'.format(results['a_mAP_per_class_unshown'][i] * 100)
-        ))
-    rows.append((
-        'Average mAP',
-        '{:0.2f}'.format(results['a_mAP'] * 100),
-        '{:0.2f}'.format(results['a_mAP_visible'] * 100),
-        '{:0.2f}'.format(results['a_mAP_unshown'] * 100)
-    ))
+        rows.append(
+            (
+                label,
+                "{:0.2f}".format(results["a_mAP_per_class"][i] * 100),
+                "{:0.2f}".format(results["a_mAP_per_class_visible"][i] * 100),
+                "{:0.2f}".format(results["a_mAP_per_class_unshown"][i] * 100),
+            )
+        )
+    rows.append(
+        (
+            "Average mAP",
+            "{:0.2f}".format(results["a_mAP"] * 100),
+            "{:0.2f}".format(results["a_mAP_visible"] * 100),
+            "{:0.2f}".format(results["a_mAP_unshown"] * 100),
+        )
+    )
 
     logging.info("Best Performance at end of training ")
-    logging.info('Metric: ' + metric)
-    print(tabulate(rows, headers=['', 'Any', 'Visible', 'Unseen']))
+    logging.info("Metric: " + metric)
+    logging.info("\n" + tabulate(rows, headers=["", "Any", "Visible", "Unseen"]))
+    # print(tabulate(rows, headers=['', 'Any', 'Visible', 'Unseen']))
     return results

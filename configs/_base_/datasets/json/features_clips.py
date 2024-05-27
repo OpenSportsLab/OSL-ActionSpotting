@@ -1,16 +1,33 @@
 # classes = ("Medical",) 
-classes = 'datasets_jsons/soccernetv2/features/class.txt'
+classes = [
+    "Penalty",
+    "Kick-off",
+    "Goal",
+    "Substitution",
+    "Offside",
+    "Shots on target",
+    "Shots off target",
+    "Clearance",
+    "Ball out of play",
+    "Throw-in",
+    "Foul",
+    "Indirect free-kick",
+    "Direct free-kick",
+    "Corner",
+    "Yellow card",
+    "Red card",
+    "Yellow->red card",
+]
+# classes = 'datasets_jsons/soccernetv2/features/class.txt'
 # classes = '/scratch/users/ybenzakour/zip/features/class.txt'
 # classes = '/home/ybenzakour/datasets/SoccerNet/class.txt'
-extension = '.mkv'
 dataset = dict(
-    extension = extension,
     input_fps = 25,
     extract_fps = 2,
     train=dict(
         type="FeatureClipsfromJSON",
         path="train.json",
-        data_root = ["/home/ybenzakour/datasets/SoccerNet/","/home/ybenzakour/datasets/SoccerNet/"],
+        data_root = "/home/ybenzakour/datasets/SoccerNet/",
         framerate=2,
         window_size=20,
         classes=classes,
@@ -20,7 +37,7 @@ dataset = dict(
             shuffle=True,
             pin_memory=True,
         )),
-    val=dict(
+    valid=dict(
         type="FeatureClipsfromJSON",
         path="val.json",
         data_root = "/home/ybenzakour/datasets/SoccerNet/",

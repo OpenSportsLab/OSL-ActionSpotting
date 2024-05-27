@@ -29,8 +29,6 @@ def parse_args():
     # parser.add_argument("--static_graph", action="store_true", help="set static_graph==True in DDP")
     parser.add_argument("--cfg-options", nargs="+", action=DictAction, help="override settings")
 
-    # # parser.add_argument('--logging_dir',       required=False, type=str,   default="log", help='Where to log' )
-    parser.add_argument('--loglevel',   required=False, type=str,   default='INFO', help='logging level')
 
     # read args
     args = parser.parse_args()
@@ -56,27 +54,31 @@ def main():
         print("\nScript aborted by user.")
         raise SystemExit
 
-    # Set up the signal handler for KeyboardInterrupt
+    # Set up the signal handler for KeyboardInterrupt because of pytorch lightning
     signal.signal(signal.SIGINT, signal_handler)
     
     # Create Work directory
     os.makedirs(cfg.work_dir, exist_ok=True)
 
     # Define logging
-    numeric_level = getattr(logging, args.loglevel.upper(), None)
+    numeric_level = getattr(logging, cfg.log_level.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % args.loglevel)
+        raise ValueError("Invalid log level: %s" % cfg.log_level)
 
-    # Define output folder
-    log_path = os.path.join(cfg.work_dir, datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log'))
+    # Create logs folder
+    os.makedirs(os.path.join(cfg.work_dir, "logs"), exist_ok=True)
+    # Define logs folder
+    log_path = os.path.join(
+        cfg.work_dir, "logs", datetime.now().strftime("%Y-%m-%d_%H-%M-%S.log")
+    )
     logging.basicConfig(
         level=numeric_level,
-        format=
-        "%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+        format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
         handlers=[
             logging.FileHandler(log_path),
             logging.StreamHandler()
-        ])
+        ],
+    )
 
     #Check configs files
     logging.info('Checking configs files')

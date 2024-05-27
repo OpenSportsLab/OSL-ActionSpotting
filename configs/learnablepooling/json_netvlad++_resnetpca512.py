@@ -8,10 +8,10 @@ work_dir = "outputs/learnablepooling/json_netvlad++_resnetpca512"
 
 dataset = dict(
     train=dict(path='datasets_jsons/soccernetv2/features/Train.json'),
-    val=dict(path="datasets_jsons/soccernetv2/features/Valid.json"),
+    valid=dict(path="datasets_jsons/soccernetv2/features/Valid.json"),
     test=dict(path="datasets_jsons/soccernetv2/features/Test.json")
 )
-
+log_level = 'INFO'  # The level of logging
 model = dict(
     neck=dict(
         type='NetVLAD++',

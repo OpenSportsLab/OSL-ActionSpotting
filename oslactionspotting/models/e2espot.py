@@ -1,3 +1,4 @@
+import logging
 from oslactionspotting.core.loss.builder import build_criterion
 from oslactionspotting.models.backbones import build_backbone
 from oslactionspotting.models.common import step, BaseRGBModel
@@ -82,7 +83,9 @@ class E2EModel(BaseRGBModel):
         self._multi_gpu = multi_gpu
         self._model = E2EModel.Impl(num_classes, backbone, head, clip_len, modality)
         self._model.print_stats()
+        logging.info("Build criterion")
         self.criterion = build_criterion(cfg.training.criterion)
+        logging.info(self.criterion)
         if multi_gpu:
             self._model = nn.DataParallel(self._model)
             self._model.to(device)

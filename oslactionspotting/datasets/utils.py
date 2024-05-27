@@ -1,6 +1,14 @@
+from collections import defaultdict
+import logging
+import os
+import cv2
 import numpy as np
 import torch
 import math
+
+from tqdm import tqdm
+
+from oslactionspotting.core.utils.io import load_json
 
 
 def get_stride(src_fps, sample_fps):
@@ -12,7 +20,6 @@ def get_stride(src_fps, sample_fps):
     Returns:
         stride (int): The stride to apply.
     """
-    sample_fps = sample_fps
     if sample_fps <= 0:
         stride = 1
     else:
@@ -382,3 +389,126 @@ def feats2clip(
         return feats[idx, :]
     # print(idx)
     return feats[idx, ...]
+
+def get_num_frames(num_frames, fps, sample_fps):
+    """Compute the number of frames of a video after fps changes.
+
+    Args:
+        num_frames (int): Number of frames in the base video.
+        fps (int): The input fps.
+        sample_fps (int): The output fps.
+
+    Returns:
+        (int): The number of frames with the output fps.
+    """
+    return math.ceil(num_frames / get_stride(fps, sample_fps))
+
+def annotationstoe2eformat(label_files, video_dirs, input_fps, extract_fps, dali):
+    """Adapt annotations jsons to e2e format.
+
+    Args:
+        label_files (string,list[string]): Json files of annotations.
+        label_dirs (string,list[string]): Data root folder of videos. Must match number of label files.
+        input_fps (int): Fps of input videos.
+        extract_fps (int): Fps at which we extract frames.
+        dali (bool): WHether processing with dali or opencv.
+    """
+    if not isinstance(label_files,list):
+        label_files = [label_files]
+    if not isinstance(video_dirs,list):
+        video_dirs = [video_dirs]
+    assert len(label_files) == len(video_dirs)
+
+    labels_e2e = list()
+    classes_by_label_dir = []
+    for label_dir, video_dir in zip(label_files, video_dirs):
+        logging.info('Processing '+ label_dir + ' to e2e format.')
+        videos = []
+        annotations = load_json(label_dir)
+        labels = annotations["labels"]
+        classes_by_label_dir.append(labels)
+        videos = annotations["videos"]
+        for video in tqdm(videos):
+            if "annotations" in video.keys():
+                video_annotations = video["annotations"]
+            else:
+                video_annotations = []
+
+            num_events = 0
+
+            vc = cv2.VideoCapture(os.path.join(video_dir, video["path"]))
+            width = int(vc.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(vc.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            fps = vc.get(cv2.CAP_PROP_FPS)
+            num_frames = int(vc.get(cv2.CAP_PROP_FRAME_COUNT))
+
+            sample_fps = read_fps(
+                fps, extract_fps if extract_fps < fps else fps
+            )
+            num_frames_after = get_num_frames(
+                num_frames, fps, extract_fps if extract_fps < fps else fps
+            )
+
+            if dali:
+                if get_stride(
+                    fps, extract_fps if extract_fps < fps else fps
+                ) != get_stride(input_fps, extract_fps):
+                    sample_fps = fps / get_stride(input_fps, extract_fps)
+                    num_frames_dali = math.ceil(
+                        num_frames / get_stride(input_fps, extract_fps)
+                    )
+                else:
+                    num_frames_dali = num_frames_after
+
+            # video_id = os.path.splitext(video["path"])[0]
+            video_id = os.path.join(video_dir, video["path"])
+
+            events = []
+            for annotation in video_annotations:
+                if dali:
+                    if get_stride(
+                        fps, extract_fps if extract_fps < fps else fps
+                    ) != get_stride(input_fps, extract_fps):
+                        adj_frame = (
+                            float(annotation["position"])
+                            / 1000
+                            * (fps / get_stride(input_fps, extract_fps))
+                        )
+                    else:
+                        adj_frame = float(annotation["position"]) / 1000 * sample_fps
+                    if int(adj_frame) == 0:
+                        adj_frame = 1
+                else:
+                    adj_frame = float(annotation["position"]) / 1000 * sample_fps
+                events.append(
+                    {
+                        "frame": int(adj_frame),
+                        "label": annotation["label"],
+                        "team": annotation["team"],
+                        "visibility": annotation["visibility"],
+                    }
+                )
+
+            num_events += len(events)
+            events.sort(key=lambda x: x["frame"])
+
+            
+            labels_e2e.append(
+                {   
+                    "events": events,
+                    "fps": sample_fps,
+                    "num_frames": num_frames_dali if dali else num_frames_after,
+                    "num_frames_base": num_frames,
+                    "num_events": len(events),
+                    "width": width,
+                    "height": height,
+                    "video": video_id,
+                    "path" : video["path"]
+                }
+            )
+        assert len(video_annotations) == num_events
+    classes = classes_by_label_dir[0]
+    for classes_tmp in classes_by_label_dir:
+        assert classes == classes_tmp
+    labels_e2e.sort(key=lambda x: x["video"])
+    return labels_e2e
