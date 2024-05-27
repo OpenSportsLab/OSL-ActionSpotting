@@ -1134,8 +1134,9 @@ class DaliDataSet(DALIGenericIterator):
             video (torch.tensor): The frames processed.
             label : the list of labels (corresponding to events) corresponding with the extracted frames.
         """
-        video, label, frame_num = fn.readers.video(
+        video, label, frame_num = fn.readers.video_resize(
             device="gpu",
+            size=(TARGET_HEIGHT,TARGET_WIDTH),
             file_list=file_list,
             sequence_length=sequence_length,
             random_shuffle=True,
@@ -1440,8 +1441,9 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
             video (torch.tensor): The frames processed.
             label : the index of the clip in the list of clips.
         """
-        video, label = fn.readers.video(
+        video, label = fn.readers.video_resize(
             device="gpu",
+            size=(TARGET_HEIGHT,TARGET_WIDTH),
             file_list=file_list,
             sequence_length=sequence_length,
             random_shuffle=False,
@@ -1456,7 +1458,6 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
             skip_vfr_check=True,
         )
 
-        # video = fn.resize(size=(224,398))
         video = fn.crop_mirror_normalize(
             video,
             dtype=types.FLOAT,
@@ -1468,3 +1469,5 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         )
 
         return video, label
+    def get_dims(video):
+        print(video.shape)

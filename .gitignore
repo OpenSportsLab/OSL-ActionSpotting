@@ -166,6 +166,8 @@ rny002_gsm
 lightning_logs
 run.sbatch
 *.out
+datasets_jsons/*
+environment.yml
 
 
 log/*
