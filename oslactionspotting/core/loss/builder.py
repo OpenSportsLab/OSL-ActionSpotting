@@ -18,13 +18,16 @@ def build_criterion(cfg, default_args=None):
     if cfg.type == "NLLLoss":
         criterion = NLLLoss()
     elif cfg.type == "ContextAwareLoss":
-        criterion = ContextAwareLoss(K=cfg.K,
-                                     framerate=cfg.framerate,
-                                     hit_radius=cfg.hit_radius,
-                                     miss_radius=cfg.miss_radius)
+        criterion = ContextAwareLoss(
+            K=cfg.K,
+            framerate=cfg.framerate,
+            hit_radius=cfg.hit_radius,
+            miss_radius=cfg.miss_radius,
+        )
     elif cfg.type == "SpottingLoss":
-        criterion = SpottingLoss(lambda_coord=cfg.lambda_coord,
-                                 lambda_noobj=cfg.lambda_noobj)
+        criterion = SpottingLoss(
+            lambda_coord=cfg.lambda_coord, lambda_noobj=cfg.lambda_noobj
+        )
     elif cfg.type == "Combined2x":
         c_1 = build_criterion(cfg.loss_1)
         c_2 = build_criterion(cfg.loss_2)

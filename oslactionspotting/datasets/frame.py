@@ -1,5 +1,33 @@
 #!/usr/bin/env python3
+"""
+Copyright 2022 James Hong, Haotian Zhang, Matthew Fisher, Michael Gharbi,
+Kayvon Fatahalian
 
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
 import os
 import copy
 import random
@@ -11,7 +39,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from oslactionspotting.core.utils.io import load_json
 from .utils import annotationstoe2eformat, get_stride, get_num_frames, read_fps
-from .transform import (
+from .utils import (
     RandomGaussianNoise,
     RandomHorizontalFlipFLow,
     RandomOffsetFlow,
@@ -971,7 +999,9 @@ class DaliDataSet(DALIGenericIterator):
 
         super().__init__(self.pipes, output_map, size=self.nb_videos)
 
-        self.device = torch.device("cuda:{}".format(self.devices[1]))
+        self.device = torch.device(
+            "cuda:{}".format(self.devices[1 if len(self.devices) > 1 else 0])
+        )
 
         self.gpu_transform = None
         if not self.is_eval:
@@ -1031,6 +1061,8 @@ class DaliDataSet(DALIGenericIterator):
             data: List of samples that are located on different gpus.
         """
         nb_devices = len(self.devices)
+        if nb_devices == 1:
+            ret = self.get_attr(data[0])
         if nb_devices >= 2:
             ret = self.get_attr(data[0])
             mix = self.get_attr(data[1])
@@ -1044,6 +1076,10 @@ class DaliDataSet(DALIGenericIterator):
             self.move_to_device(mix2)
 
         if self.mixup:
+            if nb_devices == 1:
+                mix = {}
+                for key, tensor in ret.items():
+                    ret[key], mix[key] = torch.chunk(tensor, 2, dim=0)
             if nb_devices >= 4:
                 for key, tensor in ret.items():
                     ret[key] = torch.cat((tensor, ret2[key]))
@@ -1136,7 +1172,7 @@ class DaliDataSet(DALIGenericIterator):
         """
         video, label, frame_num = fn.readers.video_resize(
             device="gpu",
-            size=(TARGET_HEIGHT,TARGET_WIDTH),
+            size=(TARGET_HEIGHT, TARGET_WIDTH),
             file_list=file_list,
             sequence_length=sequence_length,
             random_shuffle=True,
@@ -1443,7 +1479,7 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         """
         video, label = fn.readers.video_resize(
             device="gpu",
-            size=(TARGET_HEIGHT,TARGET_WIDTH),
+            size=(TARGET_HEIGHT, TARGET_WIDTH),
             file_list=file_list,
             sequence_length=sequence_length,
             random_shuffle=False,
@@ -1469,5 +1505,6 @@ class DaliDataSetVideo(DALIGenericIterator, DatasetVideoSharedMethods):
         )
 
         return video, label
+
     def get_dims(video):
         print(video.shape)

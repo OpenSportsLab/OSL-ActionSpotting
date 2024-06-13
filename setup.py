@@ -6,7 +6,7 @@ from setuptools import setup, find_packages, Command
 
 from oslactionspotting import __version__, __authors__, __author_email__, __github__
 
-with open('README.md') as readme_file:
+with open('README.md','r', encoding='utf-8') as readme_file:
     readme = readme_file.read()
 
 print(find_packages())

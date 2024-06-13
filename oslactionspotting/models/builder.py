@@ -36,13 +36,6 @@ def build_model(cfg, verbose=True, default_args=None):
             backbone=cfg.model.backbone,
             head=cfg.model.head,
             neck=cfg.model.neck,
-            # input_size=cfg.model.input_size,
-            # num_classes=cfg.model.num_classes,
-            # chunk_size=cfg.model.chunk_size,
-            # dim_capsule=cfg.model.dim_capsule,
-            # receptive_field=cfg.model.receptive_field,
-            # num_detections=cfg.model.num_detections,
-            # framerate=cfg.model.framerate,
             runner=cfg.runner.type,
         )
     elif cfg.model.type == "E2E":

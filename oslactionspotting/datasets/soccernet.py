@@ -375,6 +375,7 @@ class SoccerNetClips(SoccerNet):
         train (bool): Whether training or testing.
             Default: True.
     """
+
     def __init__(
         self,
         path,
@@ -592,6 +593,7 @@ class SoccerNetClipsChunks(SoccerNet):
         train (bool): Whether we prepare data for training or for testing purposes.
             Default: True.
     """
+
     def __init__(
         self,
         path,

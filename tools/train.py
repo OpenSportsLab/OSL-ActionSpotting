@@ -8,6 +8,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import torch
 from mmengine.config import Config, DictAction
+from oslactionspotting.core.trainer import build_trainer
 from oslactionspotting.core.utils.default_args import (
     get_default_args_dataset,
     get_default_args_model,
@@ -17,9 +18,8 @@ from oslactionspotting.core.utils.default_args import (
 
 
 from oslactionspotting.core.utils.io import check_config
-from oslactionspotting.datasets import build_dataset, build_dataloader
-from oslactionspotting.models import build_model
-from oslactionspotting.core import build_trainer
+from oslactionspotting.datasets.builder import build_dataloader, build_dataset
+from oslactionspotting.models.builder import build_model
 
 
 def parse_args():
@@ -80,7 +80,7 @@ def main():
     if not isinstance(numeric_level, int):
         raise ValueError("Invalid log level: %s" % cfg.log_level)
 
-    #Create logs folder
+    # Create logs folder
     os.makedirs(os.path.join(cfg.work_dir, "logs"), exist_ok=True)
     # Define logs folder
     log_path = os.path.join(

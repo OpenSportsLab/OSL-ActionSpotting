@@ -1,3 +1,32 @@
+"""
+Copyright 2022 James Hong, Haotian Zhang, Matthew Fisher, Michael Gharbi,
+Kayvon Fatahalian
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
 from collections import defaultdict
 import logging
 import os
@@ -7,8 +36,6 @@ import torch
 import math
 
 from tqdm import tqdm
-
-from oslactionspotting.core.utils.io import load_json
 
 
 def get_stride(src_fps, sample_fps):
@@ -352,8 +379,6 @@ def batch2long(output_segmentation, video_size, chunk_size, receptive_field):
     return segmentation_long
 
 
-
-
 def feats2clip(
     feats, stride, clip_length, padding="replicate_last", off=0, modif_last_index=False
 ):
@@ -390,6 +415,7 @@ def feats2clip(
     # print(idx)
     return feats[idx, ...]
 
+
 def get_num_frames(num_frames, fps, sample_fps):
     """Compute the number of frames of a video after fps changes.
 
@@ -403,6 +429,7 @@ def get_num_frames(num_frames, fps, sample_fps):
     """
     return math.ceil(num_frames / get_stride(fps, sample_fps))
 
+
 def annotationstoe2eformat(label_files, video_dirs, input_fps, extract_fps, dali):
     """Adapt annotations jsons to e2e format.
 
@@ -413,16 +440,18 @@ def annotationstoe2eformat(label_files, video_dirs, input_fps, extract_fps, dali
         extract_fps (int): Fps at which we extract frames.
         dali (bool): WHether processing with dali or opencv.
     """
-    if not isinstance(label_files,list):
+    from oslactionspotting.core.utils.io import load_json
+
+    if not isinstance(label_files, list):
         label_files = [label_files]
-    if not isinstance(video_dirs,list):
+    if not isinstance(video_dirs, list):
         video_dirs = [video_dirs]
     assert len(label_files) == len(video_dirs)
 
     labels_e2e = list()
     classes_by_label_dir = []
     for label_dir, video_dir in zip(label_files, video_dirs):
-        logging.info('Processing '+ label_dir + ' to e2e format.')
+        logging.info("Processing " + label_dir + " to e2e format.")
         videos = []
         annotations = load_json(label_dir)
         labels = annotations["labels"]
@@ -442,9 +471,7 @@ def annotationstoe2eformat(label_files, video_dirs, input_fps, extract_fps, dali
             fps = vc.get(cv2.CAP_PROP_FPS)
             num_frames = int(vc.get(cv2.CAP_PROP_FRAME_COUNT))
 
-            sample_fps = read_fps(
-                fps, extract_fps if extract_fps < fps else fps
-            )
+            sample_fps = read_fps(fps, extract_fps if extract_fps < fps else fps)
             num_frames_after = get_num_frames(
                 num_frames, fps, extract_fps if extract_fps < fps else fps
             )
@@ -492,9 +519,8 @@ def annotationstoe2eformat(label_files, video_dirs, input_fps, extract_fps, dali
             num_events += len(events)
             events.sort(key=lambda x: x["frame"])
 
-            
             labels_e2e.append(
-                {   
+                {
                     "events": events,
                     "fps": sample_fps,
                     "num_frames": num_frames_dali if dali else num_frames_after,
@@ -503,7 +529,7 @@ def annotationstoe2eformat(label_files, video_dirs, input_fps, extract_fps, dali
                     "width": width,
                     "height": height,
                     "video": video_id,
-                    "path" : video["path"]
+                    "path": video["path"],
                 }
             )
         assert len(video_annotations) == num_events
@@ -512,3 +538,101 @@ def annotationstoe2eformat(label_files, video_dirs, input_fps, extract_fps, dali
         assert classes == classes_tmp
     labels_e2e.sort(key=lambda x: x["video"])
     return labels_e2e
+
+
+import random
+import torch
+import torch.nn as nn
+import torchvision.transforms.functional as F
+
+
+class RandomHorizontalFlipFLow(nn.Module):
+
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+
+    def forward(self, img):
+        if torch.rand(1)[0] < self.p:
+            shape = img.shape
+            img.view((-1,) + shape[-3:])[:, 1, :, :] *= -1
+            return img.flip(-1)
+        return img
+
+
+class RandomOffsetFlow(nn.Module):
+
+    def __init__(self, p=0.5, x=0.1, y=0.05):
+        super().__init__()
+        self.p = p
+        self.x = x
+        self.y = y
+
+    def forward(self, img):
+        if torch.rand(1)[0] < self.p:
+            shape = img.shape
+            view = img.view((-1,) + shape[-3:])
+            view[:, 1, :, :] += (torch.rand(1, device=img.device)[0] * 2 - 1) * self.x
+            view[:, 0, :, :] += (torch.rand(1, device=img.device)[0] * 2 - 1) * self.y
+        return img
+
+
+class RandomGaussianNoise(nn.Module):
+
+    def __init__(self, p=0.5, s=0.1):
+        super().__init__()
+        self.p = p
+        self.std = s**0.5
+
+    def forward(self, img):
+        v = torch.rand(1)[0]
+        if v < self.p:
+            img += torch.randn(img.shape, device=img.device) * self.std
+        return img
+
+
+class SeedableRandomSquareCrop:
+
+    def __init__(self, dim):
+        self._dim = dim
+
+    def __call__(self, img):
+        c, h, w = img.shape[-3:]
+        x, y = 0, 0
+        if h > self._dim:
+            y = random.randint(0, h - self._dim)
+        if w > self._dim:
+            x = random.randint(0, w - self._dim)
+        return F.crop(img, y, x, self._dim, self._dim)
+
+
+class ThreeCrop:
+
+    def __init__(self, dim):
+        self._dim = dim
+
+    def __call__(self, img):
+        c, h, w = img.shape[-3:]
+        y = (h - self._dim) // 2
+        ret = []
+        dw = w - self._dim
+        for x in (0, dw // 2, dw):
+            ret.append(F.crop(img, y, x, self._dim, self._dim))
+        return torch.stack(ret)
+
+
+import torch
+
+
+def get_repartition_gpu():
+    """Returns the distribution of gpus that will be used by pipelines for dali."""
+    x = torch.cuda.device_count()
+    print("Number of gpus:", x)
+    if x == 1:
+        return [0], [0]
+    if x == 2:
+        return [0, 1], [0, 1]
+    elif x == 3:
+        return [0, 1], [1, 2]
+    elif x > 3:
+        return [0, 1, 2, 3], [0, 2, 1, 3]

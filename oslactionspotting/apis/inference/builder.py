@@ -1,4 +1,6 @@
 from .inference import Inferer, infer_E2E, infer_JSON, infer_SN
+
+
 def build_inferer(cfg, model, default_args=None):
     """Build a inferer from config dict.
 

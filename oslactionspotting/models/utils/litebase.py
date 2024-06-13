@@ -4,9 +4,9 @@ import pytorch_lightning as pl
 import time
 from SoccerNet.Evaluation.utils import AverageMeter
 
-from oslactionspotting.core.loss import build_criterion
-from oslactionspotting.core.scheduler import build_scheduler
-from oslactionspotting.core.optimizer import build_optimizer
+from oslactionspotting.core.loss.builder import build_criterion
+from oslactionspotting.core.scheduler.builder import build_scheduler
+from oslactionspotting.core.optimizer.builder import build_optimizer
 
 
 class LiteBaseModel(pl.LightningModule):

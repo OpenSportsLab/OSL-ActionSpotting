@@ -4,20 +4,17 @@ import logging
 
 
 class CustomProgressBar(TQDMProgressBar):
-    """Override the custom progress bar used by pytorch lightning to change some attributes.
-    """
+    """Override the custom progress bar used by pytorch lightning to change some attributes."""
 
     def get_metrics(self, trainer, pl_module):
-        """Override the method to don't show the version number in the progress bar.
-        """
+        """Override the method to don't show the version number in the progress bar."""
         items = super().get_metrics(trainer, pl_module)
         items.pop("v_num", None)
         return items
 
 
 class MyCallback(pl.Callback):
-    """Override the Callback class of pl to change the behaviour on validation epoch end.
-    """
+    """Override the Callback class of pl to change the behaviour on validation epoch end."""
 
     def __init__(self):
         super().__init__()
@@ -25,10 +22,10 @@ class MyCallback(pl.Callback):
     def on_validation_epoch_end(self, trainer, pl_module):
         loss_validation = pl_module.losses.avg
         state = {
-            'epoch': trainer.current_epoch + 1,
-            'state_dict': pl_module.model.state_dict(),
-            'best_loss': pl_module.best_loss,
-            'optimizer': pl_module.optimizer.state_dict(),
+            "epoch": trainer.current_epoch + 1,
+            "state_dict": pl_module.model.state_dict(),
+            "best_loss": pl_module.best_loss,
+            "optimizer": pl_module.optimizer.state_dict(),
         }
 
         # remember best prec@1 and save checkpoint
@@ -41,14 +38,15 @@ class MyCallback(pl.Callback):
             # torch.save(state, best_model_path)
 
         # Reduce LR on Plateau after patience reached
-        prevLR = pl_module.optimizer.param_groups[0]['lr']
+        prevLR = pl_module.optimizer.param_groups[0]["lr"]
         pl_module.scheduler.step(loss_validation)
-        currLR = pl_module.optimizer.param_groups[0]['lr']
+        currLR = pl_module.optimizer.param_groups[0]["lr"]
 
-        if (currLR is not prevLR and pl_module.scheduler.num_bad_epochs == 0):
+        if currLR is not prevLR and pl_module.scheduler.num_bad_epochs == 0:
             logging.info("\nPlateau Reached!")
-        if (prevLR < 2 * pl_module.scheduler.eps and
-                pl_module.scheduler.num_bad_epochs >= pl_module.scheduler.patience):
-            logging.info(
-                "\nPlateau Reached and no more reduction -> Exiting Loop")
+        if (
+            prevLR < 2 * pl_module.scheduler.eps
+            and pl_module.scheduler.num_bad_epochs >= pl_module.scheduler.patience
+        ):
+            logging.info("\nPlateau Reached and no more reduction -> Exiting Loop")
             trainer.should_stop = True

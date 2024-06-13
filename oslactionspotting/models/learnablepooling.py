@@ -8,8 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from oslactionspotting.models.litebase import LiteBaseModel
-from oslactionspotting.models.utils import (
+from oslactionspotting.models.utils.litebase import LiteBaseModel
+from oslactionspotting.models.utils.utils import (
     check_if_should_predict,
     get_json_data,
     get_prediction_data,
@@ -18,9 +18,9 @@ from oslactionspotting.models.utils import (
     zipResults,
 )
 
-from .heads import build_head
-from .backbones import build_backbone
-from .necks import build_neck
+from .heads.builder import build_head
+from .backbones.builder import build_backbone
+from .necks.builder import build_neck
 
 import os
 
@@ -297,7 +297,7 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                 # Compute the output for batches of frames
                 BS = 256
                 timestamp_long = timestamp(self.model, features, BS)
-                
+
                 timestamp_long = timestamp_long[:, 1:]
 
                 self.spotting_predictions.append(timestamp_long)
@@ -317,10 +317,10 @@ class LiteLearnablePoolingModel(LiteBaseModel):
                     for spot in spots:
                         frame_index = int(spot[0])
                         confidence = spot[1]
-                        
+
                         if confidence < self.confidence_threshold:
                             continue
-                        
+
                         json_data["predictions"].append(
                             get_prediction_data(
                                 False,

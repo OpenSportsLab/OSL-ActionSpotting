@@ -7,10 +7,12 @@ import time
 from mmengine.config import Config, DictAction
 import numpy as np
 import torch
-from oslactionspotting.apis.inference import build_inferer
-from oslactionspotting.core.utils.dali import get_repartition_gpu
-from oslactionspotting.core.utils.default_args import get_default_args_dataset, get_default_args_model
-from oslactionspotting.core.utils.eval import search_best_epoch
+from oslactionspotting.apis.inference.builder import build_inferer
+from oslactionspotting.apis.inference.utils import search_best_epoch
+from oslactionspotting.core.utils.default_args import (
+    get_default_args_dataset,
+    get_default_args_model,
+)
 from oslactionspotting.core.utils.io import check_config, whether_infer_split
 from oslactionspotting.datasets.builder import build_dataset
 from oslactionspotting.models.builder import build_model
@@ -74,10 +76,7 @@ def main():
     logging.basicConfig(
         level=numeric_level,
         format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
-        handlers=[
-            logging.FileHandler(log_path),
-            logging.StreamHandler()
-        ],
+        handlers=[logging.FileHandler(log_path), logging.StreamHandler()],
     )
 
     # Check configs files
@@ -85,9 +84,6 @@ def main():
     check_config(cfg)
 
     cfg.infer_split = whether_infer_split(cfg.dataset.test)
-    dali = getattr(cfg, "dali", False)
-    if dali:
-        cfg.repartitions = get_repartition_gpu()
 
     logging.info(cfg)
 

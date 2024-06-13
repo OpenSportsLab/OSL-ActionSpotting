@@ -5,13 +5,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from oslactionspotting.models.litebase import LiteBaseModel
+from oslactionspotting.models.utils.litebase import LiteBaseModel
 
 import os
 
 from oslactionspotting.datasets.utils import timestamps2long, batch2long
 
-from oslactionspotting.models.utils import (
+from oslactionspotting.models.utils.utils import (
     NMS,
     check_if_should_predict,
     get_json_data,
@@ -20,9 +20,9 @@ from oslactionspotting.models.utils import (
     zipResults,
 )
 
-from .heads import build_head
-from .backbones import build_backbone
-from .necks import build_neck
+from .heads.builder import build_head
+from .backbones.builder import build_backbone
+from .necks.builder import build_neck
 
 
 class ContextAwareModel(nn.Module):
@@ -169,8 +169,10 @@ class LiteContextAwareModel(LiteBaseModel):
         self.stop_predict = False
 
         if self.infer_split:
-            self.output_folder, self.output_results, self.stop_predict = check_if_should_predict(
-                self.cfg.dataset.test.results, self.cfg.work_dir, self.overwrite
+            self.output_folder, self.output_results, self.stop_predict = (
+                check_if_should_predict(
+                    self.cfg.dataset.test.results, self.cfg.work_dir, self.overwrite
+                )
             )
             if self.runner == "runner_JSON":
                 self.target_dir = os.path.join(self.cfg.work_dir, self.output_folder)
@@ -250,7 +252,7 @@ class LiteContextAwareModel(LiteBaseModel):
                     "videos"
                 ]
                 for index in np.arange(len(list_videos)):
-                    video = list_videos[index]["path_features"]
+                    video = list_videos[index]["path"]
 
                     if self.infer_split:
                         video = os.path.splitext(video)[0]

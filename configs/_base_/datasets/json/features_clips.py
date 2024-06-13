@@ -1,4 +1,3 @@
-# classes = ("Medical",) 
 classes = [
     "Penalty",
     "Kick-off",
@@ -18,16 +17,14 @@ classes = [
     "Red card",
     "Yellow->red card",
 ]
-# classes = 'datasets_jsons/soccernetv2/features/class.txt'
-# classes = '/scratch/users/ybenzakour/zip/features/class.txt'
-# classes = '/home/ybenzakour/datasets/SoccerNet/class.txt'
+
 dataset = dict(
-    input_fps = 25,
-    extract_fps = 2,
+    input_fps=25,
+    extract_fps=2,
     train=dict(
         type="FeatureClipsfromJSON",
-        path="train.json",
-        data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        path="/home/ybenzakour/datasets/SoccerNet/JSON/ResNET_PCA512/train/annotations.json",
+        data_root="/home/ybenzakour/datasets/SoccerNet/",
         framerate=2,
         window_size=20,
         classes=classes,
@@ -36,11 +33,12 @@ dataset = dict(
             batch_size=256,
             shuffle=True,
             pin_memory=True,
-        )),
+        ),
+    ),
     valid=dict(
         type="FeatureClipsfromJSON",
-        path="val.json",
-        data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        path="/home/ybenzakour/datasets/SoccerNet/JSON/ResNET_PCA512/valid/annotations.json",
+        data_root="/home/ybenzakour/datasets/SoccerNet/",
         framerate=2,
         window_size=20,
         classes=classes,
@@ -49,21 +47,22 @@ dataset = dict(
             batch_size=256,
             shuffle=True,
             pin_memory=True,
-        )),
+        ),
+    ),
     test=dict(
         type="FeatureVideosfromJSON",
-        path="test.json",
-        data_root = "/home/ybenzakour/datasets/SoccerNet/",
+        path="/home/ybenzakour/datasets/SoccerNet/JSON/ResNET_PCA512/test/annotations.json",
+        data_root="/home/ybenzakour/datasets/SoccerNet/",
         framerate=2,
         window_size=20,
-        split=["test"],
         classes=classes,
-        metric = "loose",
-        results = "results_spotting_test",
+        metric="loose",
+        results="results_spotting_test",
         dataloader=dict(
             num_workers=1,
             batch_size=1,
             shuffle=False,
             pin_memory=True,
-        )),
+        ),
+    ),
 )

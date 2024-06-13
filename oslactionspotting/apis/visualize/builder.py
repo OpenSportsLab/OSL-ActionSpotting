@@ -1,5 +1,7 @@
 from .visualizer import Visualizer
-def build_visualizer(cfg, Default_args = None):
+
+
+def build_visualizer(cfg, Default_args=None):
     """Build a visualizer from config dict.
 
     Args:

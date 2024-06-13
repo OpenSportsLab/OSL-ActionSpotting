@@ -135,7 +135,7 @@ def build_dataset(cfg, gpu=None, default_args=None):
             cfg.input_fps,
             cfg.extract_fps,
             crop_dim=cfg.crop_dim,
-            overlap_len=getattr(cfg, 'overlap_len', cfg.clip_len //2),
+            overlap_len=getattr(cfg, "overlap_len", cfg.clip_len // 2),
         )
     elif cfg.type == "VideoGameWithDali":
         loader_batch_size = cfg.dataloader.batch_size // default_args["acc_grad_iter"]

@@ -7,6 +7,7 @@ import torch
 
 ####################################################################################################################################################
 
+
 class Combined2x(torch.nn.Module):
     """Combination of two losses.
 
@@ -36,4 +37,6 @@ class Combined2x(torch.nn.Module):
         Returns:
             torch.Tensor: The returned combined loss.
         """
-        return self.w_1 * self.c_1(labels[0], output[0]) + self.w_2 * self.c_2(labels[1], output[1])
+        return self.w_1 * self.c_1(labels[0], output[0]) + self.w_2 * self.c_2(
+            labels[1], output[1]
+        )

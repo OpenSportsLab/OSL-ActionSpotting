@@ -3,8 +3,7 @@ import torch.nn.functional as F
 
 
 class CELoss(torch.nn.Module):
-    """Cross Entropy Loss.
-    """
+    """Cross Entropy Loss."""
 
     def __init__(self):
         super(CELoss, self).__init__()
@@ -21,6 +20,4 @@ class CELoss(torch.nn.Module):
         Returns:
             torch.Tensor: The returned CrossEntropy loss.
         """
-        return F.cross_entropy(
-            output, labels,
-            **ce_kwargs)
+        return F.cross_entropy(output, labels, **ce_kwargs)

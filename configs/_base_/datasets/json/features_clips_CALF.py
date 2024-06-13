@@ -1,4 +1,3 @@
-# classes = ("Medical",)
 classes = [
     "Penalty",
     "Kick-off",
@@ -18,15 +17,13 @@ classes = [
     "Red card",
     "Yellow->red card",
 ]
-# classes = 'datasets_jsons/soccernetv2/features/class.txt'
-# classes = '/scratch/users/ybenzakour/zip/features/class.txt'
-# classes = '/home/ybenzakour/datasets/SoccerNet/class.txt'
+
 dataset = dict(
     input_fps=25,
     extract_fps=2,
     train=dict(
         type="FeatureClipChunksfromJson",
-        path="train.json",
+        path="/home/ybenzakour/datasets/SoccerNet/JSON/ResNET_PCA512/train/annotations.json",
         data_root="/home/ybenzakour/datasets/SoccerNet/",
         framerate=2,
         chunk_size=120,
@@ -42,7 +39,7 @@ dataset = dict(
     ),
     valid=dict(
         type="FeatureClipChunksfromJson",
-        path="val.json",
+        path="/home/ybenzakour/datasets/SoccerNet/JSON/ResNET_PCA512/valid/annotations.json",
         data_root="/home/ybenzakour/datasets/SoccerNet/",
         framerate=2,
         chunk_size=120,
@@ -58,13 +55,12 @@ dataset = dict(
     ),
     test=dict(
         type="FeatureVideosChunksfromJson",
-        path="test.json",
+        path="/home/ybenzakour/datasets/SoccerNet/JSON/ResNET_PCA512/test/annotations.json",
         data_root="/home/ybenzakour/datasets/SoccerNet/",
         framerate=2,
         chunk_size=120,
         receptive_field=40,
         chunks_per_epoch=6000,
-        split=["test"],
         classes=classes,
         metric="loose",
         results="results_spotting_test",

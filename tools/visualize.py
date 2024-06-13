@@ -1,8 +1,7 @@
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import logging
 from mmengine.config import Config, DictAction
-from oslactionspotting.core.utils.io import check_config
-from oslactionspotting.apis.visualize import build_visualizer
+from oslactionspotting.apis.visualize.builder import build_visualizer
 
 
 def parse_args():
@@ -38,17 +37,11 @@ def main():
     if not isinstance(numeric_level, int):
         raise ValueError("Invalid log level: %s" % cfg.log_level)
 
-    
     logging.basicConfig(
         level=numeric_level,
         format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
-        handlers=[
-            logging.StreamHandler()
-        ],
+        handlers=[logging.StreamHandler()],
     )
-    # Check configs files
-    logging.info("Checking configs files")
-    check_config(cfg)
 
     logging.info(cfg)
 

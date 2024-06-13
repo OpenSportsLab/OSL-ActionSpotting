@@ -1,8 +1,38 @@
+"""
+Copyright 2022 James Hong, Haotian Zhang, Matthew Fisher, Michael Gharbi,
+Kayvon Fatahalian
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
 import logging
 from oslactionspotting.core.loss.builder import build_criterion
-from oslactionspotting.models.backbones import build_backbone
-from oslactionspotting.models.common import step, BaseRGBModel
-from oslactionspotting.models.heads import build_head
+from oslactionspotting.models.backbones.builder import build_backbone
+from oslactionspotting.models.utils.common import step, BaseRGBModel
+from oslactionspotting.models.heads.builder import build_head
 from contextlib import nullcontext
 import torch
 from tqdm import tqdm
@@ -134,14 +164,10 @@ class E2EModel(BaseRGBModel):
 
         ce_kwargs = {}
         if fg_weight != 1:
-            if self._multi_gpu:
-                ce_kwargs["weight"] = torch.FloatTensor(
-                    [1] + [fg_weight] * (self._num_classes - 1)
-                ).to(self.device)
-            else:
-                ce_kwargs["weight"] = torch.FloatTensor(
-                    [1] + [fg_weight] * (self._num_classes - 1)
-                ).to(torch.device("cuda:{}".format(1)))
+            ce_kwargs["weight"] = torch.FloatTensor(
+                [1] + [fg_weight] * (self._num_classes - 1)
+            ).to(self.device)
+
         epoch_loss = 0.0
 
         times = []
@@ -151,11 +177,7 @@ class E2EModel(BaseRGBModel):
             for batch_idx, batch in enumerate(tqdm(loader)):
                 if dali:
                     frame = batch["frame"].to(self.device)
-                    label = batch["label"].to(
-                        self.device
-                        if self._multi_gpu
-                        else torch.device("cuda:{}".format(1))
-                    )
+                    label = batch["label"].to(self.device)
                 else:
                     frame = loader.dataset.load_frame_gpu(batch, self.device)
                     label = batch["label"].to(self.device)
@@ -169,11 +191,7 @@ class E2EModel(BaseRGBModel):
                 with torch.cuda.amp.autocast():
                     pred = self._model(frame)
 
-                    pred = (
-                        pred.to(self.device)
-                        if self._multi_gpu
-                        else pred.to(torch.device("cuda:{}".format(1)))
-                    )
+                    pred = pred.to(self.device)
 
                     loss = 0.0
                     if len(pred.shape) == 3:

@@ -1,13 +1,10 @@
 import logging
 import os
 
-from oslactionspotting.core.utils.eval import infer_and_process_predictions_e2e
+from oslactionspotting.apis.inference.utils import infer_and_process_predictions_e2e
 from oslactionspotting.core.utils.lightning import CustomProgressBar
 from oslactionspotting.datasets.builder import build_dataloader
 import pytorch_lightning as pl
-
-
-
 
 
 class Inferer:
@@ -116,8 +113,8 @@ def infer_E2E(cfg, model, data):
             cfg.dataset.test.dataloader,
             True,
         )
-        logging.info('Predictions saved')
-        logging.info(os.path.join(pred_file + '.json'))
-        logging.info('High recall predictions saved')
-        logging.info(os.path.join(pred_file + '.recall.json.gz'))
+        logging.info("Predictions saved")
+        logging.info(os.path.join(pred_file + ".json"))
+        logging.info("High recall predictions saved")
+        logging.info(os.path.join(pred_file + ".recall.json.gz"))
         return json_data

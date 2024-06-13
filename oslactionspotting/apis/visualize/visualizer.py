@@ -98,7 +98,11 @@ class Visualizer:
             key = cv2.waitKey(int(self.fps)) & 0xFF
             if key == ord("q"):
                 break
-            elif key == ord("p"):
+            elif key == ord("s"):
                 current_frame = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
                 new_frame_position = current_frame + self.frames_to_skip
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame_position)
+            elif key == ord("a"):
+                current_frame = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
+                new_frame_position = current_frame - self.frames_to_skip
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame_position)

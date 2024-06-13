@@ -1,4 +1,22 @@
-classes = 'datasets_jsons/soccernetv2/2_fps/dali/class.txt'
+classes = [
+    "Ball out of play",
+    "Clearance",
+    "Corner",
+    "Direct free-kick",
+    "Foul",
+    "Goal",
+    "Indirect free-kick",
+    "Kick-off",
+    "Offside",
+    "Penalty",
+    "Red card",
+    "Shots off target",
+    "Shots on target",
+    "Substitution",
+    "Throw-in",
+    "Yellow card",
+    "Yellow->red card",
+]
             
 dataset = dict(
     epoch_num_frames  = 500000,
@@ -54,7 +72,6 @@ dataset = dict(
         classes=classes,
         path = "/home/ybenzakour/224p/test/annotations.json",                 # path to label json
         data_root = "/home/ybenzakour/datasets/SoccerNet/",
-        split=["test"],
         results = "results_spotting_test_ocv",
         nms_window = 2,
         metric = "loose",

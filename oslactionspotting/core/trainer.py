@@ -1,13 +1,42 @@
+"""
+Copyright 2022 James Hong, Haotian Zhang, Matthew Fisher, Michael Gharbi,
+Kayvon Fatahalian
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
 import logging
-from oslactionspotting.core.optimizer import build_optimizer
-from oslactionspotting.core.scheduler import build_scheduler
-from oslactionspotting.core.utils.eval import infer_and_process_predictions_e2e
+from oslactionspotting.apis.inference.utils import infer_and_process_predictions_e2e
+from oslactionspotting.core.optimizer.builder import build_optimizer
+from oslactionspotting.core.scheduler.builder import build_scheduler
+
 from oslactionspotting.core.utils.io import store_json, clear_files
 
 from oslactionspotting.core.utils.lightning import CustomProgressBar, MyCallback
 import pytorch_lightning as pl
 
-from torch.optim.lr_scheduler import ChainedScheduler, LinearLR, CosineAnnealingLR
 import os
 
 import torch
@@ -30,12 +59,12 @@ def build_trainer(cfg, model=None, default_args=None):
         evaluator: The constructed trainer.
     """
     if cfg.type == "trainer_e2e":
-        
-        logging.info('Build optimizer')
+
+        logging.info("Build optimizer")
         optimizer, scaler = build_optimizer(model._get_params(), cfg.optimizer)
         logging.info(optimizer)
         logging.info(scaler)
-        logging.info('Build scheduler')
+        logging.info("Build scheduler")
         lr_scheduler = build_scheduler(optimizer, cfg.scheduler, default_args)
         # optimizer, scaler = model.get_optimizer({'lr': cfg.learning_rate})
 
@@ -58,25 +87,8 @@ def build_trainer(cfg, model=None, default_args=None):
         )
     else:
         trainer = Trainer_pl(cfg, default_args["work_dir"])
-        # call = MyCallback()
-        # trainer = pl.Trainer(
-        #     max_epochs=cfg.max_epochs,
-        #     devices=[cfg.GPU],
-        #     callbacks=[call, CustomProgressBar(refresh_rate=1)],
-        #     num_sanity_val_steps=0,
-        # )
+
     return trainer
-
-
-# def get_lr_scheduler(args, optimizer, num_steps_per_epoch):
-#     cosine_epochs = args.num_epochs - args.warm_up_epochs
-#     print('Using Linear Warmup ({}) + Cosine Annealing LR ({})'.format(
-#         args.warm_up_epochs, cosine_epochs))
-#     return args.num_epochs, ChainedScheduler([
-#         LinearLR(optimizer, start_factor=0.01, end_factor=1.0,
-#                  total_iters=args.warm_up_epochs * num_steps_per_epoch),
-#         CosineAnnealingLR(optimizer,
-#             num_steps_per_epoch * cosine_epochs)])
 
 
 class Trainer(ABC):
@@ -201,7 +213,7 @@ class Trainer_e2e(Trainer):
                 lr_scheduler=self.lr_scheduler,
                 acc_grad_iter=self.acc_grad_iter,
             )
-            
+
             valid_loss = self.model.epoch(
                 valid_loader, self.dali, acc_grad_iter=self.acc_grad_iter
             )
@@ -261,7 +273,9 @@ class Trainer_e2e(Trainer):
                 )
 
                 logging.info("Checkpoint saved")
-                logging.info(os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(epoch)))
+                logging.info(
+                    os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(epoch))
+                )
 
                 clear_files(self.save_dir, r"optim_\d+\.pt")
                 torch.save(
@@ -273,7 +287,9 @@ class Trainer_e2e(Trainer):
                     os.path.join(self.save_dir, "optim_{:03d}.pt".format(epoch)),
                 )
                 logging.info("Optim saved")
-                logging.info(os.path.join(self.save_dir, "optim_{:03d}.pt".format(epoch)))
+                logging.info(
+                    os.path.join(self.save_dir, "optim_{:03d}.pt".format(epoch))
+                )
             # break
         logging.info("Best epoch: {}".format(self.best_epoch))
 
@@ -293,7 +309,11 @@ class Trainer_e2e(Trainer):
             )
 
             logging.info("Checkpoint of best epoch loaded")
-            logging.info(os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(self.best_epoch)))
+            logging.info(
+                os.path.join(
+                    self.save_dir, "checkpoint_{:03d}.pt".format(self.best_epoch)
+                )
+            )
 
             # Evaluate on valid if not already done
             eval_splits = ["valid"] if self.criterion_valid != "map" else []

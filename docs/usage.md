@@ -7,17 +7,16 @@ The currently avaliable configs are the following:
 Learneable Pooling:
 
 ```bash
-configs/learnablepooling/json_netvlad++_resnetpca512.py
-configs/learnablepooling/json_soccernet_netvlad++_resnetpca512.py
-
-configs/learnablepooling/soccernet_avgpool_resnetpca512.py
-configs/learnablepooling/soccernet_maxpool_resnetpca512.py
-configs/learnablepooling/soccernet_netrvlad_resnetpca512.py
-configs/learnablepooling/soccernet_netvlad_resnetpca512.py
-configs/learnablepooling/soccernet_avgpool++_resnetpca512.py
-configs/learnablepooling/soccernet_maxpool++_resnetpca512.py
-configs/learnablepooling/soccernet_netrvlad++_resnetpca512.py
 configs/learnablepooling/soccernet_netvlad++_resnetpca512.py
+
+configs/learnablepooling/json_avgpool_resnetpca512.py
+configs/learnablepooling/json_maxpool_resnetpca512.py
+configs/learnablepooling/json_netrvlad_resnetpca512.py
+configs/learnablepooling/json_netvlad_resnetpca512.py
+configs/learnablepooling/json_avgpool++_resnetpca512.py
+configs/learnablepooling/json_maxpool++_resnetpca512.py
+configs/learnablepooling/json_netrvlad++_resnetpca512.py
+configs/learnablepooling/json_netvlad++_resnetpca512.py
 ```
 
 CALF:
@@ -28,10 +27,11 @@ configs/contextawarelossfunction/json_soccernet_calf_resnetpca512.py
 configs/contextawarelossfunction/soccernet_resnetpca512.py
 ```
 
-E2E-Spot:
+PTS:
 
 ```bash
 configs/e2espot/e2espot.py
+configs/e2espot/e2espot_ocv.py
 ```
 
 ## Training
@@ -51,16 +51,37 @@ python tools/train.py \
 
 ```bash
 python tools/train.py \
-    configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
+    configs/learnablepooling/json_netvlad++_resnetpca512.py \
     --cfg-options training.max_epochs=10 \
-        training.evaluation_frequency=8 \
-        data_root=/datasets/SoccerNet \
         dataset.train.data_root=/datasets/SoccerNet \
-        dataset.test.data_root=/datasets/SoccerNet \
-        dataset.valid.data_root=/datasets/SoccerNet
+        dataset.valid.data_root=/datasets/SoccerNet \
+        dataset.train.path=/datasets/SoccerNet/ResNET_PCA512/train/annotations.json \
+        dataset.valid.path=/datasets/SoccerNet/ResNET_PCA512/valid/annotations.json
 ```
 
-## Inference and Evaluation
+## Inference
+
+```bash
+python tools/infer.py {config}
+```
+
+### Inference example
+
+```bash
+python tools/infer.py \
+    configs/learnablepooling/json_netvlad++_resnetpca512.py
+```
+
+### Inference example with custom config file
+
+```bash
+python tools/infer.py \
+    configs/learnablepooling/json_netvlad++_resnetpca512.py \
+    --cfg-options dataset.test.data_root=/datasets/SoccerNet \
+        dataset.test.path=/datasets/SoccerNet/ResNET_PCA512/test/annotations.json
+```
+
+## Evaluation
 
 ```bash
 python tools/evaluate.py {config}
@@ -77,10 +98,31 @@ python tools/evaluate.py \
 
 ```bash
 python tools/evaluate.py \
-    configs/learnablepooling/soccernet_netvlad++_resnetpca512.py \
-    --cfg-options model.load_weights=/path/to/model.pth.tar \
-        data_root=/datasets/SoccerNet \
-        dataset.train.data_root=/datasets/SoccerNet \
-        dataset.test.data_root=/datasets/SoccerNet \
-        dataset.valid.data_root=/datasets/SoccerNet
+    configs/learnablepooling/json_netvlad++_resnetpca512.py \
+    --cfg-options dataset.test.path=/datasets/SoccerNet/ResNET_PCA512/test/annotations.json \
+    dataset.test.metric=tight
 ```
+
+## Visualization
+
+```bash
+python tools/visualize.py {config}
+```
+
+### Visualization example
+
+```bash
+python tools/visualize.py \
+    configs/learnablepooling/json_netvlad++_resnetpca512.py
+```
+
+### Visualization example with custom config file
+
+```bash
+python tools/visualize.py \
+    configs/learnablepooling/json_netvlad++_resnetpca512.py \
+    --cfg-options dataset.test.results=/outputs/learnablepooling/json_netvlad++_resnetpca512/results_spotting_test/england_epl/2014-2015/2015-05-17_-_18-00_Manchester_United_1_-_1_Arsenal/1_ResNET_TF2_PCA512/results_spotting.json \
+    dataset.test.path=/home/ybenzakour/datasets/SoccerNet/england_epl/2014-2015/2015-05-17_-_18-00_Manchester_United_1_-_1_Arsenal/1_224p.mkv \
+    visualizer.threshold=0.2
+```
+
