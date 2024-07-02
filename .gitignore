@@ -172,3 +172,5 @@ environment.yml
 
 log/*
 dgcm/*
+
+models/*
