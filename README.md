@@ -1,6 +1,6 @@
 # OSL-ActionSpotting: A Unified Library for Action Spotting in Sports Videos
 
-[![ArXiv](https://img.shields.io/badge/arXiv-xxx.xxx-b31b1b.svg?style=flat)](https://arxiv.org/abs/xxx.xxx)
+[![ArXiv](https://img.shields.io/badge/arXiv-2407.01265-b31b1b.svg?style=flat)](https://arxiv.org/abs/2407.01265)
 [![License](https://img.shields.io/badge/License-GPL_3.0-blue.svg)](https://github.com/SoccerNet/sn-spotting-pip/blob/main/LICENSE)
 
 OSL-ActionSpotting is a plug-and-play library that unifies action
@@ -47,11 +47,14 @@ All the things that need to be done in the future is in [roadmap.md](docs/en/roa
 If you think this repo is helpful, please cite us:
 
 ```bibtex
-@misc{name,
-    title={},
-    author={},
-    howpublished = {\url{https://github.com/OpenSportsLab/OSL-ActionSpotting}},
-    year={2024}
+@misc{benzakour2024oslactionspottingunifiedlibraryaction,
+      title={OSL-ActionSpotting: A Unified Library for Action Spotting in Sports Videos}, 
+      author={Yassine Benzakour and Bruno Cabado and Silvio Giancola and Anthony Cioppa and Bernard Ghanem and Marc Van Droogenbroeck},
+      year={2024},
+      eprint={2407.01265},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2407.01265}, 
 }
 ```
 
