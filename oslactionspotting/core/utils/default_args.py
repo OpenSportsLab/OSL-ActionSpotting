@@ -1,6 +1,15 @@
+from oslactionspotting.core.utils.io import load_json
+
+def load_classes_from_annotations(annotation_path): 
+    
+    annotations = load_json(annotation_path)
+    labels = annotations.get("labels", [])
+    return {label: idx + 1 for idx, label in enumerate(sorted(labels))}
+
 def get_default_args_data_train_e2e_dali(cfg):
+    classes = load_classes_from_annotations(cfg.dataset.train.path)
     return {
-        "classes": cfg.classes,
+        "classes": classes,
         "train": True,
         "acc_grad_iter": cfg.training.acc_grad_iter,
         "num_epochs": cfg.training.num_epochs,
@@ -9,8 +18,9 @@ def get_default_args_data_train_e2e_dali(cfg):
 
 
 def get_default_args_data_valid_e2e_dali(cfg):
+    classes = load_classes_from_annotations(cfg.dataset.valid.path)
     return {
-        "classes": cfg.classes,
+        "classes": classes,
         "train": False,
         "acc_grad_iter": cfg.training.acc_grad_iter,
         "num_epochs": cfg.training.num_epochs,
@@ -19,11 +29,13 @@ def get_default_args_data_valid_e2e_dali(cfg):
 
 
 def get_default_args_data_train_e2e_opencv(cfg):
-    return {"classes": cfg.classes, "train": True}
+    classes = load_classes_from_annotations(cfg.dataset.train.path)
+    return {"classes": classes, "train": True}
 
 
 def get_default_args_data_valid_e2e_opencv(cfg):
-    return {"classes": cfg.classes, "train": False}
+    classes = load_classes_from_annotations(cfg.dataset.valid.path)
+    return {"classes": classes, "train": False}
 
 
 def get_default_args_data_train():
@@ -35,11 +47,13 @@ def get_default_args_data_valid():
 
 
 def get_default_args_data_valid_data_frames_e2e_dali(cfg):
-    return {"classes": cfg.classes, "repartitions": cfg.repartitions}
+    classes = load_classes_from_annotations(cfg.dataset.valid.path)
+    return {"classes": classes, "repartitions": cfg.repartitions}
 
 
 def get_default_args_data_valid_data_frames_e2e_opencv(cfg):
-    return {"classes": cfg.classes}
+    classes = load_classes_from_annotations(cfg.dataset.valid.path)
+    return {"classes": classes}
 
 
 def get_default_args_dataset(split, cfg):
@@ -75,7 +89,8 @@ def get_default_args_dataset(split, cfg):
 
 def get_default_args_model(cfg):
     if cfg.model.type == "E2E":
-        return {"classes": cfg.classes}
+        classes = load_classes_from_annotations(cfg.dataset.train.path)
+        return {"classes": classes}
     else:
         return None
 
