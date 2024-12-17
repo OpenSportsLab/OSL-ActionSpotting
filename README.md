@@ -38,6 +38,8 @@ Please refer to [install.md](docs/install.md) for installation and data preparat
 
 Please refer to [usage.md](docs/usage.md) for details of training and evaluation scripts.
 
+_Note: - We have added few documentation guides inside different parts of the library to make working with the library easier. Like this is an [instruction](configs/_base_/datasets/json/README.md) for class intialization inside the configs directory. So please try to follow them if you get issues while working with the library. :)_
+
 ## 🤝 Roadmap
 
 All the things that need to be done in the future is in [roadmap.md](docs/en/roadmap.md).
