@@ -33,7 +33,7 @@ def parse_args():
     # not that important
     parser.add_argument("--seed", type=int, default=42, help="random seed")
     # parser.add_argument("--id", type=int, default=0, help="repeat experiment id")
-    # parser.add_argument("--resume", type=str, default=None, help="resume from a checkpoint")
+    parser.add_argument("--resume-from", type=str, default=None, help="resume from a checkpoint")
     # parser.add_argument("--ema", action="store_true", help="whether to use model EMA")
     # parser.add_argument("--wandb", action="store_true", help="whether to use wandb to log everything")
     # parser.add_argument("--not_eval", action="store_true", help="whether not to eval, only do inference")
@@ -147,6 +147,7 @@ def main():
         cfg.training,
         model,
         get_default_args_trainer(cfg, len(train_loader)),
+        resume_from = args.resume_from
     )
 
     # Start training`
