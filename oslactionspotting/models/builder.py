@@ -2,7 +2,6 @@ import torch
 from oslactionspotting.models.e2espot import E2EModel
 from .learnablepooling import LiteLearnablePoolingModel
 from .contextaware import LiteContextAwareModel
-
 import logging
 
 
@@ -48,28 +47,54 @@ def build_model(cfg, verbose=True, default_args=None):
             modality=cfg.dataset.modality,
             multi_gpu=cfg.model.multi_gpu,
         )
-        if cfg.model.load_weights != None:
-            checkpoint = torch.load(cfg.model.load_weights)
-            new_state_dict = {}
-            for key in list(checkpoint.keys()):
-                if key.startswith("_features"):
-                    new_state_dict["backbone." + key] = checkpoint[key]
-                elif key.startswith("_pred_fine"):
-                    new_state_dict["head." + key] = checkpoint[key]
+        
+        # Load weights if specified
+        if cfg.model.load_weights is not None:
+            if verbose:
+                logging.info(f"Loading weights from: {cfg.model.load_weights}")
+            
+            try:
+                # Load checkpoint
+                checkpoint = torch.load(cfg.model.load_weights)
+                
+                if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+                    state_dict = checkpoint['model_state_dict']
+                    if verbose:
+                        logging.info("Found model_state_dict in checkpoint")
                 else:
-                    new_state_dict[key] = checkpoint[key]
-            model.load(new_state_dict)
-            # model.load(checkpoint)
+                    state_dict = checkpoint
+                    if verbose:
+                        logging.info("Using checkpoint as state dict directly")
+                
+                new_state_dict = {}
+                for key in list(state_dict.keys()):
+                    if key.startswith("_features"):
+                        new_state_dict["backbone." + key] = state_dict[key]
+                    elif key.startswith("_pred_fine"):
+                        new_state_dict["head." + key] = state_dict[key]
+                    else:
+                        new_state_dict[key] = state_dict[key]
+                
+                # Load processed state dict
+                model.load(new_state_dict)
+                if verbose:
+                    logging.info("Model weights loaded successfully")
+                    
+            except Exception as e:
+                logging.error(f"Error loading weights: {str(e)}")
+                raise
     else:
         model = None
+        logging.warning(f"Unknown model type: {cfg.model.type}")
 
-    if verbose:
-        # Display info on model
+    if verbose and model is not None:
+        # Display model info
         logging.info(model)
         total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         parameters_per_layer = [
             p.numel() for p in model.parameters() if p.requires_grad
         ]
-        logging.info("Total number of parameters: " + str(total_params))
+        logging.info(f"Total trainable parameters: {total_params:,}")
+        logging.info(f"Number of parameter groups: {len(parameters_per_layer)}")
 
     return model

@@ -45,7 +45,7 @@ from oslactionspotting.datasets.builder import build_dataset
 from abc import ABC, abstractmethod
 
 
-def build_trainer(cfg, model=None, default_args=None):
+def build_trainer(cfg, model=None, default_args=None, resume_from=None):
     """Build a trainer from config dict.
 
     Args:
@@ -59,19 +59,60 @@ def build_trainer(cfg, model=None, default_args=None):
         evaluator: The constructed trainer.
     """
     if cfg.type == "trainer_e2e":
-
-        logging.info("Build optimizer")
+        checkpoint_dir = default_args["work_dir"]
+        start_epoch = 0
+        logging.info(f"Checkpoint directory: {checkpoint_dir}")
+        
+        # Handle checkpoint loading
+        if resume_from is not None:
+            if not os.path.isfile(resume_from):
+                raise ValueError(f"Checkpoint file not found: {resume_from}")
+                
+            logging.info(f"Loading checkpoint from: {resume_from}")
+            checkpoint = torch.load(resume_from)
+            
+            # Load model state
+            model.load(checkpoint['model_state_dict'])
+            logging.info("Model state loaded successfully")
+            
+            # Get current training progress
+            start_epoch = checkpoint['epoch'] + 1
+            logging.info(f"Resuming from epoch {start_epoch}")
+            
+            # Check if we've already reached target epochs
+            if start_epoch >= cfg.num_epochs:
+                logging.error(f"Model already trained for {start_epoch} epochs")
+                logging.error(f"Target epochs in config: {cfg.num_epochs}")
+                logging.error("Please increase num_epochs in config to continue training")
+                raise ValueError("Need to increase num_epochs to continue training")
+            
+            logging.info(f"Will continue training from epoch {start_epoch} to {cfg.num_epochs}")
+        
+        logging.info("Building optimizer...")
         optimizer, scaler = build_optimizer(model._get_params(), cfg.optimizer)
-        logging.info(optimizer)
-        logging.info(scaler)
-        logging.info("Build scheduler")
+        
+        # Load optimizer state if available in checkpoint
+        if resume_from is not None and 'optimizer_state_dict' in checkpoint:
+            try:
+                optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                scaler.load_state_dict(checkpoint['scaler_state_dict'])
+                logging.info("Optimizer and scaler states loaded")
+            except Exception as e:
+                logging.warning(f"Could not load optimizer state: {e}")
+                logging.warning("Will start with fresh optimizer state")
+            
+        logging.info("Building scheduler...")
         lr_scheduler = build_scheduler(optimizer, cfg.scheduler, default_args)
-        # optimizer, scaler = model.get_optimizer({'lr': cfg.learning_rate})
+        
+        # Load scheduler state if available
+        if resume_from is not None and 'lr_state_dict' in checkpoint:
+            try:
+                lr_scheduler.load_state_dict(checkpoint['lr_state_dict'])
+                logging.info("Scheduler state loaded")
+            except Exception as e:
+                logging.warning(f"Could not load scheduler state: {e}")
+                logging.warning("Will start with fresh scheduler state")
 
-        # # Warmup schedule
-        # num_steps_per_epoch = default_args["len_train_loader"] // cfg.acc_grad_iter
-        # num_epochs, lr_scheduler = get_lr_scheduler(
-        #     cfg, optimizer, num_steps_per_epoch)
         trainer = Trainer_e2e(
             cfg,
             model,
@@ -84,12 +125,20 @@ def build_trainer(cfg, model=None, default_args=None):
             default_args["cfg_test"],
             default_args["cfg_challenge"],
             default_args["cfg_valid_data_frames"],
+            start_epoch=start_epoch
         )
+        
+        # Load training history if resuming
+        if resume_from is not None:
+            trainer.best_epoch = checkpoint.get('best_epoch', 0)
+            trainer.best_criterion_valid = checkpoint.get('best_criterion_valid', 
+                0 if cfg.criterion_valid == "map" else float("inf"))
+            logging.info(f"Restored best epoch: {trainer.best_epoch}")
+            
     else:
         trainer = Trainer_pl(cfg, default_args["work_dir"])
 
     return trainer
-
 
 class Trainer(ABC):
     def __init__(self):
@@ -164,13 +213,14 @@ class Trainer_e2e(Trainer):
         cfg_test=None,
         cfg_challenge=None,
         cfg_valid_data_frames=None,
+        start_epoch=0
     ):
         self.losses = []
         self.best_epoch = 0
         self.best_criterion_valid = 0 if args.criterion_valid == "map" else float("inf")
 
         self.num_epochs = args.num_epochs
-        self.epoch = 0
+        self.epoch = start_epoch
         self.model = model
 
         self.optimizer = optimizer
@@ -189,22 +239,60 @@ class Trainer_e2e(Trainer):
         self.cfg_challenge = cfg_challenge
         self.cfg_valid_data_frames = cfg_valid_data_frames
 
+    def save_checkpoint(self, epoch, is_best=False):
+        """Save checkpoint with training state."""
+        checkpoint = {
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'scaler_state_dict': self.scaler.state_dict(),
+            'lr_state_dict': self.lr_scheduler.state_dict(),
+            'best_epoch': self.best_epoch,
+            'best_criterion_valid': self.best_criterion_valid
+        }
+
+        os.makedirs(self.save_dir, exist_ok=True)
+        # Save latest checkpoint
+        # latest_path = os.path.join(self.save_dir, f"latest_checkpoint_{epoch:03d}.pt")
+        # torch.save(checkpoint, latest_path)
+        # logging.info(f"Latest checkpoint saved: {latest_path}")
+
+        # # Remove previous latest checkpoint
+        # for f in os.listdir(self.save_dir):
+        #     if f.startswith("latest_checkpoint_") and f != os.path.basename(latest_path):
+        #         os.remove(os.path.join(self.save_dir, f))
+
+        latest_path = os.path.join(self.save_dir, "latest_checkpoint.pt")
+        torch.save(checkpoint, latest_path)
+        logging.info(f"Latest checkpoint saved: {latest_path}")
+        
+        # Save best checkpoint if needed
+        # if is_best:
+        #     # best_path = os.path.join(self.save_dir, f"best_checkpoint_{epoch:03d}.pt")
+        #     best_path = os.path.join(self.save_dir, f"best_checkpoint_{epoch:03d}.pt")
+        #     torch.save(checkpoint, best_path)
+        #     logging.info(f"Best checkpoint saved: {best_path}")
+            
+        #     # Remove previous best checkpoint
+        #     for f in os.listdir(self.save_dir):
+        #         if f.startswith("best_checkpoint_") and f != os.path.basename(best_path):
+        #             os.remove(os.path.join(self.save_dir, f))
+                    
+        if is_best:
+            best_path = os.path.join(self.save_dir, "best_checkpoint.pt")
+            torch.save(checkpoint, best_path)
+            logging.info(f"Best checkpoint saved: {best_path}")
+            
     def train(self, train_loader, valid_loader, classes):
-        """
-        Args:
-            train_loader : Data loader for the train split.
-            valid_loader : Data loader for the valid split.
-            classes (dict): Dictionnary with classes associated to indexes.
-        """
+        """Training loop with checkpoint management."""
         if self.criterion_valid == "map":
             dataset_Valid_Frames = build_dataset(
                 self.cfg_valid_data_frames,
                 None,
                 {"repartitions": self.repartitions, "classes": classes},
             )
+
         for epoch in range(self.epoch, self.num_epochs):
-            # train_loss = 0.0
-            # valid_loss = 0.0
             train_loss = self.model.epoch(
                 train_loader,
                 self.dali,
@@ -218,24 +306,24 @@ class Trainer_e2e(Trainer):
                 valid_loader, self.dali, acc_grad_iter=self.acc_grad_iter
             )
             print(
-                "[Epoch {}] Train loss: {:0.5f} Valid loss: {:0.5f}".format(
-                    epoch, train_loss, valid_loss
-                )
+                f"[Epoch {epoch+1}/{self.num_epochs}] Train loss: {train_loss:.5f} Valid loss: {valid_loss:.5f}"
             )
 
             valid_mAP = 0
-            # self.start_valid_epoch = 0
+            is_best = False
+
             if self.criterion_valid == "loss":
                 if valid_loss < self.best_criterion_valid:
                     self.best_criterion_valid = valid_loss
                     self.best_epoch = epoch
+                    is_best = True
                     print("New best epoch!")
             elif self.criterion_valid == "map":
                 if epoch >= self.start_valid_epoch:
                     pred_file = None
                     if self.save_dir is not None:
                         pred_file = os.path.join(
-                            self.save_dir, "pred-valid.{}".format(epoch)
+                            self.save_dir, f"pred-valid_{epoch:03d}"
                         )
                         os.makedirs(self.save_dir, exist_ok=True)
                     valid_mAP = infer_and_process_predictions_e2e(
@@ -250,6 +338,7 @@ class Trainer_e2e(Trainer):
                     if valid_mAP > self.best_criterion_valid:
                         self.best_criterion_valid = valid_mAP
                         self.best_epoch = epoch
+                        is_best = True
                         print("New best epoch!")
             else:
                 print("Unknown criterion:", self.criterion_valid)
@@ -262,36 +351,17 @@ class Trainer_e2e(Trainer):
                     "valid_mAP": valid_mAP,
                 }
             )
+
             if self.save_dir is not None:
                 os.makedirs(self.save_dir, exist_ok=True)
                 store_json(
-                    os.path.join(self.save_dir, "loss.json"), self.losses, pretty=True
+                    os.path.join(self.save_dir, "loss.json"),
+                    self.losses,
+                    pretty=True
                 )
-                torch.save(
-                    self.model.state_dict(),
-                    os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(epoch)),
-                )
+                self.save_checkpoint(epoch, is_best)
 
-                logging.info("Checkpoint saved")
-                logging.info(
-                    os.path.join(self.save_dir, "checkpoint_{:03d}.pt".format(epoch))
-                )
-
-                clear_files(self.save_dir, r"optim_\d+\.pt")
-                torch.save(
-                    {
-                        "optimizer_state_dict": self.optimizer.state_dict(),
-                        "scaler_state_dict": self.scaler.state_dict(),
-                        "lr_state_dict": self.lr_scheduler.state_dict(),
-                    },
-                    os.path.join(self.save_dir, "optim_{:03d}.pt".format(epoch)),
-                )
-                logging.info("Optim saved")
-                logging.info(
-                    os.path.join(self.save_dir, "optim_{:03d}.pt".format(epoch))
-                )
-            # break
-        logging.info("Best epoch: {}".format(self.best_epoch))
+        logging.info(f"Training completed. Best epoch: {self.best_epoch}")
 
         if self.dali:
             train_loader.delete()
@@ -300,62 +370,60 @@ class Trainer_e2e(Trainer):
                 dataset_Valid_Frames.delete()
 
         if self.save_dir is not None:
-            self.model.load(
-                torch.load(
-                    os.path.join(
-                        self.save_dir, "checkpoint_{:03d}.pt".format(self.best_epoch)
-                    )
+            self._run_final_evaluation(classes)
+
+    def _run_final_evaluation(self, classes):
+        """Run final evaluation using best model."""
+        # Load best model for evaluation
+        best_checkpoint_path = os.path.join(
+            self.save_dir, f"best_checkpoint.pt"
+        )
+        checkpoint = torch.load(best_checkpoint_path)
+        self.model.load(checkpoint['model_state_dict'])
+        logging.info(f"Loaded best model from epoch {self.best_epoch}")
+
+        # Evaluate on valid if not already done
+        eval_splits = ["valid"] if self.criterion_valid != "map" else []
+
+        # Evaluate on hold out splits
+        eval_splits += ["test", "challenge"]
+        for split in eval_splits:
+            if split == "valid":
+                cfg_tmp = self.cfg_valid_data_frames
+            elif split == "test":
+                cfg_tmp = self.cfg_test
+            elif split == "challenge":
+                cfg_tmp = self.cfg_challenge
+
+            split_path = os.path.join(cfg_tmp.path)
+            if not os.path.exists(split_path):
+                continue
+
+            split_data = build_dataset(
+                cfg_tmp,
+                None,
+                {"repartitions": self.repartitions, "classes": classes},
+            )
+            split_data.print_info()
+
+            pred_file = None
+            if self.save_dir is not None:
+                pred_file = os.path.join(
+                    self.save_dir, f"pred-{split}_{self.best_epoch:03d}"
                 )
+
+            infer_and_process_predictions_e2e(
+                self.model,
+                self.dali,
+                split_data,
+                split.upper(),
+                classes,
+                pred_file,
+                calc_stats=split != "challenge",
+                dataloader_params=cfg_tmp.dataloader,
             )
 
-            logging.info("Checkpoint of best epoch loaded")
-            logging.info(
-                os.path.join(
-                    self.save_dir, "checkpoint_{:03d}.pt".format(self.best_epoch)
-                )
-            )
+            if self.dali:
+                split_data.delete()
 
-            # Evaluate on valid if not already done
-            eval_splits = ["valid"] if self.criterion_valid != "map" else []
-
-            # Evaluate on hold out splits
-            eval_splits += ["test", "challenge"]
-            for split in eval_splits:
-                if split == "valid":
-                    cfg_tmp = self.cfg_valid_data_frames
-                if split == "test":
-                    cfg_tmp = self.cfg_test
-                elif split == "challenge":
-                    cfg_tmp = self.cfg_challenge
-                split_path = os.path.join(cfg_tmp.path)
-
-                if os.path.exists(split_path):
-                    split_data = build_dataset(
-                        cfg_tmp,
-                        None,
-                        {"repartitions": self.repartitions, "classes": classes},
-                    )
-                    split_data.print_info()
-
-                    pred_file = None
-                    if self.save_dir is not None:
-                        pred_file = os.path.join(
-                            self.save_dir, "pred-{}.{}".format(split, self.best_epoch)
-                        )
-
-                    infer_and_process_predictions_e2e(
-                        self.model,
-                        self.dali,
-                        split_data,
-                        split.upper(),
-                        classes,
-                        pred_file,
-                        calc_stats=split != "challenge",
-                        dataloader_params=cfg_tmp.dataloader,
-                    )
-
-                    if self.dali:
-                        split_data.delete()
-
-        logging.info("Done training")
-        logging.info(self.best_epoch)
+        logging.info(f"Final evaluation completed. Best epoch: {self.best_epoch}")

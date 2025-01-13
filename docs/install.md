@@ -24,3 +24,17 @@ pip install cupy-cudaz
 pip install -r requirements.txt
 pip install -e .
 ```
+
+## For example, this is verified for Ubuntu 22.04 python=3.11 cuda version=12.2
+```bash
+conda create -y -n osl python=3.11
+conda activate osl
+conda install pytorch==2.1.1 torchvision==0.16.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+pip install --extra-index-url https://pypi.nvidia.com/ nvidia-dali-cuda120
+pip install cupy-cuda12x
+pip install -r requirements.txt
+pip install "numpy<2.0"
+pip install -e .
+```
+
+_Note: You might need to downgrade numpy!_

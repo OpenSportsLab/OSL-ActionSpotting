@@ -72,6 +72,15 @@ python tools/infer.py \
     configs/learnablepooling/json_netvlad++_resnetpca512.py
 ```
 
+#### For E2E, provide the model weights path
+
+```bash
+python tools/infer.py \
+    configs/e2espot/e2espot.py --weights /path/to/your/model/weights
+```
+
+_Note:- If you don't provide the path to the model weights, then the weights are assumed to be inside the cfg.work_dir as "best_checkpoint.pt"_
+
 ### Inference example with custom config file
 
 ```bash
@@ -103,6 +112,24 @@ python tools/evaluate.py \
     dataset.test.metric=tight
 ```
 
+### If you don't see any results, you might need to specify the path to your results file
+
+```bash
+python tools/evaluate.py \
+    configs/e2espot/e2espot.py \
+    --cfg-options dataset.test.results=/outputs/e2e/rny008_gsm_150/results_spotting_test.recall.json.gz
+```
+
+#### So for a custom evaluation on test set, it might look something like this
+
+```bash
+python tools/evaluate.py \
+    configs/e2espot/e2espot.py \
+    --cfg-options dataset.test.path=/datasets/224p/test/annotations.json \
+    dataset.test.data_root=/datasets/224p/test \
+    dataset.test.results=outputs/e2e/rny008_gsm_150/results_spotting_test.recall.json.gz \
+    dataset.test.metric=tight
+```
 ## Visualization
 
 ```bash

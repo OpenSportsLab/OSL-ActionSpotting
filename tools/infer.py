@@ -31,6 +31,7 @@ def parse_args():
     )
 
     parser.add_argument("--seed", type=int, default=42, help="random seed")
+    parser.add_argument("--weights", type=str, help="Path to specific model weights for inference")
 
     # read args
     args = parser.parse_args()
@@ -91,16 +92,41 @@ def main():
     start = time.time()
     logging.info("Starting main function")
 
-    model = None
-    # Ensure weights are not None
-    if cfg.model.load_weights is None:
+    # model = None
+    # # Ensure weights are not None
+    # if cfg.model.load_weights is None:
+    #     if cfg.runner.type == "runner_e2e":
+    #         # best_epoch = search_best_epoch(cfg.work_dir)
+    #         # cfg.model.load_weights = os.path.join(
+    #             # cfg.work_dir, "checkpoint_{:03d}.pt".format(best_epoch)
+    #         # )
+    #         best_checkpoint_path = os.path.join(
+    #         cfg.work_dir, "best_checkpoint_100.pt"
+    #         )
+    #         cfg.model.load_weights = best_checkpoint_path
+    #     else:
+    #         cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
+    
+
+    # Handle model weights path
+    if args.weights is not None:
+        # Use specified weights path
+        if not os.path.exists(args.weights):
+            raise ValueError(f"Specified weights file not found: {args.weights}")
+        cfg.model.load_weights = args.weights
+        logging.info(f"Using specified model weights: {args.weights}")
+    elif cfg.model.load_weights is None:
+        # Use default path in work_dir
         if cfg.runner.type == "runner_e2e":
-            best_epoch = search_best_epoch(cfg.work_dir)
-            cfg.model.load_weights = os.path.join(
-                cfg.work_dir, "checkpoint_{:03d}.pt".format(best_epoch)
-            )
+            best_checkpoint_path = os.path.join(cfg.work_dir, "best_checkpoint.pt")
+            if not os.path.exists(best_checkpoint_path):
+                logging.warning(f"Default checkpoint not found: {best_checkpoint_path}")
+            cfg.model.load_weights = best_checkpoint_path
+            logging.info(f"Using default model weights: {best_checkpoint_path}")
         else:
-            cfg.model.load_weights = os.path.join(cfg.work_dir, "model.pth.tar")
+            default_path = os.path.join(cfg.work_dir, "model.pth.tar")
+            cfg.model.load_weights = default_path
+            logging.info(f"Using default model weights: {default_path}")
 
     # Build Model
     model = build_model(
