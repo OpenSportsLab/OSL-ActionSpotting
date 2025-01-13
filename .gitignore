@@ -174,3 +174,5 @@ log/*
 dgcm/*
 
 models/*
+
+tools/slurm/logs/*
