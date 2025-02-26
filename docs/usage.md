@@ -79,7 +79,7 @@ python tools/infer.py \
     configs/e2espot/e2espot.py --weights /path/to/your/model/weights
 ```
 
-_Note:- If you don't provide the path to the model weights, then the weights are assumed to be inside the cfg.work_dir as "best_checkpoint.pt"_
+_Note:- If you don't provide the path to the model weights, the weights are assumed to be inside the cfg.work_dir as "best_checkpoint.pt"_
 
 ### Inference example with custom config file
 
@@ -120,6 +120,7 @@ python tools/evaluate.py \
     --cfg-options dataset.test.results=/outputs/e2e/rny008_gsm_150/results_spotting_test.recall.json.gz
 ```
 
+*Try to provide full path to the results, if you do not see any results.*
 #### So for a custom evaluation on test set, it might look something like this
 
 ```bash
