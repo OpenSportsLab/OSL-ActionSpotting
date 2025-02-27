@@ -35,7 +35,7 @@ dataset = dict(
         dataloader=dict(
             num_workers=8,
             batch_size=8,
-            shuffle=False,
+            shuffle=True,
             pin_memory=True,
             prefetch_factor = 1,
         ),
@@ -97,5 +97,3 @@ dataset = dict(
         ),
     ),
 )
-
-

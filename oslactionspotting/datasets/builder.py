@@ -14,6 +14,7 @@ from .soccernet import (
 from .json import FeatureClipChunksfromJson, FeatureClipsfromJSON
 import torch
 
+import random
 
 def build_dataset(cfg, gpu=None, default_args=None):
     """Build a dataset from config dict.
@@ -193,8 +194,8 @@ def build_dataloader(dataset, cfg, gpu, dali):
     Returns:
         Dataloader: The constructed dataloader.
     """
-    # def worker_init_fn(id):
-    #     random.seed(id + 100 * 100)
+    def worker_init_fn(id):
+        random.seed(id + 100 * 100)
     if dali:
         return dataset
     dataloader = torch.utils.data.DataLoader(
@@ -206,6 +207,6 @@ def build_dataloader(dataset, cfg, gpu, dali):
         prefetch_factor=(
             cfg.prefetch_factor if "prefetch_factor" in cfg.keys() else None
         ),
-        # worker_init_fn=worker_init_fn
+        worker_init_fn=worker_init_fn
     )
     return dataloader

@@ -16,6 +16,8 @@ from oslactionspotting.core.utils.default_args import (
     get_default_args_trainer,
 )
 
+import random
+
 
 from oslactionspotting.core.utils.io import check_config
 from oslactionspotting.datasets.builder import build_dataloader, build_dataset
@@ -61,10 +63,21 @@ def main():
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 
-    # for reproducibility
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
+    def set_seed(seed):
+        random.seed(seed)  # Python random module
+        np.random.seed(seed)  # NumPy
+        torch.manual_seed(seed)  # PyTorch
+        torch.cuda.manual_seed(seed)  # PyTorch CUDA
+        torch.cuda.manual_seed_all(seed)  # Multi-GPU training
 
+        # Ensures deterministic behavior
+        torch.backends.cudnn.deterministic = True  
+        torch.backends.cudnn.benchmark = False  
+
+        # Ensures deterministic behavior for CUDA operations
+        torch.use_deterministic_algorithms(True, warn_only=True)
+
+    set_seed(args.seed)
     def signal_handler(signal, frame):
         print("\nScript aborted by user.")
         raise SystemExit
