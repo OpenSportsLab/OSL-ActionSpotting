@@ -50,6 +50,7 @@ class Evaluator:
 def evaluate_common_JSON(cfg, results, metric):
     if cfg.path == None:
         return
+    
     with open(cfg.path) as f:
         GT_data = json.load(f)
 
