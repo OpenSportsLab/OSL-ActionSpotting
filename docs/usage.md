@@ -153,4 +153,22 @@ python tools/visualize.py \
     dataset.test.path=/home/ybenzakour/datasets/SoccerNet/england_epl/2014-2015/2015-05-17_-_18-00_Manchester_United_1_-_1_Arsenal/1_224p.mkv \
     visualizer.threshold=0.2
 ```
+## Export to ONNX
 
+Export trained models to ONNX format for deployment:
+
+```bash
+python tools/export_onnx.py {config} --weights {weights} --output model.onnx
+```
+
+### Export example
+
+```bash
+python tools/export_onnx.py \
+    configs/e2espot/e2espot.py \
+    --weights outputs/e2e/best_checkpoint.pt \
+    --output model.onnx \
+    --validate
+```
+
+For detailed export options, see [export.md](export.md).

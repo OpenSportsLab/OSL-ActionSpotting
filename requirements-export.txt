@@ -1,0 +1,8 @@
+# Optional dependencies for ONNX model export
+# Install with: pip install -r requirements-export.txt
+
+onnx>=1.14.0
+onnxruntime>=1.15.0
+
+# For GPU inference (optional, use instead of onnxruntime)
+# onnxruntime-gpu>=1.15.0

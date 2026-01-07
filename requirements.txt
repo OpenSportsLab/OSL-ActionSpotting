@@ -9,3 +9,6 @@ tqdm
 tabulate
 timm
 mmengine
+
+# For ONNX export functionality, also install:
+# pip install -r requirements-export.txt

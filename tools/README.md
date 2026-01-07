@@ -14,3 +14,23 @@ Directly fetch the files (config or weights) for your model of interest.
 python tools/download_weights_model_zoo.py --Model avgpool --File json_avgpool_resnetpca512.py
 python tools/download_weights_model_zoo.py --Model avgpool --File model.pth.tar
 ```
+
+## Export models to ONNX
+
+Export trained models to ONNX format for deployment:
+
+```bash
+# Basic export
+python tools/export_onnx.py configs/e2espot/e2espot.py \
+    --weights outputs/e2e/best_checkpoint.pt \
+    --output model.onnx
+
+# Export with validation
+python tools/export_onnx.py configs/e2espot/e2espot.py \
+    --weights outputs/e2e/best_checkpoint.pt \
+    --output model.onnx \
+    --validate \
+    --test-inference
+```
+
+See [docs/export.md](../docs/export.md) for full documentation.
