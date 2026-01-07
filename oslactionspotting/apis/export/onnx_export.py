@@ -258,7 +258,7 @@ def validate_onnx_model(
 
 # --- Internal Helpers ---
 
-def _handle_import_error(pkg_name: str, results: Dict, verbose: bool) -> None:
+def _handle_import_error(pkg_name: str, results: Dict[str, Any], verbose: bool) -> None:
     msg = f"{pkg_name} not installed. Run: pip install {pkg_name}"
     results["errors"].append(msg)
     results["valid"] = False
@@ -266,7 +266,7 @@ def _handle_import_error(pkg_name: str, results: Dict, verbose: bool) -> None:
         logger.warning(f"  {msg}")
 
 
-def _handle_validation_error(msg: str, results: Dict, verbose: bool):
+def _handle_validation_error(msg: str, results: Dict, verbose: bool) -> None:
     results["errors"].append(msg)
     results["valid"] = False
     if verbose:
