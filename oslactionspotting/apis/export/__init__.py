@@ -7,7 +7,7 @@ Example:
     >>> from oslactionspotting.apis.export import export_to_onnx, validate_onnx_model
     >>>
     >>> # Export a trained model
-    >>> export_to_onnx(model, "model. onnx", clip_len=100)
+    >>> export_to_onnx(model, "model.onnx", clip_len=100)
     >>>
     >>> # Validate the exported model
     >>> results = validate_onnx_model("model.onnx")

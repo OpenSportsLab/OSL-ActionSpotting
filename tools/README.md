@@ -22,12 +22,12 @@ Export trained models to ONNX format for deployment:
 ```bash
 # Basic export
 python tools/export_onnx.py configs/e2espot/e2espot.py \
-    --weights outputs/e2e/best_checkpoint. pt \
+    --weights outputs/e2e/best_checkpoint.pt \
     --output model.onnx
 
 # Export with validation
 python tools/export_onnx.py configs/e2espot/e2espot.py \
-    --weights outputs/e2e/best_checkpoint. pt \
+    --weights outputs/e2e/best_checkpoint.pt \
     --output model.onnx \
     --validate \
     --test-inference

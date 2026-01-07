@@ -153,7 +153,7 @@ def validate_onnx_model(
 
     Args:
         onnx_path (str): Path to the ONNX model file.
-        check_model (bool): If True, run onnx. checker.check_model(). Default: True.
+        check_model (bool): If True, run onnx.checker.check_model(). Default: True.
         test_inference (bool): If True, run a test inference with ONNX Runtime.
             Default: True.
         clip_len (int): Clip length for test inference. Default: 100.
@@ -163,7 +163,7 @@ def validate_onnx_model(
     Returns:
         Dict[str, Any]: Validation results containing:
             - "valid" (bool): Overall validation status
-            - "check_model" (bool): Result of onnx. checker.check_model()
+            - "check_model" (bool): Result of onnx.checker.check_model()
             - "inference_test" (bool): Result of inference test
             - "output_shape" (tuple): Shape of inference output
             - "errors" (list): List of any error messages
