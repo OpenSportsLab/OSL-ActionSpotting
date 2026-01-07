@@ -19,6 +19,11 @@ from .onnx_export import (
     validate_onnx_model,
     TARGET_HEIGHT,
     TARGET_WIDTH,
+    DEFAULT_CLIP_LEN,
+    DEFAULT_FEATURE_DIM,
+    DEFAULT_CHANNELS,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_OPSET_VERSION,
 )
 
 __all__ = [
@@ -26,4 +31,9 @@ __all__ = [
     "validate_onnx_model",
     "TARGET_HEIGHT",
     "TARGET_WIDTH",
+    "DEFAULT_CLIP_LEN",
+    "DEFAULT_FEATURE_DIM",
+    "DEFAULT_CHANNELS",
+    "DEFAULT_BATCH_SIZE",
+    "DEFAULT_OPSET_VERSION",
 ]

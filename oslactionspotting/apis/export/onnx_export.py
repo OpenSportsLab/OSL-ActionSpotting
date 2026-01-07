@@ -18,6 +18,13 @@ import torch.nn as nn
 TARGET_HEIGHT = 224
 TARGET_WIDTH = 398
 
+# Export defaults
+DEFAULT_CLIP_LEN = 100
+DEFAULT_FEATURE_DIM = 512
+DEFAULT_CHANNELS = 3
+DEFAULT_BATCH_SIZE = 1
+DEFAULT_OPSET_VERSION = 14
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,11 +32,11 @@ def export_to_onnx(
     model: nn.Module,
     output_path: str,
     dummy_input: Optional[torch.Tensor] = None,
-    clip_len: int = 100,
+    clip_len: int = DEFAULT_CLIP_LEN,
     input_size: Tuple[int, int] = (TARGET_HEIGHT, TARGET_WIDTH),
     input_names: Optional[List[str]] = None,
     output_names: Optional[List[str]] = None,
-    opset_version: int = 14,
+    opset_version: int = DEFAULT_OPSET_VERSION,
     dynamic_axes: Union[bool, Dict[str, Dict[int, str]]] = True,
     device: str = "cpu",
     verbose: bool = True,
@@ -142,7 +149,7 @@ def validate_onnx_model(
     onnx_path: str,
     check_model: bool = True,
     test_inference: bool = True,
-    clip_len: int = 100,
+    clip_len: int = DEFAULT_CLIP_LEN,
     input_size: Tuple[int, int] = (TARGET_HEIGHT, TARGET_WIDTH),
     verbose: bool = True,
 ) -> Dict[str, Any]:
@@ -290,23 +297,23 @@ def _create_dummy_input(
     if is_e2e:
         # Shape: (batch, clip_len, channels, height, width)
         return torch.randn(
-            1, clip_len, 3, input_size[0], input_size[1],
+            DEFAULT_BATCH_SIZE, clip_len, DEFAULT_CHANNELS, input_size[0], input_size[1],
             device=device, dtype=torch.float32
         )
 
     # Fallback to Feature-based model heuristic
     # Shape: (batch, window_size, feature_dim)
-    feature_dim = 512
+    feature_dim = DEFAULT_FEATURE_DIM
     if hasattr(model, "backbone"):
         bb = getattr(model, "backbone")
         feature_dim = getattr(
-            bb, "output_dim", getattr(bb, "feature_dim", 512))
+            bb, "output_dim", getattr(bb, "feature_dim", DEFAULT_FEATURE_DIM))
         # Handle case where dim might be a non-int (e.g. 1-element tensor)
         if hasattr(feature_dim, "item"):
             feature_dim = int(feature_dim.item())  # type: ignore
 
     return torch.randn(
-        1, clip_len, int(feature_dim),
+        DEFAULT_BATCH_SIZE, clip_len, int(feature_dim),
         device=device, dtype=torch.float32
     )
 
@@ -355,17 +362,18 @@ def _resolve_dynamic_shape(
         if isinstance(dim, (str, type(None))):
             # Resolve common dynamic axes by index
             if i == 0:
-                val = 1
+                val = DEFAULT_BATCH_SIZE
             elif i == 1:
                 val = clip_len
             elif i == 2:
-                val = 3 if len(shape) == 5 else 512  # Guessing
+                val = DEFAULT_CHANNELS if len(
+                    shape) == 5 else DEFAULT_FEATURE_DIM
             elif i == 3:
                 val = input_size[0]
             elif i == 4:
                 val = input_size[1]
             else:
-                val = 1
+                val = DEFAULT_BATCH_SIZE
             resolved.append(val)
         else:
             resolved.append(int(dim))
