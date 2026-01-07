@@ -356,28 +356,133 @@ def _resolve_dynamic_shape(
     clip_len: int,
     input_size: Tuple[int, int],
 ) -> Tuple[int, ...]:
-    """Resolve dynamic dimensions (strings/None) in ONNX input shape to integers."""
+    """Resolve dynamic dimensions (strings/None) in ONNX input shape to integers.
+
+    This function handles ONNX models exported with dynamic axes by substituting
+    concrete values for symbolic dimensions. It uses the following resolution strategy:
+
+    For 5D inputs (video: batch, time, channels, height, width):
+        - Dim 0: batch_size -> DEFAULT_BATCH_SIZE
+        - Dim 1: clip_length/time -> clip_len parameter
+        - Dim 2: channels -> DEFAULT_CHANNELS (3)
+        - Dim 3: height -> input_size[0]
+        - Dim 4: width -> input_size[1]
+
+    For 3D inputs (features: batch, time, features):
+        - Dim 0: batch_size -> DEFAULT_BATCH_SIZE
+        - Dim 1: window_size -> clip_len parameter
+        - Dim 2: feature_dim -> DEFAULT_FEATURE_DIM (512)
+
+    Args:
+        shape: The input shape from ONNX, may contain strings or None for dynamic dims.
+        clip_len: Temporal dimension size to use.
+        input_size: Spatial dimensions (height, width) to use.
+
+    Returns:
+        Tuple of resolved integer dimensions.
+
+    Note:
+        This function logs warnings when it must guess dimension values.
+        For production use, consider exporting with fixed shapes or providing
+        explicit test inputs to validate_onnx_model().
+    """
     resolved = []
+    num_dynamic = sum(1 for d in shape if isinstance(d, (str, type(None))))
+
+    if num_dynamic > 0:
+        logger.debug(
+            f"Resolving {num_dynamic} dynamic dimension(s) in shape {shape}"
+        )
+
     for i, dim in enumerate(shape):
         if isinstance(dim, (str, type(None))):
-            # Resolve common dynamic axes by index
-            if i == 0:
-                val = DEFAULT_BATCH_SIZE
-            elif i == 1:
-                val = clip_len
-            elif i == 2:
-                val = DEFAULT_CHANNELS if len(
-                    shape) == 5 else DEFAULT_FEATURE_DIM
-            elif i == 3:
-                val = input_size[0]
-            elif i == 4:
-                val = input_size[1]
-            else:
-                val = DEFAULT_BATCH_SIZE
-            resolved.append(val)
+            # Try to infer from dimension name if it's a string
+            dim_name = dim if isinstance(dim, str) else None
+            val = _resolve_single_dimension(
+                index=i,
+                dim_name=dim_name,
+                total_dims=len(shape),
+                clip_len=clip_len,
+                input_size=input_size,
+            )
+            resolved. append(val)
         else:
             resolved.append(int(dim))
+
     return tuple(resolved)
+
+
+def _resolve_single_dimension(
+    index: int,
+    dim_name:  Optional[str],
+    total_dims: int,
+    clip_len: int,
+    input_size:  Tuple[int, int],
+) -> int:
+    """Resolve a single synamic dimension to a concrete integer value.
+
+    Args:
+        index: Position of the dimension in the shape.
+        dim_name: Name of the dynamic axis (e.g., "batch_size", "clip_length"), or None.
+        total_dims: Total number of dimensions in the shape.
+        clip_len:  Temporal dimension size to use.
+        input_size: Spatial dimensions (height, width) to use.
+
+    Returns:
+        Resolved integer value for this dimension.
+    """
+    # First, try to resolve by name if available
+    if dim_name is not None:
+        name_lower = dim_name.lower()
+
+        if "batch" in name_lower:
+            return DEFAULT_BATCH_SIZE
+        elif "clip" in name_lower or "time" in name_lower or "window" in name_lower:
+            return clip_len
+        elif "channel" in name_lower:
+            return DEFAULT_CHANNELS
+        elif "height" in name_lower or name_lower == "h":
+            return input_size[0]
+        elif "width" in name_lower or name_lower == "w":
+            return input_size[1]
+        elif "feat" in name_lower or "dim" in name_lower:
+            return DEFAULT_FEATURE_DIM
+
+    # Fall back to positional heuristics
+    is_video_input = total_dims == 5
+    is_feature_input = total_dims == 3
+
+    if index == 0:
+        # First dimension is almost always batch
+        return DEFAULT_BATCH_SIZE
+    elif index == 1:
+        # Second dimension is typically temporal
+        return clip_len
+    elif index == 2:
+        if is_video_input:
+            return DEFAULT_CHANNELS
+        elif is_feature_input:
+            logger.warning(
+                f"Guessing feature dimension at index {index} = {DEFAULT_FEATURE_DIM}. "
+                "Consider using explicit dummy_input for accurate validation."
+            )
+            return DEFAULT_FEATURE_DIM
+        else:
+            logger.warning(
+                f"Unknown dimension at index {index} for {total_dims}D input. "
+                f"Defaulting to {DEFAULT_BATCH_SIZE}."
+            )
+            return DEFAULT_BATCH_SIZE
+    elif index == 3 and is_video_input:
+        return input_size[0]  # height
+    elif index == 4 and is_video_input:
+        return input_size[1]  # width
+    else:
+        logger.warning(
+            f"Unexpected dynamic dimension at index {index} for {total_dims}D input. "
+            f"Defaulting to {DEFAULT_BATCH_SIZE}."
+        )
+        return DEFAULT_BATCH_SIZE
 
 
 def _log_model_info(model: nn.Module) -> None:
