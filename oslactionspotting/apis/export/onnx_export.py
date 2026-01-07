@@ -27,8 +27,8 @@ def export_to_onnx(
     dummy_input: Optional[torch.Tensor] = None,
     clip_len: int = 100,
     input_size: Tuple[int, int] = (TARGET_HEIGHT, TARGET_WIDTH),
-    input_names: List[str] = ["input"],
-    output_names: List[str] = ["output"],
+    input_names: Optional[List[str]] = None,
+    output_names: Optional[List[str]] = None,
     opset_version: int = 14,
     dynamic_axes: Union[bool, Dict[str, Dict[int, str]]] = True,
     device: str = "cpu",
@@ -43,8 +43,8 @@ def export_to_onnx(
             If None, one will be generated based on heuristics.
         clip_len (int): Number of frames in the temporal window. Default: 100.
         input_size (Tuple[int, int]): Input frame size (H, W). Default: (224, 398).
-        input_names (List[str]): Names for input nodes. Default: ["input"].
-        output_names (List[str]): Names for output nodes. Default: ["output"].
+        input_names (List[str], optional): Names for input nodes.  Default: ["input"].
+        output_names (List[str], optional): Names for output nodes. Default: ["output"].
         opset_version (int): ONNX opset version. Default: 14.
         dynamic_axes (Union[bool, Dict]): If True, uses default dynamic axes configuration.
             If a Dict is provided, it is used directly. Default: True.
@@ -56,6 +56,12 @@ def export_to_onnx(
     """
     if not isinstance(model, nn.Module):
         raise ValueError(f"Expected nn.Module, got {type(model).__name__}")
+
+    # Initialize mutable defaults
+    if input_names is None:
+        input_names = ["input"]
+    if output_names is None:
+        output_names = ["output"]
 
     # Ensure output directory exists
     output_dir = os.path.dirname(output_path)
@@ -316,9 +322,6 @@ def _get_default_dynamic_axes(
     # Define mapping strategy
     input_dyn = {}
     output_dyn = {0: "batch_size"}
-
-    if input_names is None:
-        input_names = ["input"]
 
     if ndim == 5:
         # (batch, time, channel, height, width)
