@@ -166,7 +166,10 @@ def label2vector(
             else:
                 frame = framerate * (seconds + 60 * minutes)
 
-        label = EVENT_DICTIONARY[event]
+        # in case of a event not in EVENT_DICTIONARY move with the evaluation
+        # as label maybe None it wont evaluate for all classes
+        # but only the ones configured in the config model file
+        label = EVENT_DICTIONARY.get(event)
 
         value = 1
         if "visibility" in annotation.keys():

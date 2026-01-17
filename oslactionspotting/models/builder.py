@@ -37,6 +37,27 @@ def build_model(cfg, verbose=True, default_args=None):
             neck=cfg.model.neck,
             runner=cfg.runner.type,
         )
+
+        # Adding reset_backbone, reset_neck and freeze_backbone will allow
+        # in case of transfer learning domains
+        if getattr(cfg.model, "freeze_backbone", False):
+            for p in model.model.backbone.parameters():
+                p.requires_grad = False
+                logging.info(f"[INFO] Backbone is freeze_backbone: and set requires_grad=False")
+
+        # 2. Freeze neck (optional)
+        if getattr(cfg.model, "freeze_neck", False):
+            for p in model.model.neck.parameters():
+                logging.info(f"[INFO] Neck is set to freeze_neck: and set requires_grad=False")
+                p.requires_grad = False
+
+        # 3. Reset head
+        if getattr(cfg.model, "reset_head", False):
+            for m in model.model.head.modules():
+                if hasattr(m, "reset_parameters"):
+                    m.reset_parameters()
+                    logging.info("[INFO] Hed is set to reset: reset_head: reset_parameters() was called")
+
     elif cfg.model.type == "E2E":
         model = E2EModel(
             cfg,

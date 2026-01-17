@@ -163,7 +163,8 @@ class FeaturefromJson(Dataset):
             frame = self.framerate * (seconds + 60 * minutes)
 
         cont = False
-
+        # Initializing label var in case the cont is False dont thrown an error
+        label = None
         if event not in self.classes:
             cont = True
         else:
